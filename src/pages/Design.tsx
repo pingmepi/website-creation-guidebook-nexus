@@ -52,23 +52,29 @@ const Design = () => {
         minute: "numeric"
       })}`);
     }
+
+    console.log("Design page mounted with isAuthenticated:", isAuthenticated);
   }, []);
   
   const handleThemeSelect = (theme: any) => {
+    console.log("Theme selected:", theme);
     setSelectedTheme(theme);
     setCurrentStage("question-flow");
   };
   
   const handleQuestionFlowComplete = (questionAnswers: Answer[]) => {
+    console.log("Question flow complete with answers:", questionAnswers);
     setAnswers(questionAnswers);
     setShowConfirmation(true);
   };
   
   const handleConfirmDesign = () => {
+    console.log("Design confirmed");
     setShowConfirmation(false);
     
     // Check if user is logged in
     if (!isAuthenticated) {
+      console.log("User not authenticated, showing login dialog");
       setShowLoginDialog(true);
       return;
     }
@@ -77,11 +83,13 @@ const Design = () => {
   };
   
   const handleLoginSuccess = () => {
+    console.log("Login success callback in Design page");
     setShowLoginDialog(false);
     proceedToDesignStage();
   };
   
   const proceedToDesignStage = () => {
+    console.log("Proceeding to design stage");
     setCurrentStep("design");
     setCurrentStage("customization");
     toast.success("Your design is being created!", {
@@ -93,21 +101,27 @@ const Design = () => {
   };
   
   const handleBackToThemes = () => {
+    console.log("Going back to themes");
     setCurrentStage("theme-selection");
     setSelectedTheme(null);
   };
 
   const handleDesignChange = (designDataUrl: string) => {
+    console.log("Design canvas updated");
     setDesignImage(designDataUrl);
   };
   
   const handleSaveDesign = async () => {
+    console.log("Save design button clicked");
+    
     if (!isAuthenticated) {
+      console.log("User not authenticated, showing login dialog");
       setShowLoginDialog(true);
       return;
     }
     
     if (!designImage || !user) {
+      console.log("Cannot save design - missing design image or user");
       toast.error("Cannot save design", { 
         description: "Please complete your design before saving"
       });
@@ -115,7 +129,14 @@ const Design = () => {
     }
     
     try {
+      console.log("Starting design save process");
       setIsSaving(true);
+      
+      // Convert the answers to a format that can be stored as JSON
+      const serializedAnswers = answers.map(answer => ({
+        question: answer.question,
+        answer: answer.answer
+      }));
       
       const designData = {
         id: designId || v4(),
@@ -124,18 +145,25 @@ const Design = () => {
         preview_url: designImage,
         t_shirt_color: tshirtColor,
         theme: selectedTheme?.name || null,
-        design_data: {
-          answers: answers,
+        design_data: JSON.stringify({
+          answers: serializedAnswers,
           theme_id: selectedTheme?.id
-        }
+        })
       };
+      
+      console.log("Saving design with data:", designData);
       
       const { data, error } = await supabase
         .from('designs')
         .upsert(designData)
         .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error saving design:", error);
+        throw error;
+      }
+      
+      console.log("Design saved successfully, response data:", data);
       
       if (data && data.length > 0) {
         setDesignId(data[0].id);

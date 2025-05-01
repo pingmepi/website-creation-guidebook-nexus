@@ -2,13 +2,42 @@
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, LogIn, User } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LoginDialog from "./auth/LoginDialog";
 import { useUser } from "@/contexts/UserContext";
 
 const Header = () => {
   const [showLogin, setShowLogin] = useState(false);
   const { user, isLoading, logout } = useUser();
+
+  useEffect(() => {
+    console.log("Header rendered with user state:", user ? `User: ${user.email}` : "No user", "isLoading:", isLoading);
+  }, [user, isLoading]);
+
+  const handleLoginClick = () => {
+    console.log("Login button clicked");
+    setShowLogin(true);
+  };
+
+  const handleLoginClose = () => {
+    console.log("Login dialog closed");
+    setShowLogin(false);
+  };
+
+  const handleLoginSuccess = () => {
+    console.log("Login success callback triggered");
+    setShowLogin(false);
+  };
+
+  const handleLogout = async () => {
+    console.log("Logout button clicked");
+    try {
+      await logout();
+      console.log("Logout completed in Header");
+    } catch (error) {
+      console.error("Error during logout in Header:", error);
+    }
+  };
 
   return (
     <header className="bg-white shadow-sm">
@@ -42,7 +71,7 @@ const Header = () => {
                       </span>
                     </Link>
                   </Button>
-                  <Button variant="outline" onClick={logout}>
+                  <Button variant="outline" onClick={handleLogout}>
                     Log out
                   </Button>
                 </div>
@@ -50,7 +79,7 @@ const Header = () => {
                 <Button 
                   variant="outline" 
                   className="flex items-center gap-2"
-                  onClick={() => setShowLogin(true)}
+                  onClick={handleLoginClick}
                 >
                   <LogIn size={18} />
                   <span>Login</span>
@@ -68,8 +97,8 @@ const Header = () => {
       
       <LoginDialog 
         open={showLogin} 
-        onClose={() => setShowLogin(false)} 
-        onSuccess={() => setShowLogin(false)} 
+        onClose={handleLoginClose} 
+        onSuccess={handleLoginSuccess} 
       />
     </header>
   );

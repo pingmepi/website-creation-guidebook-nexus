@@ -37,24 +37,31 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
+  console.log("UserProvider initialized");
+  
   // Check for user session on mount
   useEffect(() => {
     const checkUserSession = async () => {
+      console.log("Checking user session...");
       try {
         setIsLoading(true);
         
         // Get session from Supabase
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        console.log("Session check result:", session ? "Session found" : "No session", sessionError ? `Error: ${sessionError.message}` : "No error");
         
         if (session?.user) {
           const { user: authUser } = session;
+          console.log("User found in session:", authUser.id);
           
           // Get user profile data
-          const { data: profileData } = await supabase
+          const { data: profileData, error: profileError } = await supabase
             .from("profiles")
             .select("full_name, avatar_url")
             .eq("id", authUser.id)
             .single();
+            
+          console.log("Profile data fetch result:", profileData, profileError ? `Error: ${profileError.message}` : "No error");
             
           setUser({
             id: authUser.id,
@@ -62,6 +69,9 @@ export const UserProvider = ({ children }: UserProviderProps) => {
             name: profileData?.full_name || authUser.email?.split("@")[0] || "",
             avatar_url: profileData?.avatar_url || undefined
           });
+          console.log("User state set to:", authUser.id);
+        } else {
+          console.log("No user session found");
         }
       } catch (error) {
         console.error("Error checking user session:", error);
@@ -73,17 +83,24 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     checkUserSession();
     
     // Set up auth state change listener
+    console.log("Setting up auth state change listener");
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log("Auth state change event:", event);
+        console.log("Session in auth change event:", session ? "Present" : "Not present");
+        
         if (session?.user) {
           const { user: authUser } = session;
+          console.log("Auth changed: User logged in:", authUser.id);
           
           // Get user profile data
-          const { data: profileData } = await supabase
+          const { data: profileData, error: profileError } = await supabase
             .from("profiles")
             .select("full_name, avatar_url")
             .eq("id", authUser.id)
             .single();
+            
+          console.log("Profile data fetch on auth change:", profileData, profileError ? `Error: ${profileError.message}` : "No error");
             
           setUser({
             id: authUser.id,
@@ -91,7 +108,9 @@ export const UserProvider = ({ children }: UserProviderProps) => {
             name: profileData?.full_name || authUser.email?.split("@")[0] || "",
             avatar_url: profileData?.avatar_url || undefined
           });
+          console.log("User state updated on auth change to:", authUser.id);
         } else {
+          console.log("Auth changed: User logged out or no user");
           setUser(null);
         }
         
@@ -101,21 +120,30 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     
     // Cleanup subscription
     return () => {
+      console.log("Cleaning up auth subscription");
       subscription.unsubscribe();
     };
   }, []);
   
   // Authentication methods
   const login = async (email: string, password: string) => {
+    console.log("Login attempt with email:", email);
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
-      if (error) throw error;
+      console.log("Login response:", data ? "Data received" : "No data", error ? `Error: ${error.message}` : "No error");
+      
+      if (error) {
+        console.error("Login error details:", error);
+        throw error;
+      }
+      
+      console.log("Login successful for user:", data.user?.id);
       
     } catch (error) {
       console.error("Login error:", error);
@@ -126,10 +154,11 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   };
   
   const signup = async (email: string, password: string, name?: string) => {
+    console.log("Signup attempt with email:", email, "and name:", name);
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -139,7 +168,14 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         },
       });
       
-      if (error) throw error;
+      console.log("Signup response:", data ? "Data received" : "No data", error ? `Error: ${error.message}` : "No error");
+      
+      if (error) {
+        console.error("Signup error details:", error);
+        throw error;
+      }
+      
+      console.log("Signup successful, user created:", data.user?.id);
       
     } catch (error) {
       console.error("Signup error:", error);
@@ -150,12 +186,18 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   };
   
   const logout = async () => {
+    console.log("Logout attempt");
     setIsLoading(true);
     
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
       
+      if (error) {
+        console.error("Logout error details:", error);
+        throw error;
+      }
+      
+      console.log("Logout successful");
       setUser(null);
     } catch (error) {
       console.error("Logout error:", error);

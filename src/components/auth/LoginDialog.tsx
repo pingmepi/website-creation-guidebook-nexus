@@ -40,24 +40,32 @@ const LoginDialog = ({ open, onClose, onSuccess }: LoginDialogProps) => {
   const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>();
   
   const toggleMode = () => {
+    console.log("Mode toggled from", mode, "to", mode === "login" ? "signup" : "login");
     setMode(mode === "login" ? "signup" : "login");
     reset();
   };
   
   const onSubmit = async (data: FormData) => {
+    console.log("Form submitted:", data);
+    console.log("Current mode:", mode);
     setIsLoading(true);
     
     try {
       if (mode === "login") {
+        console.log("Attempting login with:", data.email);
         await login(data.email, data.password);
+        console.log("Login successful");
         toast.success("Logged in successfully");
         onSuccess();
       } else {
+        console.log("Attempting signup with:", data.email, "and name:", data.name);
         await signup(data.email, data.password, data.name);
+        console.log("Signup successful");
         toast.success("Account created successfully");
         setMode("login");
       }
     } catch (error: any) {
+      console.error("Authentication error:", error);
       toast.error(error.message || "Authentication failed");
     } finally {
       setIsLoading(false);
