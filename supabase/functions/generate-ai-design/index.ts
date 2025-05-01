@@ -35,7 +35,7 @@ serve(async (req) => {
     // Call the webhook to generate the image
     const webhookUrl = "https://n8.wikischool.com/webhook/generate-image";
     const response = await fetch(webhookUrl, {
-      method: 'POST',
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
