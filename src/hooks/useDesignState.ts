@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Answer } from "@/components/design/QuestionFlow";
 import { toast } from "sonner";
@@ -18,11 +17,16 @@ export type DesignStep = "preferences" | "design" | "options";
 export type DesignStage = "theme-selection" | "question-flow" | "customization";
 
 export interface Theme {
-  id: number;
+  // Update the id type to accept both number (for local themes) and string (for Supabase themes)
+  id: number | string;
   name: string;
   description?: string;
   color?: string;
   category?: string[];
+  // Add optional fields that come from Supabase
+  created_at?: string;
+  is_active?: boolean;
+  thumbnail_url?: string;
 }
 
 export function useDesignState() {
