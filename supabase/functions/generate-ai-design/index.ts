@@ -32,16 +32,39 @@ serve(async (req) => {
     
     console.log("Generated prompt for AI:", prompt);
     
-    // For now, we're just returning a placeholder image
-    // In a real implementation, this would call an AI image generation service with the prompt
-    const placeholderImageUrl = "https://mqqgfcghppkivptpjwxi.supabase.co/storage/v1/object/public/assets/placeholder.svg";
+    // Call the webhook to generate the image
+    const webhookUrl = "https://n8.wikischool.com/webhook/generate-image";
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        theme: theme,
+        answers: answers,
+        prompt: prompt 
+      }),
+    });
     
-    // Log the response we're sending back
-    console.log("Returning placeholder image URL:", placeholderImageUrl);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Error from image generation webhook:", errorText);
+      throw new Error(`Failed to generate image: ${response.status} - ${errorText}`);
+    }
+    
+    const imageData = await response.json();
+    
+    // Expected format from webhook: { imageUrl: "data:image/png;base64,..." } or { imageUrl: "https://..." }
+    // If the webhook returns a different format, adjust accordingly
+    if (!imageData.imageUrl) {
+      throw new Error("Webhook response did not contain an imageUrl");
+    }
+
+    console.log("Received image URL from webhook, returning to client");
     
     return new Response(
       JSON.stringify({ 
-        imageUrl: placeholderImageUrl,
+        imageUrl: imageData.imageUrl,
         prompt: prompt
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

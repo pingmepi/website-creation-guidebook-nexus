@@ -140,11 +140,11 @@ export function useAiDesignState() {
           })}`,
           t_shirt_color: TSHIRT_COLORS.WHITE,
           preview_url: design.design_image,
-          is_ai_generated: true,
           design_data: JSON.stringify({
             prompt: design.prompt,
             ai_design_id: design.id
-          })
+          }),
+          is_public: false
         })
         .select();
         
