@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Answer } from "@/components/design/QuestionFlow";
 import { toast } from "sonner";
@@ -41,6 +42,7 @@ export function useDesignState() {
   const [tshirtColor, setTshirtColor] = useState(TSHIRT_COLORS.WHITE);
   const [designImage, setDesignImage] = useState<string | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [designId, setDesignId] = useState<string | null>(null);
   const [designName, setDesignName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
@@ -173,58 +175,94 @@ export function useDesignState() {
     setCurrentStage("customization");
     
     // Generate design with AI using the selected theme and answers
-    if (selectedTheme && answers.length > 0 && user) {
-      try {
-        toast.loading("Generating your design with AI...");
-        
-        // Call the edge function to generate the design
-        const { data: aiResponse, error: aiError } = await supabase.functions.invoke(
-          'generate-ai-design',
-          {
-            body: { 
-              theme: selectedTheme,
-              answers: answers
-            },
-          }
-        );
-        
-        if (aiError) throw new Error(aiError.message);
-        
-        if (!aiResponse || !aiResponse.imageUrl) {
-          throw new Error("No design image was generated");
-        }
-        
-        // Set the generated design image
-        setDesignImage(aiResponse.imageUrl);
-        
-        // Save the AI generated design in the database
-        if (user) {
-          await supabase.from('ai_generated_designs').insert({
-            user_id: user.id,
-            prompt: aiResponse.prompt || '',
-            design_image: aiResponse.imageUrl,
-            theme_id: typeof selectedTheme.id === 'string' ? selectedTheme.id : null,
-            is_favorite: false
-          });
-        }
-        
-        toast.dismiss();
-        toast.success("Your design is ready!", {
-          description: "We've created a custom t-shirt design based on your preferences."
-        });
-      } catch (error) {
-        console.error("Error generating design with AI:", error);
-        toast.dismiss();
-        toast.error("Failed to generate design", {
-          description: "Please try again later."
-        });
-        
-        // Set placeholder design image if generation fails
-        setDesignImage("/assets/images/design/placeholder.svg");
-      }
+    if (selectedTheme && answers.length > 0) {
+      await generateDesignWithAI();
     } else {
       // Set placeholder design image if no theme or answers
       setDesignImage("/assets/images/design/placeholder.svg");
+    }
+  };
+
+  const generateDesignWithAI = async () => {
+    if (!selectedTheme || answers.length === 0) {
+      toast.error("Theme and answers are required to generate design");
+      return;
+    }
+
+    try {
+      setIsGenerating(true);
+      toast.loading("Generating your design with AI...");
+      
+      // Call the edge function to generate the design
+      const { data: aiResponse, error: aiError } = await supabase.functions.invoke(
+        'generate-ai-design',
+        {
+          body: { 
+            theme: selectedTheme,
+            answers: answers
+          },
+        }
+      );
+      
+      if (aiError) throw new Error(aiError.message);
+      
+      if (!aiResponse || !aiResponse.imageUrl) {
+        throw new Error("No design image was generated");
+      }
+      
+      // Set the generated design image
+      setDesignImage(aiResponse.imageUrl);
+      
+      // Save the design image with the answers and theme
+      if (user) {
+        await saveDesignToDatabase(aiResponse.imageUrl, aiResponse.prompt || '');
+      }
+      
+      toast.dismiss();
+      toast.success("Your design is ready!", {
+        description: "We've created a custom t-shirt design based on your preferences."
+      });
+    } catch (error) {
+      console.error("Error generating design with AI:", error);
+      toast.dismiss();
+      toast.error("Failed to generate design", {
+        description: "Please try again later."
+      });
+      
+      // Set placeholder design image if generation fails
+      setDesignImage("/assets/images/design/placeholder.svg");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const saveDesignToDatabase = async (imageUrl: string, prompt: string) => {
+    try {
+      if (!user) return;
+
+      // Create a new design record
+      const { data, error } = await supabase
+        .from('designs')
+        .insert({
+          user_id: user.id,
+          name: designName,
+          t_shirt_color: tshirtColor,
+          preview_url: imageUrl,
+          design_data: JSON.stringify({
+            answers: answers,
+            theme_id: selectedTheme?.id,
+            prompt: prompt
+          })
+        })
+        .select();
+        
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setDesignId(data[0].id);
+      }
+    } catch (error) {
+      console.error("Error saving AI design to database:", error);
     }
   };
   
@@ -320,6 +358,7 @@ export function useDesignState() {
     tshirtColor,
     designImage,
     isSaving,
+    isGenerating,
     designId,
     designName,
     isLoading,
@@ -332,6 +371,7 @@ export function useDesignState() {
     handleLoginSuccess,
     handleBackToThemes,
     handleDesignChange,
-    handleSaveDesign
+    handleSaveDesign,
+    generateDesignWithAI
   };
 }

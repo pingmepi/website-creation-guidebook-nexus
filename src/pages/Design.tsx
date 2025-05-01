@@ -21,6 +21,7 @@ const Design = () => {
     tshirtColor,
     designImage,
     isSaving,
+    isGenerating,
     isLoading,
     setShowConfirmation,
     setShowLoginDialog,
@@ -63,6 +64,7 @@ const Design = () => {
                     tshirtColor={tshirtColor}
                     designImage={designImage}
                     isSaving={isSaving}
+                    isGenerating={isGenerating}
                     tshirtColors={TSHIRT_COLORS}
                     onColorChange={setTshirtColor}
                     onDesignChange={handleDesignChange}

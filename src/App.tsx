@@ -21,7 +21,6 @@ import dashboardRoutes from "@/routes/DashboardRoutes";
 const Index = lazy(() => import("@/pages/Index"));
 const Shop = lazy(() => import("@/pages/Shop"));
 const Design = lazy(() => import("@/pages/Design"));
-const AIDesign = lazy(() => import("@/pages/AIDesign"));
 const About = lazy(() => import("@/pages/About"));
 const Cart = lazy(() => import("@/pages/Cart"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
@@ -51,7 +50,6 @@ const App = () => (
               <Route path="/" element={<MainLayout><Index /></MainLayout>} />
               <Route path="/shop" element={<MainLayout><Shop /></MainLayout>} />
               <Route path="/design" element={<Design />} />
-              <Route path="/ai-design" element={<AIDesign />} />
               <Route path="/about" element={<MainLayout><About /></MainLayout>} />
               <Route path="/cart" element={<MainLayout><Cart /></MainLayout>} />
 

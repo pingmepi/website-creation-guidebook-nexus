@@ -35,7 +35,7 @@ serve(async (req) => {
     // Call the webhook to generate the image
     const webhookUrl = "https://n8.wikischool.com/webhook/generate-image";
     const response = await fetch(webhookUrl, {
-      method: 'GET',
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -55,7 +55,6 @@ serve(async (req) => {
     const imageData = await response.json();
     
     // Expected format from webhook: { imageUrl: "data:image/png;base64,..." } or { imageUrl: "https://..." }
-    // If the webhook returns a different format, adjust accordingly
     if (!imageData.imageUrl) {
       throw new Error("Webhook response did not contain an imageUrl");
     }
