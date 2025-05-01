@@ -9,13 +9,197 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      design_questions: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          options: Json | null
+          question_text: string
+          sort_order: number | null
+          theme_id: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          options?: Json | null
+          question_text: string
+          sort_order?: number | null
+          theme_id?: string | null
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          options?: Json | null
+          question_text?: string
+          sort_order?: number | null
+          theme_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_questions_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      design_responses: {
+        Row: {
+          created_at: string
+          design_id: string
+          id: string
+          question_id: string
+          response: string
+        }
+        Insert: {
+          created_at?: string
+          design_id: string
+          id?: string
+          question_id: string
+          response: string
+        }
+        Update: {
+          created_at?: string
+          design_id?: string
+          id?: string
+          question_id?: string
+          response?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_responses_design_id_fkey"
+            columns: ["design_id"]
+            isOneToOne: false
+            referencedRelation: "designs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "design_responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "design_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      designs: {
+        Row: {
+          created_at: string
+          description: string | null
+          design_data: Json
+          id: string
+          is_public: boolean | null
+          name: string
+          preview_url: string | null
+          t_shirt_color: string
+          theme: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          design_data: Json
+          id?: string
+          is_public?: boolean | null
+          name: string
+          preview_url?: string | null
+          t_shirt_color: string
+          theme?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          design_data?: Json
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          preview_url?: string | null
+          t_shirt_color?: string
+          theme?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      themes: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          thumbnail_url: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          thumbnail_url?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          thumbnail_url?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_theme_questions: {
+        Args: { theme_uuid: string }
+        Returns: {
+          id: string
+          question_text: string
+          type: string
+          options: Json
+          sort_order: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

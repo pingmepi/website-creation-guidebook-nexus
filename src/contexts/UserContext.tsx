@@ -1,14 +1,17 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
 
-interface User {
+interface UserProfile {
   id: string;
   email: string;
   name?: string;
+  avatar_url?: string;
 }
 
 interface UserContextType {
-  user: User | null;
+  user: UserProfile | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -31,34 +34,92 @@ interface UserProviderProps {
 }
 
 export const UserProvider = ({ children }: UserProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
+  // Check for user session on mount
   useEffect(() => {
-    // Check for existing session in localStorage (temporary solution until Supabase integration)
-    const checkExistingSession = () => {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+    const checkUserSession = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Get session from Supabase
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          const { user: authUser } = session;
+          
+          // Get user profile data
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("full_name, avatar_url")
+            .eq("id", authUser.id)
+            .single();
+            
+          setUser({
+            id: authUser.id,
+            email: authUser.email || "",
+            name: profileData?.full_name || authUser.email?.split("@")[0] || "",
+            avatar_url: profileData?.avatar_url || undefined
+          });
+        }
+      } catch (error) {
+        console.error("Error checking user session:", error);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
     
-    checkExistingSession();
+    checkUserSession();
+    
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          const { user: authUser } = session;
+          
+          // Get user profile data
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("full_name, avatar_url")
+            .eq("id", authUser.id)
+            .single();
+            
+          setUser({
+            id: authUser.id,
+            email: authUser.email || "",
+            name: profileData?.full_name || authUser.email?.split("@")[0] || "",
+            avatar_url: profileData?.avatar_url || undefined
+          });
+        } else {
+          setUser(null);
+        }
+        
+        setIsLoading(false);
+      }
+    );
+    
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
   
-  // Mock authentication functions (will be replaced with Supabase)
+  // Authentication methods
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     
     try {
-      // Mock successful login
-      const mockUser = { id: "123", email, name: "Test User" };
-      setUser(mockUser);
-      localStorage.setItem("user", JSON.stringify(mockUser));
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
+      
     } catch (error) {
       console.error("Login error:", error);
-      throw new Error("Invalid email or password");
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -68,13 +129,21 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     setIsLoading(true);
     
     try {
-      // Mock successful signup
-      const mockUser = { id: "123", email, name: name || email.split("@")[0] };
-      setUser(mockUser);
-      localStorage.setItem("user", JSON.stringify(mockUser));
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name || email.split("@")[0],
+          },
+        },
+      });
+      
+      if (error) throw error;
+      
     } catch (error) {
       console.error("Signup error:", error);
-      throw new Error("Failed to create account");
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -84,9 +153,10 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     setIsLoading(true);
     
     try {
-      // Mock logout
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
       setUser(null);
-      localStorage.removeItem("user");
     } catch (error) {
       console.error("Logout error:", error);
     } finally {

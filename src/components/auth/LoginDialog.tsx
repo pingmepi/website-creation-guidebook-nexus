@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
+import { useUser } from "@/contexts/UserContext";
 
 type AuthMode = "login" | "signup";
 
@@ -32,6 +33,9 @@ interface FormData {
 const LoginDialog = ({ open, onClose, onSuccess }: LoginDialogProps) => {
   const [mode, setMode] = useState<AuthMode>("login");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const { login, signup } = useUser();
   
   const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>();
   
@@ -40,18 +44,23 @@ const LoginDialog = ({ open, onClose, onSuccess }: LoginDialogProps) => {
     reset();
   };
   
-  const onSubmit = (data: FormData) => {
-    // Placeholder for Supabase integration
-    console.log("Form submitted:", data);
+  const onSubmit = async (data: FormData) => {
+    setIsLoading(true);
     
-    if (mode === "login") {
-      // Mock successful login for now
-      toast.success("Logged in successfully");
-      onSuccess();
-    } else {
-      // Mock successful signup for now
-      toast.success("Account created successfully");
-      setMode("login");
+    try {
+      if (mode === "login") {
+        await login(data.email, data.password);
+        toast.success("Logged in successfully");
+        onSuccess();
+      } else {
+        await signup(data.email, data.password, data.name);
+        toast.success("Account created successfully");
+        setMode("login");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Authentication failed");
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -124,11 +133,11 @@ const LoginDialog = ({ open, onClose, onSuccess }: LoginDialogProps) => {
           </div>
           
           <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" onClick={toggleMode}>
+            <Button type="button" variant="outline" onClick={toggleMode} disabled={isLoading}>
               {mode === "login" ? "Need an account? Sign up" : "Already have an account? Log in"}
             </Button>
-            <Button type="submit">
-              {mode === "login" ? "Log in" : "Sign up"}
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Processing..." : (mode === "login" ? "Log in" : "Sign up")}
             </Button>
           </DialogFooter>
         </form>
