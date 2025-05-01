@@ -24,7 +24,9 @@ const DesignStepper = ({ currentStep }: DesignStepperProps) => {
 
   return (
     <div className="mb-10">
-      <Progress value={getProgress()} className="h-2 mb-8" />
+      <div className="max-w-xs mx-auto mb-8">
+        <Progress value={getProgress()} className="h-2" />
+      </div>
       <div className="flex justify-between items-center">
         <div className="flex flex-col items-center">
           <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
