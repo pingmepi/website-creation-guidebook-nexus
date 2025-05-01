@@ -37,6 +37,12 @@ const PreferencesSection = ({
           <div className="md:w-2/5 mt-8 md:mt-0">
             <h3 className="text-lg font-medium mb-4 text-center">Preview</h3>
             <TshirtDesignPreview color={tshirtColor} />
+            
+            <div className="mt-4 text-center">
+              <p className="text-sm text-gray-500">
+                Complete the questions to generate your custom AI design
+              </p>
+            </div>
           </div>
         </div>
       )}

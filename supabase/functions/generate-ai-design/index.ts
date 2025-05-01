@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,25 +13,37 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt } = await req.json();
-    console.log("Received prompt for AI design generation:", prompt);
+    const { theme, answers } = await req.json();
+    console.log("Received design generation request with theme:", theme);
+    console.log("User answers:", answers);
     
-    if (!prompt) {
+    if (!theme || !answers || answers.length === 0) {
       return new Response(
-        JSON.stringify({ error: "Prompt is required" }),
+        JSON.stringify({ error: "Theme and answers are required" }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
     
+    // Build a prompt based on the theme and answers
+    let prompt = `Create a t-shirt design with theme: ${theme.name}. `;
+    answers.forEach(answer => {
+      prompt += `${answer.question}: ${answer.answer}. `;
+    });
+    
+    console.log("Generated prompt for AI:", prompt);
+    
     // For now, we're just returning a placeholder image
-    // In a real implementation, this would call an AI image generation service
+    // In a real implementation, this would call an AI image generation service with the prompt
     const placeholderImageUrl = "https://mqqgfcghppkivptpjwxi.supabase.co/storage/v1/object/public/assets/placeholder.svg";
     
     // Log the response we're sending back
     console.log("Returning placeholder image URL:", placeholderImageUrl);
     
     return new Response(
-      JSON.stringify({ imageUrl: placeholderImageUrl }),
+      JSON.stringify({ 
+        imageUrl: placeholderImageUrl,
+        prompt: prompt
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {

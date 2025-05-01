@@ -6,7 +6,6 @@ import { Route } from "react-router-dom";
 const Dashboard = lazy(() => import("@/pages/dashboard/Dashboard"));
 const Profile = lazy(() => import("@/pages/dashboard/Profile"));
 const SavedDesigns = lazy(() => import("@/pages/dashboard/SavedDesigns"));
-const AIDesigns = lazy(() => import("@/pages/dashboard/AIDesigns"));
 const OrderHistory = lazy(() => import("@/pages/dashboard/OrderHistory"));
 const Settings = lazy(() => import("@/pages/dashboard/Settings"));
 
@@ -15,7 +14,6 @@ const dashboardRoutes = [
   <Route key="dashboard" path="/dashboard" element={<Dashboard />} />,
   <Route key="profile" path="/dashboard/profile" element={<Profile />} />,
   <Route key="designs" path="/dashboard/designs" element={<SavedDesigns />} />,
-  <Route key="ai-designs" path="/dashboard/ai-designs" element={<AIDesigns />} />,
   <Route key="orders" path="/dashboard/orders" element={<OrderHistory />} />,
   <Route key="settings" path="/dashboard/settings" element={<Settings />} />
 ];

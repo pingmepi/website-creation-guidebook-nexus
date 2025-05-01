@@ -167,16 +167,63 @@ export function useDesignState() {
     proceedToDesignStage();
   };
   
-  const proceedToDesignStage = () => {
+  const proceedToDesignStage = async () => {
     console.log("Proceeding to design stage");
     setCurrentStep("design");
     setCurrentStage("customization");
-    toast.success("Your design is being created!", {
-      description: "We're generating your custom t-shirt design."
-    });
     
-    // Set placeholder design image if none exists yet
-    if (!designImage) {
+    // Generate design with AI using the selected theme and answers
+    if (selectedTheme && answers.length > 0 && user) {
+      try {
+        toast.loading("Generating your design with AI...");
+        
+        // Call the edge function to generate the design
+        const { data: aiResponse, error: aiError } = await supabase.functions.invoke(
+          'generate-ai-design',
+          {
+            body: { 
+              theme: selectedTheme,
+              answers: answers
+            },
+          }
+        );
+        
+        if (aiError) throw new Error(aiError.message);
+        
+        if (!aiResponse || !aiResponse.imageUrl) {
+          throw new Error("No design image was generated");
+        }
+        
+        // Set the generated design image
+        setDesignImage(aiResponse.imageUrl);
+        
+        // Save the AI generated design in the database
+        if (user) {
+          await supabase.from('ai_generated_designs').insert({
+            user_id: user.id,
+            prompt: aiResponse.prompt || '',
+            design_image: aiResponse.imageUrl,
+            theme_id: typeof selectedTheme.id === 'string' ? selectedTheme.id : null,
+            is_favorite: false
+          });
+        }
+        
+        toast.dismiss();
+        toast.success("Your design is ready!", {
+          description: "We've created a custom t-shirt design based on your preferences."
+        });
+      } catch (error) {
+        console.error("Error generating design with AI:", error);
+        toast.dismiss();
+        toast.error("Failed to generate design", {
+          description: "Please try again later."
+        });
+        
+        // Set placeholder design image if generation fails
+        setDesignImage("/assets/images/design/placeholder.svg");
+      }
+    } else {
+      // Set placeholder design image if no theme or answers
       setDesignImage("/assets/images/design/placeholder.svg");
     }
   };
