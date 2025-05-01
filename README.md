@@ -1,73 +1,47 @@
-# Welcome to your Lovable project
+# Custom T-Shirt Hub Documentation
 
-## Project info
+*Last Updated: May 2024*
 
-**URL**: https://lovable.dev/projects/65970797-2e99-411c-8c86-2414a2aa562f
+This directory contains comprehensive documentation for the Custom T-Shirt Hub project.
 
-## How can I edit this code?
+## Key Documentation Files
 
-There are several ways of editing your application.
+### Project Status & Planning
 
-**Use Lovable**
+- [**Project Status**](./project_status.md) - Current state of the project, including implemented features, pending work, and known issues
+- [**Feature Tracker**](./feature_tracker.md) - Detailed tracking of feature implementation status
+- [**Product Requirements Document (PRD)**](./PRD.md) - Original product requirements and specifications
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/65970797-2e99-411c-8c86-2414a2aa562f) and start prompting.
+### Technical Documentation
 
-Changes made via Lovable will be committed automatically to this repo.
+- [**Tech Stack**](./tech_stack.md) - Overview of the technologies used in the project
+- [**API Details**](./api_details.md) - Documentation of all APIs, including implementation status
+- [**Security Checklist**](./security_checklist_updated.md) - Comprehensive security audit with implementation status
 
-**Use your preferred IDE**
+### Implementation Guides
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- [**Test User Implementation Guide**](./test-user-implementation-guide.md) - Guide for implementing test user functionality
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Project Overview
 
-Follow these steps:
+The Custom T-Shirt Hub is a web application that allows users to design custom t-shirts through a guided, theme-based design flow. Users can select themes, answer questions to customize their design, and use a visual editor to make final adjustments before ordering.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Current Status
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+The project has implemented core authentication and design functionality but requires security improvements and feature completion before it can be considered production-ready. See the [Project Status](./project_status.md) document for detailed information.
 
-# Step 3: Install the necessary dependencies.
-npm i
+## Security Status
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+Several critical security issues have been identified and need to be addressed, particularly:
 
-**Edit a file directly in GitHub**
+1. Authentication tokens stored in localStorage (XSS vulnerability)
+2. Unscoped API queries
+3. Lack of input sanitization
+4. Missing security headers
+5. No rate limiting on sensitive endpoints
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+See the [Security Checklist](./security_checklist_updated.md) for a detailed breakdown of security concerns and recommendations.
 
-**Use GitHub Codespaces**
+## Next Steps
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/65970797-2e99-411c-8c86-2414a2aa562f) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+The immediate focus should be on addressing the critical security issues identified in the security checklist, followed by completing the user dashboard and checkout flow. See the [Project Status](./project_status.md) document for detailed next steps.
