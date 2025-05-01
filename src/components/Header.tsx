@@ -1,9 +1,15 @@
 
 import { Button } from "@/components/ui/button";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, LogIn, User } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import LoginDialog from "./auth/LoginDialog";
+import { useUser } from "@/contexts/UserContext";
 
 const Header = () => {
+  const [showLogin, setShowLogin] = useState(false);
+  const { user, isLoading, logout } = useUser();
+
   return (
     <header className="bg-white shadow-sm">
       <div className="container mx-auto px-4 py-4">
@@ -20,12 +26,45 @@ const Header = () => {
             <Link to="/about" className="text-gray-700 hover:text-blue-600 transition-colors">About</Link>
           </nav>
           
-          <Button variant="outline" className="flex items-center gap-2">
-            <ShoppingCart size={18} />
-            <span className="hidden sm:inline">Cart (0)</span>
-          </Button>
+          <div className="flex items-center gap-3">
+            {!isLoading && (
+              user ? (
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <User size={18} />
+                    <span className="hidden sm:inline-block">
+                      {user.name || user.email.split('@')[0]}
+                    </span>
+                  </Button>
+                  <Button variant="outline" onClick={logout}>
+                    Log out
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={() => setShowLogin(true)}
+                >
+                  <LogIn size={18} />
+                  <span>Login</span>
+                </Button>
+              )
+            )}
+            
+            <Button variant="outline" className="flex items-center gap-2">
+              <ShoppingCart size={18} />
+              <span className="hidden sm:inline">Cart (0)</span>
+            </Button>
+          </div>
         </div>
       </div>
+      
+      <LoginDialog 
+        open={showLogin} 
+        onClose={() => setShowLogin(false)} 
+        onSuccess={() => setShowLogin(false)} 
+      />
     </header>
   );
 };
