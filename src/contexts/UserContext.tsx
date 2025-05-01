@@ -85,7 +85,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     // Set up auth state change listener
     console.log("Setting up auth state change listener");
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log("Auth state change event:", event);
         console.log("Session in auth change event:", session ? "Present" : "Not present");
         
@@ -93,22 +93,29 @@ export const UserProvider = ({ children }: UserProviderProps) => {
           const { user: authUser } = session;
           console.log("Auth changed: User logged in:", authUser.id);
           
-          // Get user profile data
-          const { data: profileData, error: profileError } = await supabase
-            .from("profiles")
-            .select("full_name, avatar_url")
-            .eq("id", authUser.id)
-            .single();
-            
-          console.log("Profile data fetch on auth change:", profileData, profileError ? `Error: ${profileError.message}` : "No error");
-            
-          setUser({
-            id: authUser.id,
-            email: authUser.email || "",
-            name: profileData?.full_name || authUser.email?.split("@")[0] || "",
-            avatar_url: profileData?.avatar_url || undefined
-          });
-          console.log("User state updated on auth change to:", authUser.id);
+          // Use setTimeout to avoid deadlocks with Supabase calls
+          setTimeout(async () => {
+            try {
+              // Get user profile data
+              const { data: profileData, error: profileError } = await supabase
+                .from("profiles")
+                .select("full_name, avatar_url")
+                .eq("id", authUser.id)
+                .single();
+                
+              console.log("Profile data fetch on auth change:", profileData, profileError ? `Error: ${profileError.message}` : "No error");
+                
+              setUser({
+                id: authUser.id,
+                email: authUser.email || "",
+                name: profileData?.full_name || authUser.email?.split("@")[0] || "",
+                avatar_url: profileData?.avatar_url || undefined
+              });
+              console.log("User state updated on auth change to:", authUser.id);
+            } catch (error) {
+              console.error("Error fetching profile data:", error);
+            }
+          }, 0);
         } else {
           console.log("Auth changed: User logged out or no user");
           setUser(null);
