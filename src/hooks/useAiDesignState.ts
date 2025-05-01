@@ -4,7 +4,16 @@ import { toast } from "sonner";
 import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
 import { TSHIRT_COLORS } from "./useDesignState";
-import { AiGeneratedDesign } from "@/types/design";
+
+export interface AiGeneratedDesign {
+  id: string;
+  user_id: string;
+  prompt: string;
+  design_image: string;
+  created_at: string;
+  is_favorite: boolean;
+  theme_id?: string;
+}
 
 export function useAiDesignState() {
   const { user, isAuthenticated } = useUser();
