@@ -51,6 +51,44 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_generated_designs: {
+        Row: {
+          created_at: string
+          design_image: string
+          id: string
+          is_favorite: boolean
+          prompt: string
+          theme_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          design_image: string
+          id?: string
+          is_favorite?: boolean
+          prompt: string
+          theme_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          design_image?: string
+          id?: string
+          is_favorite?: boolean
+          prompt?: string
+          theme_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_generated_designs_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cart_items: {
         Row: {
           created_at: string

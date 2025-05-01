@@ -4,16 +4,7 @@ import { toast } from "sonner";
 import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
 import { TSHIRT_COLORS } from "./useDesignState";
-
-// Interface for AI generated design
-export interface AiGeneratedDesign {
-  id: string;
-  prompt: string;
-  design_image: string;
-  created_at: string;
-  is_favorite: boolean;
-  theme_id?: string;
-}
+import { AiGeneratedDesign } from "@/types/design";
 
 export function useAiDesignState() {
   const { user, isAuthenticated } = useUser();
@@ -57,14 +48,15 @@ export function useAiDesignState() {
         .insert({
           user_id: user.id,
           prompt: prompt,
-          design_image: aiResponse.imageUrl
+          design_image: aiResponse.imageUrl,
+          is_favorite: false
         })
         .select();
         
       if (error) throw error;
       
       if (data && data.length > 0) {
-        const newDesign = data[0] as AiGeneratedDesign;
+        const newDesign = data[0] as unknown as AiGeneratedDesign;
         setGeneratedDesigns(prev => [newDesign, ...prev]);
         setSelectedDesign(newDesign);
         
@@ -99,7 +91,7 @@ export function useAiDesignState() {
         
       if (error) throw error;
       
-      setGeneratedDesigns(data || []);
+      setGeneratedDesigns(data as unknown as AiGeneratedDesign[] || []);
     } catch (error) {
       console.error("Error fetching AI designs:", error);
       toast.error("Failed to load your AI designs");
