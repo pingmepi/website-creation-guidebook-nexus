@@ -30,11 +30,17 @@ const Header = () => {
             {!isLoading && (
               user ? (
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" className="flex items-center gap-2">
-                    <User size={18} />
-                    <span className="hidden sm:inline-block">
-                      {user.name || user.email.split('@')[0]}
-                    </span>
+                  <Button 
+                    variant="ghost" 
+                    className="flex items-center gap-2"
+                    asChild
+                  >
+                    <Link to="/dashboard">
+                      <User size={18} />
+                      <span className="hidden sm:inline-block">
+                        {user.name || user.email.split('@')[0]}
+                      </span>
+                    </Link>
                   </Button>
                   <Button variant="outline" onClick={logout}>
                     Log out
