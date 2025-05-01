@@ -1,7 +1,5 @@
-
 import { useState, useEffect } from "react";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import MainLayout from "@/layouts/MainLayout";
 import DesignStepper from "@/components/design/DesignStepper";
 import ThemeSelector from "@/components/design/ThemeSelector";
 import QuestionFlow from "@/components/design/QuestionFlow";
@@ -183,10 +181,8 @@ const Design = () => {
   };
   
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <Header />
-      
-      <main className="flex-grow container mx-auto px-4 py-8">
+    <MainLayout>
+      <div className="container mx-auto px-4 py-8">
         <section className="max-w-4xl mx-auto text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-6">Design Your T-Shirt</h1>
           <DesignStepper currentStep={currentStep} />
@@ -296,10 +292,8 @@ const Design = () => {
           onClose={() => setShowLoginDialog(false)}
           onSuccess={handleLoginSuccess}
         />
-      </main>
-      
-      <Footer />
-    </div>
+      </div>
+    </MainLayout>
   );
 };
 

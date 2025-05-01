@@ -36,9 +36,9 @@ const ConfirmationDialog = ({
               <p className="text-gray-500">No preferences selected.</p>
             ) : (
               answers.map((answer, index) => (
-                <div key={index} className="flex justify-between">
+                <div key={index} className="flex flex-col sm:flex-row sm:justify-between gap-1 pb-2 border-b last:border-0 last:pb-0">
                   <span className="text-gray-600 font-medium">{answer.question}</span>
-                  <span>{answer.answer}</span>
+                  <span className="text-right">{answer.answer}</span>
                 </div>
               ))
             )}

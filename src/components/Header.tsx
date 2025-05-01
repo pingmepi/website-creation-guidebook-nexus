@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, LogIn, User } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import LoginDialog from "./auth/LoginDialog";
 import { useUser } from "@/contexts/UserContext";
@@ -11,6 +11,7 @@ const Header = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const { user, isLoading, logout } = useUser();
+  const location = useLocation();
 
   useEffect(() => {
     console.log("Header rendered with user state:", user ? `User: ${user.email}` : "No user", "isLoading:", isLoading);
@@ -85,20 +86,26 @@ const Header = () => {
     }
   };
 
+  const isActive = (path: string) => {
+    return location.pathname === path ? "text-blue-600 font-medium" : "text-gray-700 hover:text-blue-600 transition-colors";
+  };
+
   return (
     <header className="bg-white shadow-sm">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center text-white font-bold">T</div>
-            <Link to="/" className="font-bold text-xl">Custom T-Shirts</Link>
+            <Link to="/" className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center text-white font-bold">T</div>
+              <span className="font-bold text-xl">Custom T-Shirts</span>
+            </Link>
           </div>
           
           <nav className="hidden md:flex items-center space-x-6">
-            <Link to="/" className="text-gray-700 hover:text-blue-600 transition-colors">Home</Link>
-            <Link to="/shop" className="text-gray-700 hover:text-blue-600 transition-colors">Shop</Link>
-            <Link to="/design" className="text-gray-700 hover:text-blue-600 transition-colors">Design Your Own</Link>
-            <Link to="/about" className="text-gray-700 hover:text-blue-600 transition-colors">About</Link>
+            <Link to="/" className={isActive("/")}>Home</Link>
+            <Link to="/shop" className={isActive("/shop")}>Shop</Link>
+            <Link to="/design" className={isActive("/design")}>Design Your Own</Link>
+            <Link to="/about" className={isActive("/about")}>About</Link>
           </nav>
           
           <div className="flex items-center gap-3">
