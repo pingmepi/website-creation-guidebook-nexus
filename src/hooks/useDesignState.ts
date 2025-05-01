@@ -22,7 +22,8 @@ export interface Theme {
   name: string;
   description?: string;
   color?: string;
-  category?: string[];
+  // Update category to be either string[] (local themes) or string (Supabase themes)
+  category?: string[] | string;
   // Add optional fields that come from Supabase
   created_at?: string;
   is_active?: boolean;
