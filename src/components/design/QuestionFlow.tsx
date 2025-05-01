@@ -143,7 +143,7 @@ const QuestionFlow = ({ selectedTheme, onComplete, onBack }: QuestionFlowProps) 
               type="color"
               value={currentAnswer || "#d23737"}
               onChange={(e) => setCurrentAnswer(e.target.value)}
-              className="w-full h-12"
+              className="w-56 h-12"
             />
           </div>
         );

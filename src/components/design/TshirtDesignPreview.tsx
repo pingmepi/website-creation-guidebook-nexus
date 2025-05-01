@@ -44,21 +44,30 @@ const TshirtDesignPreview = ({ color = "#FFFFFF", designImage }: TshirtDesignPre
             />
           </svg>
           
-          {/* Design preview area */}
+          {/* Design preview area with measurements */}
           <div className="absolute w-[60%] aspect-square top-1/4 flex items-center justify-center">
-            {designImage ? (
-              <img 
-                src={designImage} 
-                alt="T-shirt design" 
-                className="max-w-full max-h-full object-contain"
-                onLoad={() => setIsLoading(false)}
-                onError={() => setIsLoading(false)}
-              />
-            ) : (
-              <div className="text-sm text-gray-500 text-center p-4 rounded-md bg-gray-100 w-full">
-                Your design will appear here
+            {/* Design area boundary */}
+            <div className="relative w-full h-full border-2 border-dashed border-gray-400">
+              {/* Show measurements */}
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-600">
+                Safety Area
               </div>
-            )}
+              
+              {/* Content inside design area */}
+              {designImage ? (
+                <img 
+                  src={designImage} 
+                  alt="T-shirt design" 
+                  className="max-w-full max-h-full object-contain"
+                  onLoad={() => setIsLoading(false)}
+                  onError={() => setIsLoading(false)}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-sm text-gray-500 text-center p-4">
+                  <span>Your design will appear here</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

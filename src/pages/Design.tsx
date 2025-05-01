@@ -8,6 +8,7 @@ import QuestionFlow from "@/components/design/QuestionFlow";
 import ConfirmationDialog from "@/components/design/ConfirmationDialog";
 import LoginDialog from "@/components/auth/LoginDialog";
 import TshirtDesignPreview from "@/components/design/TshirtDesignPreview";
+import DesignCanvas from "@/components/design/DesignCanvas";
 import { Answer } from "@/components/design/QuestionFlow";
 import { toast } from "sonner";
 import { useUser } from "@/contexts/UserContext";
@@ -68,15 +69,17 @@ const Design = () => {
       description: "We're generating your custom t-shirt design."
     });
     
-    // Simulate design generation
-    setTimeout(() => {
-      setDesignImage("/assets/images/design/placeholder.svg");
-    }, 1500);
+    // Set placeholder design image
+    setDesignImage("/assets/images/design/placeholder.svg");
   };
   
   const handleBackToThemes = () => {
     setCurrentStage("theme-selection");
     setSelectedTheme(null);
+  };
+
+  const handleDesignChange = (designDataUrl: string) => {
+    setDesignImage(designDataUrl);
   };
   
   return (
@@ -115,7 +118,7 @@ const Design = () => {
               <div className="flex flex-col md:flex-row gap-8">
                 <div className="md:w-3/5">
                   <h2 className="text-2xl font-bold mb-4">Customize Your Design</h2>
-                  <p className="text-gray-600 mb-8">
+                  <p className="text-gray-600 mb-4">
                     Your design is ready! You can now customize it further to match your preferences.
                   </p>
                   
@@ -132,7 +135,6 @@ const Design = () => {
                       </div>
                     </div>
                     
-                    {/* Additional customization options would go here */}
                     <div className="p-4 border border-gray-200 rounded-md">
                       <h3 className="font-medium mb-2">Color Options</h3>
                       <div className="flex gap-2 flex-wrap">
@@ -147,11 +149,23 @@ const Design = () => {
                         ))}
                       </div>
                     </div>
+                    
+                    {/* Design Canvas */}
+                    <div className="p-4 border border-gray-200 rounded-md">
+                      <h3 className="font-medium mb-4">Design Editor</h3>
+                      <DesignCanvas 
+                        tshirtColor={tshirtColor}
+                        onDesignChange={handleDesignChange}
+                      />
+                    </div>
                   </div>
                 </div>
                 
                 <div className="md:w-2/5">
-                  <TshirtDesignPreview color={tshirtColor} designImage={designImage} />
+                  <div className="sticky top-4">
+                    <h3 className="text-lg font-medium mb-4 text-center">Preview</h3>
+                    <TshirtDesignPreview color={tshirtColor} designImage={designImage} />
+                  </div>
                 </div>
               </div>
             </div>
