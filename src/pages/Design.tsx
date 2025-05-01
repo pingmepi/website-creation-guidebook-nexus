@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -15,7 +14,7 @@ import { useUser } from "@/contexts/UserContext";
 import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from "@/lib/utils";
+import { v4 } from "@/lib/utils";
 
 type DesignStep = "preferences" | "design" | "options";
 type DesignStage = "theme-selection" | "question-flow" | "customization";
@@ -119,13 +118,16 @@ const Design = () => {
       setIsSaving(true);
       
       const designData = {
-        id: designId || uuidv4(),
+        id: designId || v4(),
         user_id: user.id,
         name: designName,
         preview_url: designImage,
         t_shirt_color: tshirtColor,
-        theme_id: selectedTheme?.id,
-        preferences: answers
+        theme: selectedTheme?.name || null,
+        design_data: {
+          answers: answers,
+          theme_id: selectedTheme?.id
+        }
       };
       
       const { data, error } = await supabase
