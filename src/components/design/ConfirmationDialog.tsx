@@ -1,5 +1,6 @@
 
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import React from "react";
+import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Answer } from "./QuestionFlow";
 
@@ -11,49 +12,43 @@ interface ConfirmationDialogProps {
   onEdit: () => void;
 }
 
-const ConfirmationDialog = ({ 
+const ConfirmationDialog = ({
   open,
-  answers, 
+  answers,
   onClose,
   onConfirm,
-  onEdit
+  onEdit,
 }: ConfirmationDialogProps) => {
+  console.log("ConfirmationDialog displaying answers:", answers);
+  
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl">Confirm Your Answers</DialogTitle>
-          <DialogDescription className="text-base text-gray-600">
-            Please review your responses before continuing to the design stage.
-          </DialogDescription>
+          <DialogTitle>Confirm Your Design Preferences</DialogTitle>
         </DialogHeader>
-        
-        <div className="py-4 space-y-4">
-          {answers.map((answer, index) => (
-            <div key={index}>
-              <h4 className="font-medium text-gray-800">{answer.question}</h4>
-              {answer.question.includes("color") ? (
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="w-5 h-5 rounded-full" style={{ backgroundColor: answer.answer }}></div>
-                  <p>{answer.answer}</p>
+        <div className="py-4">
+          <p className="text-gray-600 mb-4">
+            Please review your design preferences before continuing:
+          </p>
+          <div className="space-y-2 border rounded-md p-4">
+            {answers.length === 0 ? (
+              <p className="text-gray-500">No preferences selected.</p>
+            ) : (
+              answers.map((answer, index) => (
+                <div key={index} className="flex justify-between">
+                  <span className="text-gray-600 font-medium">{answer.question}</span>
+                  <span>{answer.answer}</span>
                 </div>
-              ) : (
-                <p className="mt-1">{answer.answer}</p>
-              )}
-            </div>
-          ))}
+              ))
+            )}
+          </div>
         </div>
-        
-        <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button 
-            variant="outline" 
-            onClick={onEdit}
-            className="w-full sm:w-auto">
-            Edit Answers
+        <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-between sm:space-x-2">
+          <Button variant="outline" onClick={onEdit}>
+            Edit Preferences
           </Button>
-          <Button 
-            onClick={onConfirm}
-            className="w-full sm:w-auto">
+          <Button onClick={onConfirm}>
             Confirm & Continue
           </Button>
         </DialogFooter>

@@ -5,14 +5,59 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import LoginDialog from "./auth/LoginDialog";
 import { useUser } from "@/contexts/UserContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Header = () => {
   const [showLogin, setShowLogin] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const { user, isLoading, logout } = useUser();
 
   useEffect(() => {
     console.log("Header rendered with user state:", user ? `User: ${user.email}` : "No user", "isLoading:", isLoading);
+    
+    // Fetch cart count when user is authenticated
+    if (user) {
+      fetchCartCount();
+      
+      // Set up subscription for cart updates
+      const channel = supabase
+        .channel('cart-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*', // Listen for all events (INSERT, UPDATE, DELETE)
+            schema: 'public',
+            table: 'cart_items',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            fetchCartCount(); // Refresh the cart count
+          }
+        )
+        .subscribe();
+        
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [user, isLoading]);
+  
+  const fetchCartCount = async () => {
+    if (!user) return;
+    
+    try {
+      const { count, error } = await supabase
+        .from('cart_items')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+        
+      if (error) throw error;
+      
+      setCartCount(count || 0);
+    } catch (error) {
+      console.error("Error fetching cart count:", error);
+    }
+  };
 
   const handleLoginClick = () => {
     console.log("Login button clicked");
@@ -34,6 +79,7 @@ const Header = () => {
     try {
       await logout();
       console.log("Logout completed in Header");
+      setCartCount(0); // Reset cart count on logout
     } catch (error) {
       console.error("Error during logout in Header:", error);
     }
@@ -87,9 +133,11 @@ const Header = () => {
               )
             )}
             
-            <Button variant="outline" className="flex items-center gap-2">
-              <ShoppingCart size={18} />
-              <span className="hidden sm:inline">Cart (0)</span>
+            <Button variant="outline" className="flex items-center gap-2" asChild>
+              <Link to="/cart">
+                <ShoppingCart size={18} />
+                <span className="hidden sm:inline">Cart ({cartCount})</span>
+              </Link>
             </Button>
           </div>
         </div>

@@ -8,6 +8,7 @@ interface UserProfile {
   email: string;
   name?: string;
   avatar_url?: string;
+  marketing_emails?: boolean;
 }
 
 interface UserContextType {
@@ -57,7 +58,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
           // Get user profile data
           const { data: profileData, error: profileError } = await supabase
             .from("profiles")
-            .select("full_name, avatar_url")
+            .select("full_name, avatar_url, marketing_emails")
             .eq("id", authUser.id)
             .single();
             
@@ -67,7 +68,8 @@ export const UserProvider = ({ children }: UserProviderProps) => {
             id: authUser.id,
             email: authUser.email || "",
             name: profileData?.full_name || authUser.email?.split("@")[0] || "",
-            avatar_url: profileData?.avatar_url || undefined
+            avatar_url: profileData?.avatar_url || undefined,
+            marketing_emails: profileData?.marketing_emails ?? true
           });
           console.log("User state set to:", authUser.id);
         } else {
@@ -99,7 +101,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
               // Get user profile data
               const { data: profileData, error: profileError } = await supabase
                 .from("profiles")
-                .select("full_name, avatar_url")
+                .select("full_name, avatar_url, marketing_emails")
                 .eq("id", authUser.id)
                 .single();
                 
@@ -109,7 +111,8 @@ export const UserProvider = ({ children }: UserProviderProps) => {
                 id: authUser.id,
                 email: authUser.email || "",
                 name: profileData?.full_name || authUser.email?.split("@")[0] || "",
-                avatar_url: profileData?.avatar_url || undefined
+                avatar_url: profileData?.avatar_url || undefined,
+                marketing_emails: profileData?.marketing_emails ?? true
               });
               console.log("User state updated on auth change to:", authUser.id);
             } catch (error) {

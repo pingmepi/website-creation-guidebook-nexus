@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -14,7 +15,6 @@ import { useUser } from "@/contexts/UserContext";
 import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { v4 } from "@/lib/utils";
 
 type DesignStep = "preferences" | "design" | "options";
 type DesignStage = "theme-selection" | "question-flow" | "customization";
@@ -139,7 +139,7 @@ const Design = () => {
       }));
       
       const designData = {
-        id: designId || v4(),
+        id: designId || crypto.randomUUID(),
         user_id: user.id,
         name: designName,
         preview_url: designImage,

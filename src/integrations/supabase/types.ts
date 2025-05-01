@@ -9,6 +9,75 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      addresses: {
+        Row: {
+          city: string
+          country: string
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          postal_code: string
+          state: string
+          street_address: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          city: string
+          country?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          postal_code: string
+          state: string
+          street_address: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          city?: string
+          country?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          postal_code?: string
+          state?: string
+          street_address?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cart_items: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          quantity: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       design_questions: {
         Row: {
           created_at: string
@@ -137,6 +206,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          marketing_emails: boolean
           updated_at: string
         }
         Insert: {
@@ -144,6 +214,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          marketing_emails?: boolean
           updated_at?: string
         }
         Update: {
@@ -151,6 +222,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          marketing_emails?: boolean
           updated_at?: string
         }
         Relationships: []

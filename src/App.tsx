@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Shop from "./pages/Shop";
 import Design from "./pages/Design";
 import About from "./pages/About";
+import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/dashboard/Dashboard";
 import Profile from "./pages/dashboard/Profile";
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/shop" element={<Shop />} />
             <Route path="/design" element={<Design />} />
             <Route path="/about" element={<About />} />
+            <Route path="/cart" element={<Cart />} />
             
             {/* Dashboard Routes */}
             <Route path="/dashboard" element={<Dashboard />} />

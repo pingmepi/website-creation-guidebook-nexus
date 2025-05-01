@@ -2,8 +2,11 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, ShoppingCart } from "lucide-react";
+import { Eye, ShoppingCart, Plus, Minus } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useUser } from "@/contexts/UserContext";
 
 interface TshirtCardProps {
   id: number;
@@ -15,6 +18,62 @@ interface TshirtCardProps {
 
 const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#000000", "#0000FF"] }: TshirtCardProps) => {
   const [selectedColor, setSelectedColor] = useState(colorOptions[0]);
+  const [isAdding, setIsAdding] = useState(false);
+  const { isAuthenticated, user } = useUser();
+  
+  const handleAddToCart = async () => {
+    if (!isAuthenticated || !user) {
+      toast.error("Please login to add items to your cart");
+      return;
+    }
+    
+    try {
+      setIsAdding(true);
+      
+      // Check if item already exists in cart
+      const { data: existingItems, error: fetchError } = await supabase
+        .from("cart_items")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("product_id", id.toString());
+        
+      if (fetchError) throw fetchError;
+      
+      if (existingItems && existingItems.length > 0) {
+        // Update quantity
+        const { error: updateError } = await supabase
+          .from("cart_items")
+          .update({ 
+            quantity: existingItems[0].quantity + 1,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", existingItems[0].id);
+          
+        if (updateError) throw updateError;
+      } else {
+        // Add new item
+        const { error: insertError } = await supabase
+          .from("cart_items")
+          .insert({
+            user_id: user.id,
+            product_id: id.toString(),
+            quantity: 1
+          });
+          
+        if (insertError) throw insertError;
+      }
+      
+      toast.success("Added to cart", {
+        description: `${name} in ${selectedColor} added to your cart`
+      });
+      
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast.error("Failed to add to cart");
+    } finally {
+      setIsAdding(false);
+    }
+  };
 
   return (
     <Card className="overflow-hidden group">
@@ -30,9 +89,14 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
             <Eye size={16} />
             <span>Quick view</span>
           </Button>
-          <Button size="sm" className="opacity-90 flex items-center gap-1">
+          <Button 
+            size="sm" 
+            className="opacity-90 flex items-center gap-1"
+            onClick={handleAddToCart}
+            disabled={isAdding}
+          >
             <ShoppingCart size={16} />
-            <span>Add to cart</span>
+            <span>{isAdding ? "Adding..." : "Add to cart"}</span>
           </Button>
         </div>
       </div>
