@@ -1,6 +1,6 @@
 
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -11,11 +11,40 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Settings = () => {
   const { user } = useUser();
+  const [isLoading, setIsLoading] = useState(false);
   const [settings, setSettings] = useState({
     emailNotifications: true,
-    marketingEmails: false,
+    marketingEmails: true, // Default to true
     orderUpdates: true,
   });
+
+  // Fetch user settings from the database
+  useEffect(() => {
+    if (user) {
+      const fetchUserSettings = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("profiles")
+            .select("marketing_emails")
+            .eq("id", user.id)
+            .single();
+
+          if (error) throw error;
+
+          // Update the marketing emails setting from the database
+          // If marketing_emails is null, it will default to true
+          setSettings(prev => ({
+            ...prev,
+            marketingEmails: data.marketing_emails ?? true
+          }));
+        } catch (error) {
+          console.error("Error fetching user settings:", error);
+        }
+      };
+
+      fetchUserSettings();
+    }
+  }, [user]);
 
   const handleToggle = (setting: keyof typeof settings) => {
     setSettings((prev) => ({
@@ -24,9 +53,29 @@ const Settings = () => {
     }));
   };
 
-  const handleSave = () => {
-    // In a real app, this would save to the database
-    toast.success("Settings saved successfully");
+  const handleSave = async () => {
+    if (!user) return;
+
+    try {
+      setIsLoading(true);
+
+      // Update the marketing_emails setting in the database
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          marketing_emails: settings.marketingEmails
+        })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      toast.success("Settings saved successfully");
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast.error("Failed to save settings");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -37,15 +86,15 @@ const Settings = () => {
     try {
       // In a production app, this would typically be handled by a server-side function
       // for security reasons. This is just a placeholder implementation.
-      
+
       // Delete user data from profiles table
       if (user) {
         await supabase.from("profiles").delete().eq("id", user.id);
       }
-      
+
       // Sign out the user
       await supabase.auth.signOut();
-      
+
       toast.success("Your account has been deleted");
     } catch (error) {
       console.error("Error deleting account:", error);
@@ -75,7 +124,7 @@ const Settings = () => {
                 onCheckedChange={() => handleToggle("emailNotifications")}
               />
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <Label htmlFor="marketingEmails">Marketing Emails</Label>
@@ -89,7 +138,7 @@ const Settings = () => {
                 onCheckedChange={() => handleToggle("marketingEmails")}
               />
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <Label htmlFor="orderUpdates">Order Updates</Label>
@@ -105,10 +154,12 @@ const Settings = () => {
             </div>
           </CardContent>
           <CardFooter>
-            <Button onClick={handleSave}>Save Preferences</Button>
+            <Button onClick={handleSave} disabled={isLoading}>
+              {isLoading ? "Saving..." : "Save Preferences"}
+            </Button>
           </CardFooter>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Danger Zone</CardTitle>
@@ -123,8 +174,8 @@ const Settings = () => {
             </div>
           </CardContent>
           <CardFooter>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleDeleteAccount}
             >
               Delete Account
