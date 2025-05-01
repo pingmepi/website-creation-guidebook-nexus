@@ -29,8 +29,7 @@ const Profile = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [formData, setFormData] = useState({
     fullName: user?.name || "",
-    email: user?.email || "",
-    marketingEmails: true
+    email: user?.email || ""
   });
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [showAddressDialog, setShowAddressDialog] = useState(false);
@@ -52,22 +51,21 @@ const Profile = () => {
         try {
           const { data, error } = await supabase
             .from("profiles")
-            .select("full_name, avatar_url, marketing_emails")
+            .select("full_name, avatar_url")
             .eq("id", user.id)
             .single();
-            
+
           if (error) throw error;
-          
+
           setFormData({
             fullName: data.full_name || "",
-            email: user.email,
-            marketingEmails: data.marketing_emails ?? true
+            email: user.email
           });
         } catch (error) {
           console.error("Error fetching profile data:", error);
         }
       };
-      
+
       // Fetch addresses
       const fetchAddresses = async () => {
         try {
@@ -76,15 +74,15 @@ const Profile = () => {
             .select("*")
             .eq("user_id", user.id)
             .order("is_default", { ascending: false });
-            
+
           if (error) throw error;
-          
+
           setAddresses(data || []);
         } catch (error) {
           console.error("Error fetching addresses:", error);
         }
       };
-      
+
       fetchProfileData();
       fetchAddresses();
     }
@@ -95,29 +93,26 @@ const Profile = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleMarketingEmailsChange = (checked: boolean) => {
-    setFormData((prev) => ({ ...prev, marketingEmails: checked }));
-  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) return;
-    
+
     try {
       setIsUpdating(true);
-      
+
       // Update profile in the profiles table
       const { error } = await supabase
         .from("profiles")
-        .update({ 
-          full_name: formData.fullName,
-          marketing_emails: formData.marketingEmails
+        .update({
+          full_name: formData.fullName
         })
         .eq("id", user.id);
-      
+
       if (error) throw error;
-      
+
       toast.success("Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -141,9 +136,9 @@ const Profile = () => {
     try {
       setIsUpdating(true);
       const { error } = await supabase.auth.updateUser({ password: newPassword });
-      
+
       if (error) throw error;
-      
+
       toast.success("Password updated successfully");
       (e.target as HTMLFormElement).reset();
     } catch (error: any) {
@@ -178,12 +173,12 @@ const Profile = () => {
 
   const handleAddressSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) return;
-    
+
     try {
       setIsUpdating(true);
-      
+
       // If setting as default, update all other addresses to not be default
       if (addressFormData.is_default) {
         await supabase
@@ -207,9 +202,9 @@ const Profile = () => {
             updated_at: new Date().toISOString()
           })
           .eq("id", currentAddress.id);
-          
+
         if (error) throw error;
-        
+
         toast.success("Address updated successfully");
       } else {
         // Create new address
@@ -225,25 +220,25 @@ const Profile = () => {
             country: addressFormData.country,
             is_default: addressFormData.is_default
           });
-          
+
         if (error) throw error;
-        
+
         toast.success("Address added successfully");
       }
-      
+
       // Refresh addresses
       const { data, error } = await supabase
         .from("addresses")
         .select("*")
         .eq("user_id", user.id)
         .order("is_default", { ascending: false });
-        
+
       if (error) throw error;
-      
+
       setAddresses(data || []);
       setShowAddressDialog(false);
       resetAddressForm();
-      
+
     } catch (error) {
       console.error("Error saving address:", error);
       toast.error("Failed to save address");
@@ -268,15 +263,15 @@ const Profile = () => {
 
   const handleDeleteAddress = async (id: string) => {
     if (!user) return;
-    
+
     try {
       const { error } = await supabase
         .from("addresses")
         .delete()
         .eq("id", id);
-        
+
       if (error) throw error;
-      
+
       // Refresh addresses
       setAddresses(addresses.filter(addr => addr.id !== id));
       toast.success("Address deleted successfully");
@@ -303,7 +298,7 @@ const Profile = () => {
           <TabsTrigger value="addresses">Addresses</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="details">
           <Card>
             <CardHeader>
@@ -338,19 +333,7 @@ const Profile = () => {
                     Email cannot be changed. Contact support if you need to update it.
                   </p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="marketingEmails">Marketing Emails</Label>
-                    <p className="text-xs text-gray-500">
-                      Receive emails about new products, features, and more.
-                    </p>
-                  </div>
-                  <Switch
-                    id="marketingEmails"
-                    checked={formData.marketingEmails}
-                    onCheckedChange={handleMarketingEmailsChange}
-                  />
-                </div>
+
               </CardContent>
               <CardFooter>
                 <Button type="submit" disabled={isUpdating}>
@@ -360,7 +343,7 @@ const Profile = () => {
             </form>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="addresses">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -389,8 +372,8 @@ const Profile = () => {
               ) : (
                 <div className="grid gap-4">
                   {addresses.map((address) => (
-                    <div 
-                      key={address.id} 
+                    <div
+                      key={address.id}
                       className={`border p-4 rounded-md relative ${address.is_default ? 'bg-blue-50 border-blue-200' : ''}`}
                     >
                       {address.is_default && (
@@ -408,15 +391,15 @@ const Profile = () => {
                           <p className="text-sm text-gray-600">{address.country}</p>
                         </div>
                         <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => handleEditAddress(address)}
                           >
                             Edit
                           </Button>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="icon"
                             onClick={() => handleDeleteAddress(address.id)}
                             className="text-red-500 hover:text-red-600"
@@ -431,7 +414,7 @@ const Profile = () => {
               )}
             </CardContent>
           </Card>
-          
+
           <Dialog open={showAddressDialog} onOpenChange={setShowAddressDialog}>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
@@ -533,7 +516,7 @@ const Profile = () => {
             </DialogContent>
           </Dialog>
         </TabsContent>
-        
+
         <TabsContent value="security">
           <Card>
             <CardHeader>

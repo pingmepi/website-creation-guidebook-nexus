@@ -1,6 +1,4 @@
 
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import TshirtCard from "@/components/TshirtCard";
 import { Button } from "@/components/ui/button";
 import { tshirtImages } from "../../assets";
@@ -18,11 +16,8 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <Header />
-      
-      <main className="flex-grow">
-        {/* Hero Section */}
+    <>
+      {/* Hero Section */}
         <section className="relative bg-white overflow-hidden">
           <div className="container mx-auto px-4 py-16 md:py-24">
             <div className="grid md:grid-cols-2 gap-8 items-center">
@@ -45,9 +40,9 @@ const Index = () => {
                 </div>
               </div>
               <div className="relative">
-                <img 
-                  src={tshirtImages.mockup1} 
-                  alt="Featured T-shirt" 
+                <img
+                  src={tshirtImages.mockup1}
+                  alt="Featured T-shirt"
                   className="w-full h-auto rounded-lg shadow-lg"
                 />
                 <div className="absolute top-4 right-4 bg-white px-4 py-2 rounded-full shadow-md">
@@ -67,7 +62,7 @@ const Index = () => {
                 <Link to="/shop">View All</Link>
               </Button>
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
               {featuredTshirts.map((tshirt) => (
                 <TshirtCard
@@ -95,10 +90,7 @@ const Index = () => {
             </Button>
           </div>
         </section>
-      </main>
-      
-      <Footer />
-    </div>
+    </>
   );
 };
 

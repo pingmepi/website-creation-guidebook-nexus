@@ -1,8 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { useUser } from "@/contexts/UserContext";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, Trash, Plus, Minus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,7 +26,7 @@ const Cart = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-  
+
   const mockProducts = [
     { id: "1", name: "Classic White Tee", price: "$24.99", image: tshirtImages.mockup1 },
     { id: "2", name: "Urban Black Design", price: "$29.99", image: tshirtImages.mockup2 },
@@ -40,19 +38,19 @@ const Cart = () => {
     { id: "8", name: "Urban Gray Design", price: "$29.99", image: tshirtImages.mockup2 },
     { id: "9", name: "Winter Collection", price: "$26.99", image: tshirtImages.mockup3 }
   ];
-  
+
   const fetchCartItems = async () => {
     if (!user) return;
-    
+
     try {
       setIsLoading(true);
       const { data, error } = await supabase
         .from("cart_items")
         .select("*")
         .eq("user_id", user.id);
-        
+
       if (error) throw error;
-      
+
       // Attach product data from the mock products array
       const itemsWithProducts = data?.map(item => {
         const product = mockProducts.find(p => p.id === item.product_id);
@@ -61,7 +59,7 @@ const Cart = () => {
           product
         };
       }) || [];
-      
+
       setCartItems(itemsWithProducts);
     } catch (error) {
       console.error("Error fetching cart items:", error);
@@ -70,11 +68,11 @@ const Cart = () => {
       setIsLoading(false);
     }
   };
-  
+
   useEffect(() => {
     if (user) {
       fetchCartItems();
-      
+
       // Set up subscription for cart updates
       const channel = supabase
         .channel('cart-changes')
@@ -91,30 +89,30 @@ const Cart = () => {
           }
         )
         .subscribe();
-        
+
       return () => {
         supabase.removeChannel(channel);
       };
     }
   }, [user]);
-  
+
   const updateQuantity = async (itemId: string, newQuantity: number) => {
     if (!user || newQuantity < 1) return;
-    
+
     try {
       setIsUpdating(true);
       const { error } = await supabase
         .from("cart_items")
-        .update({ 
+        .update({
           quantity: newQuantity,
           updated_at: new Date().toISOString()
         })
         .eq("id", itemId);
-        
+
       if (error) throw error;
-      
+
       // Update cart items locally
-      setCartItems(cartItems.map(item => 
+      setCartItems(cartItems.map(item =>
         item.id === itemId ? { ...item, quantity: newQuantity } : item
       ));
     } catch (error) {
@@ -124,19 +122,19 @@ const Cart = () => {
       setIsUpdating(false);
     }
   };
-  
+
   const removeItem = async (itemId: string) => {
     if (!user) return;
-    
+
     try {
       setIsUpdating(true);
       const { error } = await supabase
         .from("cart_items")
         .delete()
         .eq("id", itemId);
-        
+
       if (error) throw error;
-      
+
       // Remove from local state
       setCartItems(cartItems.filter(item => item.id !== itemId));
       toast.success("Item removed from cart");
@@ -147,22 +145,19 @@ const Cart = () => {
       setIsUpdating(false);
     }
   };
-  
+
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => {
       const price = parseFloat(item.product?.price?.replace('$', '') || '0');
       return total + (price * item.quantity);
     }, 0).toFixed(2);
   };
-  
+
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <Header />
-      
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">Your Shopping Cart</h1>
-          
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">Your Shopping Cart</h1>
+
           {isLoading ? (
             <div className="text-center py-12">
               <p>Loading your cart...</p>
@@ -199,7 +194,7 @@ const Cart = () => {
                 <Card className="overflow-hidden">
                   <div className="p-6">
                     <h2 className="text-lg font-semibold mb-4">Cart Items ({cartItems.length})</h2>
-                    
+
                     <div className="space-y-4">
                       {cartItems.map(item => (
                         <div key={item.id}>
@@ -211,16 +206,16 @@ const Cart = () => {
                                 className="h-full w-full object-cover object-center"
                               />
                             </div>
-                            
+
                             <div className="ml-4 flex-1 flex flex-col">
                               <div className="flex justify-between">
                                 <h3 className="font-medium text-gray-900">{item.product?.name}</h3>
                                 <p className="ml-4 font-medium text-gray-900">{item.product?.price}</p>
                               </div>
-                              
+
                               <div className="flex items-center justify-between mt-2">
                                 <div className="flex items-center border rounded-md">
-                                  <button 
+                                  <button
                                     className="px-2 py-1 disabled:opacity-50"
                                     disabled={isUpdating || item.quantity <= 1}
                                     onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -228,7 +223,7 @@ const Cart = () => {
                                     <Minus className="h-4 w-4" />
                                   </button>
                                   <span className="px-4 py-1">{item.quantity}</span>
-                                  <button 
+                                  <button
                                     className="px-2 py-1 disabled:opacity-50"
                                     disabled={isUpdating}
                                     onClick={() => updateQuantity(item.id, item.quantity + 1)}
@@ -236,7 +231,7 @@ const Cart = () => {
                                     <Plus className="h-4 w-4" />
                                   </button>
                                 </div>
-                                
+
                                 <button
                                   type="button"
                                   className="text-red-500 hover:text-red-700 disabled:opacity-50 flex items-center"
@@ -256,12 +251,12 @@ const Cart = () => {
                   </div>
                 </Card>
               </div>
-              
+
               <div className="md:col-span-1">
                 <Card className="sticky top-4">
                   <div className="p-6">
                     <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
-                    
+
                     <div className="space-y-4">
                       <div className="flex justify-between">
                         <p className="text-gray-600">Subtotal</p>
@@ -276,11 +271,11 @@ const Cart = () => {
                         <p className="font-semibold">Total</p>
                         <p className="font-semibold">${calculateSubtotal()}</p>
                       </div>
-                      
+
                       <Button className="w-full" size="lg">
                         Proceed to Checkout
                       </Button>
-                      
+
                       <div className="text-center">
                         <Link to="/shop" className="text-blue-600 hover:text-blue-800 text-sm">
                           Continue shopping
@@ -293,9 +288,6 @@ const Cart = () => {
             </div>
           )}
         </div>
-      </main>
-      
-      <Footer />
     </div>
   );
 };
