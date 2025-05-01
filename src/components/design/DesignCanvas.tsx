@@ -88,17 +88,54 @@ const DesignCanvas = ({ tshirtColor, onDesignChange }: DesignCanvasProps) => {
     });
     fabricCanvas.add(placeholderText);
 
+    // Add color change listener to update selected objects
+    fabricCanvas.on('selection:created', updateSelectedObjectColor);
+    fabricCanvas.on('selection:updated', updateSelectedObjectColor);
+
     // Cleanup on component unmount
     return () => {
+      fabricCanvas.off('selection:created', updateSelectedObjectColor);
+      fabricCanvas.off('selection:updated', updateSelectedObjectColor);
       fabricCanvas.dispose();
     };
   }, []);
+
+  // Function to update color of selected objects when color changes
+  const updateSelectedObjectColor = () => {
+    if (!canvas) return;
+    
+    const activeObject = canvas.getActiveObject();
+    if (activeObject) {
+      if (activeObject.type === 'i-text' || activeObject.type === 'text') {
+        (activeObject as fabric.Text).set('fill', currentColor);
+      } else {
+        activeObject.set('fill', currentColor);
+      }
+      canvas.renderAll();
+      
+      // Update design preview
+      if (onDesignChange) {
+        const dataURL = canvas.toDataURL({
+          format: "png",
+          quality: 1,
+          multiplier: 2,
+        });
+        onDesignChange(dataURL);
+      }
+    }
+  };
 
   // Update canvas when the t-shirt color changes
   useEffect(() => {
     if (!canvas) return;
     canvas.renderAll();
   }, [tshirtColor, canvas]);
+
+  // Update selected object when color changes
+  useEffect(() => {
+    if (!canvas) return;
+    updateSelectedObjectColor();
+  }, [currentColor, canvas]);
 
   // Notify parent when design changes
   useEffect(() => {

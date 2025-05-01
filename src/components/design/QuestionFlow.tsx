@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,7 @@ interface QuestionFlowProps {
 interface QuestionType {
   id: number;
   question: string;
-  type: "text" | "color" | "radio" | "textarea";
+  type: "text" | "radio" | "textarea";
   options?: string[];
 }
 
@@ -44,17 +43,12 @@ const QuestionFlow = ({ selectedTheme, onComplete, onBack }: QuestionFlowProps) 
     },
     { 
       id: 3, 
-      question: "What's your preferred color palette?", 
-      type: "color" 
-    },
-    { 
-      id: 4, 
       question: "What's the occasion for this t-shirt?", 
       type: "radio",
       options: ["Everyday wear", "Special event", "Gift", "Team/Group", "Casual wear"] 
     },
     { 
-      id: 5, 
+      id: 4, 
       question: "Any additional details you'd like to include in your design?", 
       type: "textarea" 
     }
@@ -128,24 +122,6 @@ const QuestionFlow = ({ selectedTheme, onComplete, onBack }: QuestionFlowProps) 
             className="w-full text-lg p-4 h-auto"
             placeholder="Enter your text here"
           />
-        );
-      case "color":
-        return (
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div 
-                className="w-8 h-8 rounded" 
-                style={{ backgroundColor: currentAnswer || "#d23737" }} 
-              />
-              <div>{currentAnswer || "#d23737"}</div>
-            </div>
-            <Input 
-              type="color"
-              value={currentAnswer || "#d23737"}
-              onChange={(e) => setCurrentAnswer(e.target.value)}
-              className="w-56 h-12"
-            />
-          </div>
         );
       case "radio":
         return (
