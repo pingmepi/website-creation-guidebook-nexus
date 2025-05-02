@@ -1,22 +1,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import { fabric } from "fabric";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Circle,
-  Image,
-  Palette,
-  Pencil,
-  Square,
-  Text as TextIcon,
-  Bold,
-  Italic,
-  Underline,
-  ArrowDown,
-  Trash2,
-} from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Image, Palette, Pencil, Square, Text as TextIcon } from "lucide-react";
+
+// Import our components
+import TextTools from "./canvas/TextTools";
+import ShapeTools from "./canvas/ShapeTools";
+import ImageTools from "./canvas/ImageTools";
+import DrawingTools from "./canvas/DrawingTools";
+import ColorControls from "./canvas/ColorControls";
+import FabricCanvas from "./canvas/FabricCanvas";
+import ToolTab from "./canvas/ToolTab";
+import CanvasContainer from "./canvas/CanvasContainer";
 
 interface DesignCanvasProps {
   tshirtColor: string;
@@ -25,7 +21,6 @@ interface DesignCanvasProps {
 }
 
 const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanvasProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const [canvas, setCanvas] = useState<fabric.Canvas | null>(null);
   const [currentColor, setCurrentColor] = useState<string>("#000000");
@@ -34,6 +29,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
   const [isBold, setIsBold] = useState<boolean>(false);
   const [isItalic, setIsItalic] = useState<boolean>(false);
   const [isUnderline, setIsUnderline] = useState<boolean>(false);
+
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
 
   // Refs to track state
@@ -643,6 +639,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     try {
       const reader = new FileReader();
       reader.onload = (event) => {
+
         try {
           // Check if canvas is still valid
           if (!canvas || !canvas.getContext) {
@@ -755,6 +752,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
       reader.onerror = (error) => {
         console.error("Error reading file:", error);
         updateInProgressRef.current = false;
+
       };
       reader.readAsDataURL(file);
     } catch (fileError) {
@@ -763,8 +761,63 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     }
   };
 
+  // Function to toggle drawing mode
+  const handleToggleDrawingMode = () => {
+    setIsDrawingMode(!isDrawingMode);
+  };
+  
+  // Function to handle brush size changes
+  const handleBrushSizeChange = (values: number[]) => {
+    if (values.length > 0) {
+      setBrushSize(values[0]);
+    }
+  };
+  
+  // Function to clear canvas (except safety rectangle)
+  const handleClearCanvas = () => {
+    if (!canvas) return;
+    
+    canvas.getObjects().forEach(obj => {
+      if (obj.stroke !== "#5cb85c") { // Keep only the safety area rectangle
+        canvas.remove(obj);
+      }
+    });
+    
+    canvas.renderAll();
+  };
+
+  // Function to update color of selected objects when color changes
+  useEffect(() => {
+    if (!canvas) return;
+    
+    const activeObject = canvas.getActiveObject();
+    if (activeObject) {
+      if (activeObject.type === 'i-text' || activeObject.type === 'text') {
+        (activeObject as fabric.Text).set('fill', currentColor);
+      } else {
+        activeObject.set('fill', currentColor);
+      }
+      canvas.renderAll();
+    }
+  }, [currentColor, canvas]);
+
+  // Calculate canvas size based on container width
+  const getCanvasSize = () => {
+    if (!canvasContainerRef.current) return 300;
+    const containerWidth = canvasContainerRef.current.clientWidth || 300;
+    return Math.min(containerWidth, 300); // Max width of design area
+  };
+
+  // Pass the design changes directly to the parent component
+  const handleDesignChange = (dataURL: string) => {
+    console.log("Design changed, notifying parent");
+    if (onDesignChange) {
+      onDesignChange(dataURL);
+    }
+  };
+
   return (
-    <div className="w-full">
+    <div className="w-full" ref={canvasContainerRef}>
       <Tabs defaultValue="text">
         <TabsList className="grid grid-cols-4">
           <TabsTrigger value="text" className="flex gap-2 items-center">
@@ -784,6 +837,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
             Draw
           </TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="text" className="space-y-4 py-4">
           <div className="flex gap-2">
@@ -849,13 +903,25 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
             type="file"
             accept="image/*"
             onChange={handleImageUpload}
-          />
-        </TabsContent>
 
-        <TabsContent value="drawing" className="py-4">
-          <p className="text-sm text-muted-foreground">Drawing tools coming soon</p>
-        </TabsContent>
+          />
+        </ToolTab>
+        
+        <ToolTab value="image">
+          <ImageTools onImageUpload={handleImageUpload} />
+        </ToolTab>
+
+        <ToolTab value="drawing">
+          <DrawingTools 
+            isDrawingMode={isDrawingMode}
+            onToggleDrawingMode={handleToggleDrawingMode}
+            brushSize={brushSize}
+            onBrushSizeChange={handleBrushSizeChange}
+            onClearCanvas={handleClearCanvas}
+          />
+        </ToolTab>
       </Tabs>
+
 
       <div className="mt-4 flex items-center gap-2">
         <label htmlFor="color-picker" className="flex items-center gap-2">
@@ -887,6 +953,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
           <canvas ref={canvasRef} />
         </div>
       </div>
+
     </div>
   );
 };

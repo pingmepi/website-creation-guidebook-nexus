@@ -1,26 +1,35 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// Import using npm: prefix for Node.js packages in Edge Functions
+import { createClient } from 'npm:@supabase/supabase-js';
 
+// CORS headers for all responses
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+// This is now a Supabase Edge Function handler that works with Node.js
+export default async function handler(req) {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: corsHeaders 
+    });
   }
 
   try {
+    // Parse the request body
     const { theme, answers } = await req.json();
-    console.log("Received design generation request with theme:", theme);
-    console.log("User answers:", answers);
+    console.log("Received design generation request with theme:", theme?.name || 'Unknown theme');
+    console.log("User answers count:", answers?.length || 0);
     
     if (!theme || !answers || answers.length === 0) {
       return new Response(
         JSON.stringify({ error: "Theme and answers are required" }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
       );
     }
     
@@ -44,17 +53,22 @@ serve(async (req) => {
         imageUrl: `data:image/png;base64,${mockImageBase64}`,
         prompt: prompt
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
     );
   } catch (error) {
     console.error("Error in generate-ai-design function:", error);
     
     return new Response(
       JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      { 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
     );
   }
-});
+}
 
 // Generate a simple base64 encoded image for testing
 function generateMockImage() {
