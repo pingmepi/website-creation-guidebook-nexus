@@ -36,231 +36,730 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
   const [isUnderline, setIsUnderline] = useState<boolean>(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
 
-  // Initialize fabric canvas
+  // Refs to track state
+  const canvasInitializedRef = useRef(false);
+  const updateInProgressRef = useRef(false);
+  const lastProcessedImageRef = useRef<string | null>(null);
+
+  // Create a stable reference to the onDesignChange callback
+  const onDesignChangeRef = useRef(onDesignChange);
   useEffect(() => {
-    if (!canvasRef.current) return;
+    onDesignChangeRef.current = onDesignChange;
+  }, [onDesignChange]);
 
-    // Calculate dimensions based on the t-shirt mockup
-    const containerWidth = canvasContainerRef.current?.clientWidth || 300;
-    const canvasSize = Math.min(containerWidth, 300); // Max width of design area
-
-    // Cleanup any previous canvas instance
-    if (canvas) {
-      canvas.dispose();
-    }
-
-    const fabricCanvas = new fabric.Canvas(canvasRef.current, {
-      width: canvasSize,
-      height: canvasSize,
-      backgroundColor: "#f0f0f0", // Light gray background for design area
-    });
-
-    setCanvas(fabricCanvas);
-
-    // Add dashed rectangle for safety area
-    const safetyAreaRect = new fabric.Rect({
-      width: canvasSize - 20,
-      height: canvasSize - 20,
-      left: 10,
-      top: 10,
-      stroke: "#5cb85c", // green for safety area
-      strokeDashArray: [5, 5],
-      fill: "transparent",
-      selectable: false,
-      evented: false,
-    });
-    fabricCanvas.add(safetyAreaRect);
-
-    // Add placeholder text only if there's no initial image
-    if (!initialImage) {
-      const placeholderText = new fabric.Text("upload your design", {
-        left: canvasSize / 2,
-        top: canvasSize / 2,
-        originX: 'center',
-        originY: 'center',
-        fontFamily: 'Arial',
-        fontSize: 20,
-        fill: '#999999',
-        selectable: false,
-        evented: false,
-      });
-      fabricCanvas.add(placeholderText);
-      fabricCanvas.renderAll();
-    }
-
-    // Setup event listeners after initialization
-    fabricCanvas.on('object:modified', updateDesign);
-    fabricCanvas.on('object:added', updateDesign);
-    fabricCanvas.on('object:removed', updateDesign);
-
-    // Cleanup on component unmount
-    return () => {
-      fabricCanvas.off('object:modified', updateDesign);
-      fabricCanvas.off('object:added', updateDesign);
-      fabricCanvas.off('object:removed', updateDesign);
-      fabricCanvas.dispose();
-    };
-  }, [canvasRef.current]); // Only re-initialize when canvas ref changes
-
-  // Function to update the design and notify parent
-  const updateDesign = () => {
-    if (!canvas || !onDesignChange) return;
-
-    const dataURL = canvas.toDataURL({
-      format: "png",
-      quality: 1,
-      multiplier: 2, // Higher resolution
-    });
-    onDesignChange(dataURL);
-  };
-
-  // Load the initial image if provided
+  // Initialize canvas once on mount - with no dependencies to ensure it only runs once
   useEffect(() => {
-    if (!canvas || !initialImage) return;
+    if (canvasInitializedRef.current || !canvasRef.current) return;
 
-    // Remove placeholder text if it exists
-    const objects = canvas.getObjects();
-    const placeholderText = objects.find(obj => 
-      obj.type === 'text' && 
-      (obj as fabric.Text).text === 'upload your design'
-    );
-    if (placeholderText) {
-      canvas.remove(placeholderText);
+    console.log("Initializing canvas");
+    canvasInitializedRef.current = true;
+
+    try {
+      // Calculate dimensions
+      const containerWidth = canvasContainerRef.current?.clientWidth || 300;
+      const canvasSize = Math.min(containerWidth, 300);
+
+      // Create canvas with error handling
+      let fabricCanvas: any = null;
+      try {
+        // Make sure the canvas element is ready before initializing fabric
+        if (!canvasRef.current) {
+          throw new Error("Canvas element is not available");
+        }
+
+        // Ensure the canvas has proper dimensions
+        canvasRef.current.width = canvasSize;
+        canvasRef.current.height = canvasSize;
+
+        // Initialize the fabric canvas with explicit context
+        fabricCanvas = new fabric.Canvas(canvasRef.current, {
+          width: canvasSize,
+          height: canvasSize,
+          backgroundColor: "#f0f0f0",
+        });
+
+        if (!fabricCanvas || !fabricCanvas.getContext) {
+          throw new Error("Failed to initialize canvas properly");
+        }
+      } catch (canvasError) {
+        console.error("Error creating fabric canvas:", canvasError);
+        canvasInitializedRef.current = false;
+        return;
+      }
+
+      // Add safety area
+      try {
+        const safetyAreaRect = new fabric.Rect({
+          width: canvasSize - 20,
+          height: canvasSize - 20,
+          left: 10,
+          top: 10,
+          stroke: "#5cb85c",
+          strokeDashArray: [5, 5],
+          fill: "transparent",
+          selectable: false,
+          evented: false,
+          id: "safetyArea",
+        });
+        fabricCanvas.add(safetyAreaRect);
+      } catch (safetyError) {
+        console.error("Error adding safety area:", safetyError);
+        // Continue even if safety area fails
+      }
+
+      // Add placeholder text (will be removed if initialImage is provided in a separate effect)
+      try {
+        const placeholderText = new fabric.Text("upload your design", {
+          left: canvasSize / 2,
+          top: canvasSize / 2,
+          originX: 'center',
+          originY: 'center',
+          fontFamily: 'Arial',
+          fontSize: 20,
+          fill: '#999999',
+          selectable: false,
+          evented: false,
+          id: "placeholderText",
+        });
+        fabricCanvas.add(placeholderText);
+      } catch (textError) {
+        console.error("Error adding placeholder text:", textError);
+        // Continue even if placeholder text fails
+      }
+
+      try {
+        fabricCanvas.renderAll();
+      } catch (renderError) {
+        console.error("Error rendering canvas:", renderError);
+        // Continue even if initial render fails
+      }
+
+      // Set up event handlers that don't trigger infinite loops
+      try {
+        fabricCanvas.on('object:modified', () => {
+          if (!updateInProgressRef.current) {
+            // Use a local reference to updateDesign to avoid dependency issues
+            const currentCanvas = fabricCanvas;
+            if (!currentCanvas || !currentCanvas.getContext || !onDesignChangeRef.current || updateInProgressRef.current) return;
+
+            updateInProgressRef.current = true;
+
+            setTimeout(() => {
+              try {
+                if (onDesignChangeRef.current && currentCanvas && currentCanvas.getContext) {
+                  const dataURL = currentCanvas.toDataURL({
+                    format: "png",
+                    quality: 1,
+                    multiplier: 2,
+                  });
+                  onDesignChangeRef.current(dataURL);
+                }
+              } catch (dataURLError) {
+                console.error("Error generating data URL:", dataURLError);
+              } finally {
+                updateInProgressRef.current = false;
+              }
+            }, 100);
+          }
+        });
+
+        // Don't trigger updateDesign on object:added to prevent loops
+        // We'll manually call updateDesign after adding objects
+
+        fabricCanvas.on('object:removed', () => {
+          if (!updateInProgressRef.current) {
+            // Use a local reference to updateDesign to avoid dependency issues
+            const currentCanvas = fabricCanvas;
+            if (!currentCanvas || !currentCanvas.getContext || !onDesignChangeRef.current || updateInProgressRef.current) return;
+
+            updateInProgressRef.current = true;
+
+            setTimeout(() => {
+              try {
+                if (onDesignChangeRef.current && currentCanvas && currentCanvas.getContext) {
+                  const dataURL = currentCanvas.toDataURL({
+                    format: "png",
+                    quality: 1,
+                    multiplier: 2,
+                  });
+                  onDesignChangeRef.current(dataURL);
+                }
+              } catch (dataURLError) {
+                console.error("Error generating data URL:", dataURLError);
+              } finally {
+                updateInProgressRef.current = false;
+              }
+            }, 100);
+          }
+        });
+      } catch (eventError) {
+        console.error("Error setting up event handlers:", eventError);
+        // Continue even if event handlers fail
+      }
+
+      // Set the canvas state after all event handlers are set up
+      setCanvas(fabricCanvas);
+
+      // Cleanup function to properly dispose of the canvas
+      return () => {
+        try {
+          if (fabricCanvas) {
+            // Clear all objects first to prevent memory leaks
+            fabricCanvas.clear();
+
+            // Remove all event listeners
+            fabricCanvas.off();
+
+            // Dispose of the canvas
+            fabricCanvas.dispose();
+
+            // Clear the canvas element
+            if (canvasRef.current) {
+              const ctx = canvasRef.current.getContext('2d');
+              if (ctx) {
+                ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+              }
+            }
+          }
+        } catch (disposeError) {
+          console.error("Error disposing canvas:", disposeError);
+        } finally {
+          // Reset state
+          canvasInitializedRef.current = false;
+          setCanvas(null);
+        }
+      };
+    } catch (error) {
+      console.error("Error initializing canvas:", error);
+      canvasInitializedRef.current = false;
+    }
+  }, []); // Empty dependency array to ensure it only runs once on mount
+
+  // Track if we're currently generating a data URL to avoid loops
+  const isGeneratingDataURLRef = useRef(false);
+  // Track if initial image has been loaded
+  const initialImageLoadedRef = useRef(false);
+
+  // Load the initial image if provided - only run when initialImage changes from external source
+  useEffect(() => {
+    // Skip if we're generating a data URL (to avoid loops) or if no canvas/image
+    if (isGeneratingDataURLRef.current || !canvas || !initialImage || updateInProgressRef.current) return;
+
+    // Skip if we've already processed this exact image
+    if (lastProcessedImageRef.current === initialImage) {
+      console.log("Skipping duplicate image processing");
+      return;
     }
 
-    fabric.Image.fromURL(initialImage, (img) => {
-      // Scale image to fit within the canvas
-      const canvasWidth = canvas.width || 300;
-      const canvasHeight = canvas.height || 300;
-      
-      const scaleFactor = Math.min(
-        (canvasWidth - 40) / img.width!,
-        (canvasHeight - 40) / img.height!
+    // Skip if this is not the first load and the image is from our own canvas
+    if (initialImageLoadedRef.current && initialImage.startsWith('data:image/png;base64,')) {
+      console.log("Skipping canvas-generated image update");
+      return;
+    }
+
+    console.log("Processing initial image");
+    lastProcessedImageRef.current = initialImage;
+    updateInProgressRef.current = true;
+
+    try {
+      // Remove placeholder text if it exists
+      const objects = canvas.getObjects();
+      const placeholderText = objects.find((obj: any) =>
+        obj.type === 'text' &&
+        (obj.id === "placeholderText" || (obj as any).text === 'upload your design')
       );
-      
-      img.scale(scaleFactor);
-      img.set({
-        left: canvasWidth / 2,
-        top: canvasHeight / 2,
-        originX: 'center',
-        originY: 'center'
-      });
-      
-      canvas.add(img);
-      canvas.renderAll();
-      updateDesign(); // Notify parent of design change
-    });
-  }, [canvas, initialImage]);
+      if (placeholderText) {
+        canvas.remove(placeholderText);
+      }
+
+      // Clear existing images
+      const existingImages = objects.filter((obj: any) => obj.type === 'image');
+      if (existingImages.length > 0) {
+        console.log(`Removing ${existingImages.length} existing images`);
+        existingImages.forEach((img: any) => canvas.remove(img));
+      }
+
+      // Load the image with proper error handling
+      fabric.Image.fromURL(
+        initialImage,
+        (img: any) => {
+          try {
+            // Check if img is valid
+            if (!img || !img.width || !img.height) {
+              console.error("Loaded image is invalid");
+              updateInProgressRef.current = false;
+              return;
+            }
+
+            // Scale image to fit within the canvas
+            const canvasWidth = canvas.width || 300;
+            const canvasHeight = canvas.height || 300;
+
+            const scaleFactor = Math.min(
+              (canvasWidth - 40) / img.width!,
+              (canvasHeight - 40) / img.height!
+            );
+
+            img.scale(scaleFactor);
+            img.set({
+              left: canvasWidth / 2,
+              top: canvasHeight / 2,
+              originX: 'center',
+              originY: 'center',
+              id: "initialImage" // Add an ID to identify this object
+            });
+
+            // Add the image to canvas
+            canvas.add(img);
+            canvas.renderAll();
+            console.log("Initial image added to canvas");
+
+            // Mark that we've loaded the initial image
+            initialImageLoadedRef.current = true;
+
+            // Generate data URL directly instead of calling updateDesign
+            setTimeout(() => {
+              try {
+                if (onDesignChangeRef.current && canvas) {
+                  // Set flag to prevent loops
+                  isGeneratingDataURLRef.current = true;
+
+                  const dataURL = canvas.toDataURL({
+                    format: "png",
+                    quality: 1,
+                    multiplier: 2,
+                  });
+
+                  onDesignChangeRef.current(dataURL);
+
+                  // Reset flag after a short delay
+                  setTimeout(() => {
+                    isGeneratingDataURLRef.current = false;
+                  }, 100);
+                }
+              } catch (dataURLError) {
+                console.error("Error generating data URL:", dataURLError);
+                isGeneratingDataURLRef.current = false;
+              } finally {
+                updateInProgressRef.current = false;
+              }
+            }, 200);
+          } catch (imgError) {
+            console.error("Error processing initial image:", imgError);
+            updateInProgressRef.current = false;
+          }
+        }
+      );
+    } catch (error) {
+      console.error("Error in initialImage effect:", error);
+      updateInProgressRef.current = false;
+    }
+  }, [canvas, initialImage]); // Keep both dependencies but use flags to prevent loops
 
   // Function to update color of selected objects when color changes
   useEffect(() => {
-    if (!canvas) return;
-    
+    if (!canvas || updateInProgressRef.current) return;
+
+    // Store the current color to avoid closure issues
+    const color = currentColor;
+
     const activeObject = canvas.getActiveObject();
     if (activeObject) {
-      if (activeObject.type === 'i-text' || activeObject.type === 'text') {
-        (activeObject as fabric.Text).set('fill', currentColor);
-      } else {
-        activeObject.set('fill', currentColor);
+      try {
+        updateInProgressRef.current = true;
+
+        if (activeObject.type === 'i-text' || activeObject.type === 'text') {
+          (activeObject as any).set('fill', color);
+        } else if (activeObject.type !== 'image') {
+          // Don't change color of images
+          activeObject.set('fill', color);
+        }
+        canvas.renderAll();
+
+        // Generate data URL directly instead of calling updateDesign
+        setTimeout(() => {
+          try {
+            if (onDesignChangeRef.current && canvas) {
+              // Set flag to prevent loops
+              isGeneratingDataURLRef.current = true;
+
+              const dataURL = canvas.toDataURL({
+                format: "png",
+                quality: 1,
+                multiplier: 2,
+              });
+
+              onDesignChangeRef.current(dataURL);
+
+              // Reset flag after a short delay
+              setTimeout(() => {
+                isGeneratingDataURLRef.current = false;
+              }, 100);
+            }
+          } catch (dataURLError) {
+            console.error("Error generating data URL:", dataURLError);
+            isGeneratingDataURLRef.current = false;
+          } finally {
+            updateInProgressRef.current = false;
+          }
+        }, 100);
+      } catch (error) {
+        console.error("Error updating object color:", error);
+        updateInProgressRef.current = false;
       }
-      canvas.renderAll();
-      updateDesign();
     }
-  }, [currentColor, canvas]);
+  }, [currentColor, canvas]); // Remove updateDesign from dependencies
 
   const handleAddText = () => {
-    if (!canvas || !text.trim()) return;
+    // Simple validation - avoid excessive checks that might cause issues
+    if (!canvas || !text.trim() || updateInProgressRef.current) return;
 
-    const fabricText = new fabric.Text(text, {
-      left: 50,
-      top: 50,
-      fontFamily: "Arial",
-      fontSize,
-      fontWeight: isBold ? "bold" : "normal",
-      fontStyle: isItalic ? "italic" : "normal",
-      underline: isUnderline,
-      fill: currentColor,
-    });
+    try {
+      console.log("Adding text element");
+      updateInProgressRef.current = true;
 
-    canvas.add(fabricText);
-    canvas.setActiveObject(fabricText);
-    canvas.renderAll();
-    setText("");
-    updateDesign();
+      // Create the text
+      const fabricText = new fabric.Text(text, {
+        left: 50,
+        top: 50,
+        fontFamily: "Arial",
+        fontSize,
+        fontWeight: isBold ? "bold" : "normal",
+        fontStyle: isItalic ? "italic" : "normal",
+        underline: isUnderline,
+        fill: currentColor,
+        id: `text_${Date.now()}` // Add unique ID
+      });
+
+      // Add the text to canvas
+      canvas.add(fabricText);
+      canvas.setActiveObject(fabricText);
+      canvas.renderAll();
+      setText("");
+
+      // Generate data URL directly instead of calling updateDesign
+      setTimeout(() => {
+        try {
+          if (canvas && onDesignChangeRef.current) {
+            // Set flag to prevent loops
+            isGeneratingDataURLRef.current = true;
+
+            const dataURL = canvas.toDataURL({
+              format: "png",
+              quality: 1,
+              multiplier: 2,
+            });
+
+            onDesignChangeRef.current(dataURL);
+
+            // Reset flag after a short delay
+            setTimeout(() => {
+              isGeneratingDataURLRef.current = false;
+            }, 100);
+          }
+        } catch (dataURLError) {
+          console.error("Error generating data URL:", dataURLError);
+          isGeneratingDataURLRef.current = false;
+        } finally {
+          updateInProgressRef.current = false;
+        }
+      }, 100);
+    } catch (error) {
+      console.error("Error adding text:", error);
+      updateInProgressRef.current = false;
+    }
   };
 
   const handleAddCircle = () => {
-    if (!canvas) return;
-    const circle = new fabric.Circle({
-      radius: 30,
-      fill: currentColor,
-      left: 100,
-      top: 100,
-    });
-    canvas.add(circle);
-    canvas.setActiveObject(circle);
-    canvas.renderAll();
-    updateDesign();
+    // Simple validation - avoid excessive checks that might cause issues
+    if (!canvas || updateInProgressRef.current) return;
+
+    try {
+      console.log("Adding circle element");
+      updateInProgressRef.current = true;
+
+      // Create the circle
+      const circle = new fabric.Circle({
+        radius: 30,
+        fill: currentColor,
+        left: 100,
+        top: 100,
+        id: `circle_${Date.now()}` // Add unique ID
+      });
+
+      // Add the circle to canvas
+      canvas.add(circle);
+      canvas.setActiveObject(circle);
+      canvas.renderAll();
+
+      // Generate data URL directly instead of calling updateDesign
+      setTimeout(() => {
+        try {
+          if (canvas && onDesignChangeRef.current) {
+            // Set flag to prevent loops
+            isGeneratingDataURLRef.current = true;
+
+            const dataURL = canvas.toDataURL({
+              format: "png",
+              quality: 1,
+              multiplier: 2,
+            });
+
+            onDesignChangeRef.current(dataURL);
+
+            // Reset flag after a short delay
+            setTimeout(() => {
+              isGeneratingDataURLRef.current = false;
+            }, 100);
+          }
+        } catch (dataURLError) {
+          console.error("Error generating data URL:", dataURLError);
+          isGeneratingDataURLRef.current = false;
+        } finally {
+          updateInProgressRef.current = false;
+        }
+      }, 100);
+    } catch (error) {
+      console.error("Error adding circle:", error);
+      updateInProgressRef.current = false;
+    }
   };
 
   const handleAddSquare = () => {
-    if (!canvas) return;
-    const square = new fabric.Rect({
-      width: 60,
-      height: 60,
-      fill: currentColor,
-      left: 100,
-      top: 100,
-    });
-    canvas.add(square);
-    canvas.setActiveObject(square);
-    canvas.renderAll();
-    updateDesign();
+    // Simple validation - avoid excessive checks that might cause issues
+    if (!canvas || updateInProgressRef.current) return;
+
+    try {
+      console.log("Adding square element");
+      updateInProgressRef.current = true;
+
+      // Create the square
+      const square = new fabric.Rect({
+        width: 60,
+        height: 60,
+        fill: currentColor,
+        left: 100,
+        top: 100,
+        id: `square_${Date.now()}` // Add unique ID
+      });
+
+      // Add the square to canvas
+      canvas.add(square);
+      canvas.setActiveObject(square);
+      canvas.renderAll();
+
+      // Generate data URL directly instead of calling updateDesign
+      setTimeout(() => {
+        try {
+          if (canvas && onDesignChangeRef.current) {
+            // Set flag to prevent loops
+            isGeneratingDataURLRef.current = true;
+
+            const dataURL = canvas.toDataURL({
+              format: "png",
+              quality: 1,
+              multiplier: 2,
+            });
+
+            onDesignChangeRef.current(dataURL);
+
+            // Reset flag after a short delay
+            setTimeout(() => {
+              isGeneratingDataURLRef.current = false;
+            }, 100);
+          }
+        } catch (dataURLError) {
+          console.error("Error generating data URL:", dataURLError);
+          isGeneratingDataURLRef.current = false;
+        } finally {
+          updateInProgressRef.current = false;
+        }
+      }, 100);
+    } catch (error) {
+      console.error("Error adding square:", error);
+      updateInProgressRef.current = false;
+    }
   };
 
   const handleDeleteSelected = () => {
-    if (!canvas) return;
-    const activeObject = canvas.getActiveObject();
-    if (activeObject) {
-      canvas.remove(activeObject);
-      canvas.renderAll();
-      updateDesign();
+    // Simple validation - avoid excessive checks that might cause issues
+    if (!canvas || updateInProgressRef.current) return;
+
+    try {
+      const activeObject = canvas.getActiveObject();
+      if (activeObject) {
+        // Don't allow deleting safety area
+        if (activeObject.id === "safetyArea") {
+          console.warn("Cannot delete safety area");
+          return;
+        }
+
+        updateInProgressRef.current = true;
+        console.log(`Deleting object: ${activeObject.type} (id: ${activeObject.id})`);
+        canvas.remove(activeObject);
+        canvas.renderAll();
+
+        // Generate data URL directly instead of calling updateDesign
+        setTimeout(() => {
+          try {
+            if (canvas && onDesignChangeRef.current) {
+              // Set flag to prevent loops
+              isGeneratingDataURLRef.current = true;
+
+              const dataURL = canvas.toDataURL({
+                format: "png",
+                quality: 1,
+                multiplier: 2,
+              });
+
+              onDesignChangeRef.current(dataURL);
+
+              // Reset flag after a short delay
+              setTimeout(() => {
+                isGeneratingDataURLRef.current = false;
+              }, 100);
+            }
+          } catch (dataURLError) {
+            console.error("Error generating data URL:", dataURLError);
+            isGeneratingDataURLRef.current = false;
+          } finally {
+            updateInProgressRef.current = false;
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.error("Error deleting object:", error);
+      updateInProgressRef.current = false;
     }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && canvas) {
+    if (!file || !canvas || !canvas.getContext || updateInProgressRef.current) return;
+
+    console.log("Processing uploaded image");
+    updateInProgressRef.current = true;
+
+    try {
       const reader = new FileReader();
       reader.onload = (event) => {
-        const imgData = event.target?.result as string;
-        setUploadedImage(imgData);
-        
-        fabric.Image.fromURL(imgData, (img) => {
-          // Scale image to fit within the canvas
-          const canvasWidth = canvas.width || 300;
-          const canvasHeight = canvas.height || 300;
-          
-          const scaleFactor = Math.min(
-            (canvasWidth - 40) / img.width!,
-            (canvasHeight - 40) / img.height!
+        try {
+          // Check if canvas is still valid
+          if (!canvas || !canvas.getContext) {
+            console.error("Canvas is no longer valid during image data processing");
+            updateInProgressRef.current = false;
+            return;
+          }
+
+          const imgData = event.target?.result as string;
+          setUploadedImage(imgData);
+
+          // Remove placeholder text if it exists
+          const objects = canvas.getObjects();
+          const placeholderText = objects.find((obj: any) =>
+            obj.type === 'text' &&
+            (obj.id === "placeholderText" || (obj as any).text === 'upload your design')
           );
-          
-          img.scale(scaleFactor);
-          img.set({
-            left: canvasWidth / 2,
-            top: canvasHeight / 2,
-            originX: 'center',
-            originY: 'center'
-          });
-          
-          canvas.add(img);
-          canvas.setActiveObject(img);
-          canvas.renderAll();
-          updateDesign();
-        });
+          if (placeholderText) {
+            canvas.remove(placeholderText);
+          }
+
+          // Remove existing images
+          const existingImages = objects.filter((obj: any) => obj.type === 'image');
+          if (existingImages.length > 0) {
+            console.log(`Removing ${existingImages.length} existing images`);
+            existingImages.forEach((img: any) => canvas.remove(img));
+          }
+
+          // Now add the new image
+          try {
+            fabric.Image.fromURL(imgData, (img: any) => {
+              try {
+                // Check if canvas is still valid
+                if (!canvas || !canvas.getContext) {
+                  console.error("Canvas is no longer valid during image processing");
+                  updateInProgressRef.current = false;
+                  return;
+                }
+
+                // Scale image to fit within the canvas
+                const canvasWidth = canvas.width || 300;
+                const canvasHeight = canvas.height || 300;
+
+                const scaleFactor = Math.min(
+                  (canvasWidth - 40) / img.width!,
+                  (canvasHeight - 40) / img.height!
+                );
+
+                img.scale(scaleFactor);
+                img.set({
+                  left: canvasWidth / 2,
+                  top: canvasHeight / 2,
+                  originX: 'center',
+                  originY: 'center',
+                  id: "uploadedImage" // Add an ID to identify this object
+                });
+
+                // Final check that canvas is still valid before adding the image
+                if (canvas && canvas.getContext) {
+                  canvas.add(img);
+                  canvas.setActiveObject(img);
+                  canvas.renderAll();
+                  console.log("Uploaded image added to canvas");
+
+                  // Generate data URL directly instead of calling updateDesign
+                  setTimeout(() => {
+                    try {
+                      if (onDesignChangeRef.current && canvas) {
+                        // Set flag to prevent loops
+                        isGeneratingDataURLRef.current = true;
+
+                        const dataURL = canvas.toDataURL({
+                          format: "png",
+                          quality: 1,
+                          multiplier: 2,
+                        });
+
+                        onDesignChangeRef.current(dataURL);
+
+                        // Reset flag after a short delay
+                        setTimeout(() => {
+                          isGeneratingDataURLRef.current = false;
+                        }, 100);
+                      }
+                    } catch (dataURLError) {
+                      console.error("Error generating data URL:", dataURLError);
+                      isGeneratingDataURLRef.current = false;
+                    } finally {
+                      updateInProgressRef.current = false;
+                    }
+                  }, 200);
+                } else {
+                  console.error("Canvas became invalid before adding image");
+                  updateInProgressRef.current = false;
+                }
+              } catch (imgError) {
+                console.error("Error processing uploaded image:", imgError);
+                updateInProgressRef.current = false;
+              }
+            });
+          } catch (imgLoadError) {
+            console.error("Error loading image from data URL:", imgLoadError);
+            updateInProgressRef.current = false;
+          }
+        } catch (dataError) {
+          console.error("Error reading image data:", dataError);
+          updateInProgressRef.current = false;
+        }
+      };
+      reader.onerror = (error) => {
+        console.error("Error reading file:", error);
+        updateInProgressRef.current = false;
       };
       reader.readAsDataURL(file);
+    } catch (fileError) {
+      console.error("Error handling file upload:", fileError);
+      updateInProgressRef.current = false;
     }
   };
 
@@ -285,7 +784,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
             Draw
           </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="text" className="space-y-4 py-4">
           <div className="flex gap-2">
             <Input
@@ -333,7 +832,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
             </div>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="shapes" className="py-4">
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleAddCircle}>
@@ -344,7 +843,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
             </Button>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="image" className="py-4">
           <Input
             type="file"
@@ -357,7 +856,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
           <p className="text-sm text-muted-foreground">Drawing tools coming soon</p>
         </TabsContent>
       </Tabs>
-      
+
       <div className="mt-4 flex items-center gap-2">
         <label htmlFor="color-picker" className="flex items-center gap-2">
           <Palette size={16} />
@@ -370,9 +869,9 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
           onChange={(e) => setCurrentColor(e.target.value)}
           className="w-10 h-10 rounded-md cursor-pointer"
         />
-        <Button 
-          variant="outline" 
-          className="ml-auto flex items-center gap-1" 
+        <Button
+          variant="outline"
+          className="ml-auto flex items-center gap-1"
           onClick={handleDeleteSelected}
         >
           <Trash2 size={16} />
@@ -381,7 +880,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
       </div>
 
       <div className="mt-6 relative flex justify-center">
-        <div 
+        <div
           ref={canvasContainerRef}
           className="canvas-container relative border border-gray-300 shadow-md mb-4"
         >
