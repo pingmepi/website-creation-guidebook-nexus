@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "lib": ["deno.ns", "deno.unstable", "dom"],
+    "strict": false,
+    "checkJs": false,
+    "noImplicitAny": false,
+    "allowImportingTsExtensions": true
+  },
+  "importMap": {
+    "imports": {
+      "@supabase/supabase-js": "npm:@supabase/supabase-js@2"
+    }
+  },
+  "lint": {
+    "files": {
+      "include": ["**/*.ts"]
+    },
+    "rules": {
+      "tags": ["recommended"],
+      "exclude": ["no-explicit-any", "no-unused-vars"]
+    }
+  },
+  "fmt": {
+    "files": {
+      "include": ["**/*.ts"]
+    },
+    "options": {
+      "useTabs": false,
+      "lineWidth": 100,
+      "indentWidth": 2,
+      "singleQuote": true
+    }
+  }
+}

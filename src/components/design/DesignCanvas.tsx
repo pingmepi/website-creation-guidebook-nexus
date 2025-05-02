@@ -27,7 +27,7 @@ interface DesignCanvasProps {
 const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
-  const [canvas, setCanvas] = useState<fabric.Canvas | null>(null);
+  const [canvas, setCanvas] = useState<any>(null);
   const [currentColor, setCurrentColor] = useState<string>("#000000");
   const [text, setText] = useState<string>("");
   const [fontSize, setFontSize] = useState<number>(20);
@@ -35,6 +35,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
   const [isItalic, setIsItalic] = useState<boolean>(false);
   const [isUnderline, setIsUnderline] = useState<boolean>(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [isLoadingImage, setIsLoadingImage] = useState<boolean>(false);
 
   // Refs to track state
   const canvasInitializedRef = useRef(false);
@@ -260,6 +261,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     console.log("Processing initial image");
     lastProcessedImageRef.current = initialImage;
     updateInProgressRef.current = true;
+    setIsLoadingImage(true);
 
     try {
       // Remove placeholder text if it exists
@@ -274,23 +276,13 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
 
       // Clear existing images
       const existingImages = objects.filter((obj: any) => obj.type === 'image');
-      if (existingImages.length > 0) {
-        console.log(`Removing ${existingImages.length} existing images`);
-        existingImages.forEach((img: any) => canvas.remove(img));
-      }
+      existingImages.forEach((img: any) => canvas.remove(img));
 
       // Load the image with proper error handling
       fabric.Image.fromURL(
         initialImage,
         (img: any) => {
           try {
-            // Check if img is valid
-            if (!img || !img.width || !img.height) {
-              console.error("Loaded image is invalid");
-              updateInProgressRef.current = false;
-              return;
-            }
-
             // Scale image to fit within the canvas
             const canvasWidth = canvas.width || 300;
             const canvasHeight = canvas.height || 300;
@@ -306,55 +298,44 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
               top: canvasHeight / 2,
               originX: 'center',
               originY: 'center',
-              id: "initialImage" // Add an ID to identify this object
+              id: "aiGeneratedImage"
             });
 
-            // Add the image to canvas
             canvas.add(img);
+            canvas.setActiveObject(img);
             canvas.renderAll();
-            console.log("Initial image added to canvas");
 
-            // Mark that we've loaded the initial image
-            initialImageLoadedRef.current = true;
-
-            // Generate data URL directly instead of calling updateDesign
+            // Update the design data URL
             setTimeout(() => {
-              try {
-                if (onDesignChangeRef.current && canvas) {
-                  // Set flag to prevent loops
-                  isGeneratingDataURLRef.current = true;
-
-                  const dataURL = canvas.toDataURL({
-                    format: "png",
-                    quality: 1,
-                    multiplier: 2,
-                  });
-
-                  onDesignChangeRef.current(dataURL);
-
-                  // Reset flag after a short delay
-                  setTimeout(() => {
-                    isGeneratingDataURLRef.current = false;
-                  }, 100);
-                }
-              } catch (dataURLError) {
-                console.error("Error generating data URL:", dataURLError);
-                isGeneratingDataURLRef.current = false;
-              } finally {
-                updateInProgressRef.current = false;
+              if (onDesignChangeRef.current && canvas) {
+                isGeneratingDataURLRef.current = true;
+                const dataURL = canvas.toDataURL({
+                  format: "png",
+                  quality: 1,
+                  multiplier: 2,
+                });
+                onDesignChangeRef.current(dataURL);
+                setTimeout(() => {
+                  isGeneratingDataURLRef.current = false;
+                }, 100);
               }
+              setIsLoadingImage(false);
+              updateInProgressRef.current = false;
             }, 200);
           } catch (imgError) {
-            console.error("Error processing initial image:", imgError);
+            console.error("Error processing image:", imgError);
+            setIsLoadingImage(false);
             updateInProgressRef.current = false;
           }
-        }
+        },
+        { crossOrigin: 'anonymous' }
       );
     } catch (error) {
-      console.error("Error in initialImage effect:", error);
+      console.error("Error in image processing:", error);
+      setIsLoadingImage(false);
       updateInProgressRef.current = false;
     }
-  }, [canvas, initialImage]); // Keep both dependencies but use flags to prevent loops
+  }, [initialImage, canvas]);
 
   // Function to update color of selected objects when color changes
   useEffect(() => {
@@ -673,7 +654,9 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
 
           // Now add the new image
           try {
-            fabric.Image.fromURL(imgData, (img: any) => {
+            fabric.Image.fromURL(
+              imgData,
+              (img: any) => {
               try {
                 // Check if canvas is still valid
                 if (!canvas || !canvas.getContext) {
