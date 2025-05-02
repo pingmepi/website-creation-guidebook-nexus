@@ -3,7 +3,6 @@ import TshirtCard from "@/components/TshirtCard";
 import { Button } from "@/components/ui/button";
 import { tshirtImages } from "../../assets";
 import { Link } from "react-router-dom";
-import { Wand2 } from "lucide-react";
 
 const Index = () => {
   // Featured t-shirt collection
@@ -52,36 +51,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* AI Design Section */}
-      <section className="py-16 bg-gradient-to-r from-blue-50 to-indigo-50">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div className="order-2 md:order-1">
-              <img 
-                src="/assets/images/design/placeholder.svg" 
-                alt="AI Design" 
-                className="w-full h-auto rounded-lg shadow-lg"
-              />
-            </div>
-            <div className="order-1 md:order-2 space-y-6">
-              <div className="inline-flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                <Wand2 className="h-4 w-4 mr-1" />
-                New Feature
-              </div>
-              <h2 className="text-3xl font-bold text-gray-900">
-                Generate Unique Designs <br />with AI
-              </h2>
-              <p className="text-lg text-gray-600">
-                Describe your dream design, and our AI will bring it to life! Create one-of-a-kind t-shirts 
-                in seconds with our innovative AI design generator.
-              </p>
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700" asChild>
-                <Link to="/ai-design">Try AI Design Generator</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+
 
       {/* Featured Collection */}
       <section className="py-16 bg-white">
@@ -118,12 +88,6 @@ const Index = () => {
           <div className="flex flex-wrap justify-center gap-4">
             <Button size="lg" className="bg-blue-600 hover:bg-blue-700" asChild>
               <Link to="/design">Start Designing Now</Link>
-            </Button>
-            <Button variant="outline" size="lg" asChild>
-              <Link to="/ai-design">
-                <Wand2 className="h-4 w-4 mr-2" />
-                Use AI Generator
-              </Link>
             </Button>
           </div>
         </div>
