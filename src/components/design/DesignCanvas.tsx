@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { fabric } from "fabric";
 import { Button } from "@/components/ui/button";
@@ -45,20 +44,12 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     const containerWidth = canvasContainerRef.current.clientWidth || 300;
     const canvasSize = Math.min(containerWidth, 300); // Max width of design area
 
-    // Cleanup any previous canvas instance to prevent memory leaks
-    if (canvas) {
-      canvas.dispose();
-    }
-
-    // Create new canvas
+    // Create new canvas - ensuring we don't trigger dispose before we're ready
     const fabricCanvas = new fabric.Canvas(canvasRef.current, {
       width: canvasSize,
       height: canvasSize,
       backgroundColor: "#f0f0f0", // Light gray background for design area
     });
-
-    setCanvas(fabricCanvas);
-    setCanvasInitialized(true);
 
     // Add dashed rectangle for safety area
     const safetyAreaRect = new fabric.Rect({
@@ -108,27 +99,32 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
 
     // Force render all objects
     fabricCanvas.renderAll();
+    
+    setCanvas(fabricCanvas);
+    setCanvasInitialized(true);
 
-    // Cleanup on component unmount
+    // Cleanup on component unmount - Fix for the removeChild error
     return () => {
+      // Remove event listeners first
       fabricCanvas.off('object:modified', updateDesignCallback);
       fabricCanvas.off('object:added', updateDesignCallback);
       fabricCanvas.off('object:removed', updateDesignCallback);
-      fabricCanvas.dispose();
+      
+      // Safe dispose method to prevent the removeChild error
+      try {
+        if (fabricCanvas) {
+          // Clear all objects from canvas before disposal
+          fabricCanvas.getObjects().forEach((obj) => {
+            fabricCanvas.remove(obj);
+          });
+          fabricCanvas.clear();
+          fabricCanvas.dispose();
+        }
+      } catch (error) {
+        console.error("Error during canvas disposal:", error);
+      }
     };
   }, [canvasRef.current, canvasContainerRef.current]); // Only re-initialize when canvas ref changes
-
-  // Function to update the design and notify parent
-  const updateDesign = () => {
-    if (!canvas || !onDesignChange) return;
-
-    const dataURL = canvas.toDataURL({
-      format: "png",
-      quality: 1,
-      multiplier: 2, // Higher resolution
-    });
-    onDesignChange(dataURL);
-  };
 
   // Load the initial image if provided
   useEffect(() => {
@@ -177,6 +173,18 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
       updateDesign(); // Notify parent of design change
     }, { crossOrigin: 'anonymous' });
   }, [canvas, initialImage, canvasInitialized]);
+
+  // Function to update the design and notify parent
+  const updateDesign = () => {
+    if (!canvas || !onDesignChange) return;
+
+    const dataURL = canvas.toDataURL({
+      format: "png",
+      quality: 1,
+      multiplier: 2, // Higher resolution
+    });
+    onDesignChange(dataURL);
+  };
 
   // Function to update color of selected objects when color changes
   useEffect(() => {
