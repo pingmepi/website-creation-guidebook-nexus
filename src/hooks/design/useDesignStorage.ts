@@ -25,9 +25,18 @@ export function useDesignStorage() {
     setHasUnsavedChanges: (value: boolean) => void
   ) => {
     try {
-      if (!user) return;
+      if (!user) {
+        console.log("No user logged in, cannot save design");
+        return null;
+      }
 
       setIsSaving(true);
+      console.log("Saving design to database:", {
+        designId,
+        designName,
+        tshirtColor,
+        imageUrl: imageUrl.substring(0, 50) + "..." // Log truncated image URL
+      });
       
       // Create a new design record or update if designId exists
       const designData = {
@@ -45,6 +54,7 @@ export function useDesignStorage() {
       let result;
       
       if (designId) {
+        console.log("Updating existing design:", designId);
         // Update existing design
         result = await supabase
           .from('designs')
@@ -52,6 +62,7 @@ export function useDesignStorage() {
           .eq('id', designId)
           .select();
       } else {
+        console.log("Creating new design");
         // Create new design
         result = await supabase
           .from('designs')
@@ -61,9 +72,13 @@ export function useDesignStorage() {
       
       const { data, error } = result;
       
-      if (error) throw error;
+      if (error) {
+        console.error("Database error when saving design:", error);
+        throw error;
+      }
       
       if (data && data.length > 0) {
+        console.log("Design saved successfully with ID:", data[0].id);
         setDesignId(data[0].id);
         
         // Update URL with the design ID if it's not already there
@@ -71,6 +86,8 @@ export function useDesignStorage() {
         if (!params.has('id') || params.get('id') !== data[0].id) {
           navigate(`/design?id=${data[0].id}`, { replace: true });
         }
+      } else {
+        console.warn("No data returned when saving design");
       }
       
       setHasUnsavedChanges(false);

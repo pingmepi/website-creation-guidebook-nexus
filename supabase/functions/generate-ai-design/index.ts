@@ -20,8 +20,8 @@ export default async function handler(req) {
   try {
     // Parse the request body
     const { theme, answers } = await req.json();
-    console.log("Received design generation request with theme:", theme);
-    console.log("User answers:", answers);
+    console.log("Received design generation request with theme:", theme?.name || 'Unknown theme');
+    console.log("User answers count:", answers?.length || 0);
     
     if (!theme || !answers || answers.length === 0) {
       return new Response(

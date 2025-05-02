@@ -27,6 +27,7 @@ const FabricCanvas = ({
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   const [canvasInitialized, setCanvasInitialized] = useState(false);
   const pendingChangesRef = useRef(false);
+  const lastInitialImageRef = useRef<string | undefined>(initialImage);
   
   // Track if design has actual content beyond placeholder
   const [hasContent, setHasContent] = useState(false);
@@ -117,6 +118,7 @@ const FabricCanvas = ({
     // Notify parent component that canvas is ready
     onCanvasReady(fabricCanvas);
     setCanvasInitialized(true);
+    lastInitialImageRef.current = initialImage;
 
     // Cleanup on component unmount - Fix for the removeChild error
     return () => {
@@ -165,64 +167,74 @@ const FabricCanvas = ({
     }
   }, [isDrawingMode, brushSize, canvasInitialized]);
 
-  // Load the initial image if provided
+  // Load the initial image if provided and different from last one
   useEffect(() => {
     const fabricCanvas = fabricCanvasRef.current;
-    if (!fabricCanvas || !canvasInitialized || !initialImage) return;
-
-    // Clear placeholder text if it exists
-    const objects = fabricCanvas.getObjects();
-    const placeholderText = objects.find(obj => 
-      obj.type === 'text' && 
-      (obj as fabric.Text).text === 'upload your design'
-    );
+    if (!fabricCanvas || !canvasInitialized) return;
     
-    if (placeholderText) {
-      fabricCanvas.remove(placeholderText);
-    }
+    // Only load image if it's different from the last one we processed
+    // This prevents the image from being reloaded on every render
+    if (initialImage !== lastInitialImageRef.current) {
+      console.log("Loading new initial image:", initialImage);
+      lastInitialImageRef.current = initialImage;
 
-    // Clear existing objects except safety area rectangle
-    fabricCanvas.getObjects().forEach(obj => {
-      if (obj.stroke !== "#5cb85c") { // Keep only the safety area rectangle
-        fabricCanvas.remove(obj);
-      }
-    });
-
-    fabric.Image.fromURL(initialImage, (img) => {
-      // Scale image to fit within the canvas
-      const canvasWidth = fabricCanvas.width || 300;
-      const canvasHeight = fabricCanvas.height || 300;
-      
-      const scaleFactor = Math.min(
-        (canvasWidth - 40) / img.width!,
-        (canvasHeight - 40) / img.height!
+      // Clear placeholder text if it exists
+      const objects = fabricCanvas.getObjects();
+      const placeholderText = objects.find(obj => 
+        obj.type === 'text' && 
+        (obj as fabric.Text).text === 'upload your design'
       );
       
-      img.scale(scaleFactor);
-      img.set({
-        left: canvasWidth / 2,
-        top: canvasHeight / 2,
-        originX: 'center',
-        originY: 'center'
-      });
-      
-      fabricCanvas.add(img);
-      fabricCanvas.setActiveObject(img);
-      fabricCanvas.renderAll();
-      
-      // Mark that we have content
-      setHasContent(true);
-      
-      // Notify parent of design change
-      if (onDesignChange) {
-        const dataURL = fabricCanvas.toDataURL({
-          format: "png",
-          quality: 1,
-          multiplier: 2,
-        });
-        onDesignChange(dataURL);
+      if (placeholderText) {
+        fabricCanvas.remove(placeholderText);
       }
-    }, { crossOrigin: 'anonymous' });
+
+      // Clear existing objects except safety area rectangle
+      fabricCanvas.getObjects().forEach(obj => {
+        if (obj.stroke !== "#5cb85c") { // Keep only the safety area rectangle
+          fabricCanvas.remove(obj);
+        }
+      });
+
+      // Load the new image if provided
+      if (initialImage) {
+        fabric.Image.fromURL(initialImage, (img) => {
+          // Scale image to fit within the canvas
+          const canvasWidth = fabricCanvas.width || 300;
+          const canvasHeight = fabricCanvas.height || 300;
+          
+          const scaleFactor = Math.min(
+            (canvasWidth - 40) / img.width!,
+            (canvasHeight - 40) / img.height!
+          );
+          
+          img.scale(scaleFactor);
+          img.set({
+            left: canvasWidth / 2,
+            top: canvasHeight / 2,
+            originX: 'center',
+            originY: 'center'
+          });
+          
+          fabricCanvas.add(img);
+          fabricCanvas.setActiveObject(img);
+          fabricCanvas.renderAll();
+          
+          // Mark that we have content
+          setHasContent(true);
+          
+          // Notify parent of design change
+          if (onDesignChange) {
+            const dataURL = fabricCanvas.toDataURL({
+              format: "png",
+              quality: 1,
+              multiplier: 2,
+            });
+            onDesignChange(dataURL);
+          }
+        }, { crossOrigin: 'anonymous' });
+      }
+    }
   }, [initialImage, canvasInitialized]);
 
   return <canvas ref={canvasRef} />;

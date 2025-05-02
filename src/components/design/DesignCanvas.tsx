@@ -29,10 +29,16 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
   const [isBold, setIsBold] = useState<boolean>(false);
   const [isItalic, setIsItalic] = useState<boolean>(false);
   const [isUnderline, setIsUnderline] = useState<boolean>(false);
+  const initialImageRef = useRef<string | undefined>(initialImage);
   
   // Drawing tool states
   const [isDrawingMode, setIsDrawingMode] = useState<boolean>(false);
   const [brushSize, setBrushSize] = useState<number>(3);
+  
+  // Update the ref when initialImage changes
+  useEffect(() => {
+    initialImageRef.current = initialImage;
+  }, [initialImage]);
   
   const handleAddText = () => {
     if (!canvas || !text.trim()) return;
@@ -173,6 +179,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
 
   // Pass the design changes directly to the parent component
   const handleDesignChange = (dataURL: string) => {
+    console.log("Design changed, notifying parent");
     if (onDesignChange) {
       onDesignChange(dataURL);
     }
