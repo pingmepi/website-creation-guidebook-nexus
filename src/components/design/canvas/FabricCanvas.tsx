@@ -227,21 +227,6 @@ const FabricCanvas = ({
     }, { crossOrigin: 'anonymous' });
   }, [initialImage, canvasInitialized]);
 
-  // Function to save design explicitly
-  const saveDesign = () => {
-    const fabricCanvas = fabricCanvasRef.current;
-    if (!fabricCanvas || !onDesignChange || !hasContent) return;
-    
-    const dataURL = fabricCanvas.toDataURL({
-      format: "png",
-      quality: 1,
-      multiplier: 2,
-    });
-    
-    onDesignChange(dataURL);
-    pendingChangesRef.current = false;
-  };
-
   return <canvas ref={canvasRef} />;
 };
 

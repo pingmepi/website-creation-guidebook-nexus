@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Answer } from "@/components/design/QuestionFlow";
 import { toast } from "sonner";
@@ -45,6 +46,7 @@ export function useDesignState() {
   const [designId, setDesignId] = useState<string | null>(null);
   const [designName, setDesignName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -92,8 +94,6 @@ export function useDesignState() {
         return;
       }
       
-      console.log("Fetched design data:", data);
-      
       // Set the design data
       setDesignName(data.name || "Untitled Design");
       setTshirtColor(data.t_shirt_color || TSHIRT_COLORS.WHITE);
@@ -101,7 +101,6 @@ export function useDesignState() {
       // Make sure to set the designImage from the preview_url in the database
       if (data.preview_url) {
         setDesignImage(data.preview_url);
-        console.log("Set design image from preview_url:", data.preview_url);
       }
       
       // Parse the design data JSON
@@ -110,11 +109,8 @@ export function useDesignState() {
           ? JSON.parse(data.design_data) 
           : data.design_data;
         
-        console.log("Parsed design data:", designData);
-        
         if (designData.answers) {
           setAnswers(designData.answers);
-          console.log("Set answers:", designData.answers);
         }
         
         // Fix the theme_id handling - ensure it's a proper UUID string
@@ -126,7 +122,6 @@ export function useDesignState() {
             // Validate if this looks like a UUID before querying
             if (themeId && themeId !== "3" && themeId !== "undefined" && 
                 /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(themeId)) {
-              console.log("Attempting to fetch theme with ID:", themeId);
               
               const { data: themeData, error: themeError } = await supabase
                 .from('themes')
@@ -138,10 +133,7 @@ export function useDesignState() {
                 console.error("Error fetching theme:", themeError);
               } else if (themeData) {
                 setSelectedTheme(themeData);
-                console.log("Set selected theme:", themeData);
               }
-            } else {
-              console.warn("Invalid theme ID format:", themeId, "- skipping theme fetch");
             }
           } catch (themeError) {
             console.error("Error processing theme:", themeError);
@@ -167,24 +159,20 @@ export function useDesignState() {
   };
   
   const handleThemeSelect = (theme: Theme) => {
-    console.log("Theme selected:", theme);
     setSelectedTheme(theme);
     setCurrentStage("question-flow");
   };
   
   const handleQuestionFlowComplete = (questionAnswers: Answer[]) => {
-    console.log("Question flow complete with answers:", questionAnswers);
     setAnswers(questionAnswers);
     setShowConfirmation(true);
   };
   
   const handleConfirmDesign = () => {
-    console.log("Design confirmed");
     setShowConfirmation(false);
     
     // Check if user is logged in
     if (!isAuthenticated) {
-      console.log("User not authenticated, showing login dialog");
       setShowLoginDialog(true);
       return;
     }
@@ -193,13 +181,11 @@ export function useDesignState() {
   };
   
   const handleLoginSuccess = () => {
-    console.log("Login success callback in Design page");
     setShowLoginDialog(false);
     proceedToDesignStage();
   };
   
   const proceedToDesignStage = async () => {
-    console.log("Proceeding to design stage");
     setCurrentStep("design");
     setCurrentStage("customization");
     
@@ -236,18 +222,18 @@ export function useDesignState() {
       
       if (aiError) throw new Error(aiError.message);
       
-      console.log("AI response:", aiResponse);
-      
       if (!aiResponse || !aiResponse.imageUrl) {
         throw new Error("No design image was generated");
       }
       
       // Set the generated design image
       setDesignImage(aiResponse.imageUrl);
+      setHasUnsavedChanges(true);
       
       // Save the design image with the answers and theme
       if (user) {
         await saveDesignToDatabase(aiResponse.imageUrl, aiResponse.prompt || '');
+        setHasUnsavedChanges(false);
       }
       
       toast.dismiss();
@@ -299,27 +285,22 @@ export function useDesignState() {
   };
   
   const handleBackToThemes = () => {
-    console.log("Going back to themes");
     setCurrentStage("theme-selection");
     setSelectedTheme(null);
   };
 
   const handleDesignChange = (designDataUrl: string) => {
-    console.log("Design canvas updated");
     setDesignImage(designDataUrl);
+    setHasUnsavedChanges(true);
   };
   
   const handleSaveDesign = async () => {
-    console.log("Save design button clicked");
-    
     if (!isAuthenticated) {
-      console.log("User not authenticated, showing login dialog");
       setShowLoginDialog(true);
       return;
     }
     
     if (!designImage || !user) {
-      console.log("Cannot save design - missing design image or user");
       toast.error("Cannot save design", { 
         description: "Please complete your design before saving"
       });
@@ -327,7 +308,6 @@ export function useDesignState() {
     }
     
     try {
-      console.log("Starting design save process");
       setIsSaving(true);
       
       // Convert the answers to a format that can be stored as JSON
@@ -336,26 +316,11 @@ export function useDesignState() {
         answer: answer.answer
       }));
       
-      // Important: Include the current designImage in the save data
-      const designData = {
-        id: designId,
-        user_id: user.id,
-        name: designName,
-        preview_url: designImage, // Always save the current designImage
-        t_shirt_color: tshirtColor,
-        theme: selectedTheme?.name || null,
-        design_data: JSON.stringify({
-          answers: serializedAnswers,
-          theme_id: selectedTheme?.id
-        })
-      };
-      
-      console.log("Saving design with data:", designData);
-      
+      // Update or create the design
       let result;
       
-      // If we have a designId, update the existing record
       if (designId) {
+        // Update existing design
         result = await supabase
           .from('designs')
           .update({
@@ -371,21 +336,28 @@ export function useDesignState() {
           .eq('id', designId)
           .select();
       } else {
-        // Otherwise insert a new record
+        // Create new design
         result = await supabase
           .from('designs')
-          .insert(designData)
+          .insert({
+            user_id: user.id,
+            name: designName,
+            preview_url: designImage,
+            t_shirt_color: tshirtColor,
+            theme: selectedTheme?.name || null,
+            design_data: JSON.stringify({
+              answers: serializedAnswers,
+              theme_id: selectedTheme?.id
+            })
+          })
           .select();
       }
       
       const { data, error } = result;
       
       if (error) {
-        console.error("Error saving design:", error);
         throw error;
       }
-      
-      console.log("Design saved successfully, response data:", data);
       
       if (data && data.length > 0) {
         setDesignId(data[0].id as string);
@@ -397,6 +369,7 @@ export function useDesignState() {
         }
       }
       
+      setHasUnsavedChanges(false);
       toast.success("Design saved successfully!", {
         description: "You can find it in your saved designs."
       });
@@ -424,6 +397,7 @@ export function useDesignState() {
     designId,
     designName,
     isLoading,
+    hasUnsavedChanges,
     setShowConfirmation,
     setShowLoginDialog,
     setTshirtColor,
