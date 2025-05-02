@@ -170,8 +170,6 @@ const FabricCanvas = ({
     const fabricCanvas = fabricCanvasRef.current;
     if (!fabricCanvas || !canvasInitialized || !initialImage) return;
 
-    console.log("Loading initial image into canvas:", initialImage);
-
     // Clear placeholder text if it exists
     const objects = fabricCanvas.getObjects();
     const placeholderText = objects.find(obj => 

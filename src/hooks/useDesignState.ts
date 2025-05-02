@@ -233,7 +233,6 @@ export function useDesignState() {
       // Save the design image with the answers and theme
       if (user) {
         await saveDesignToDatabase(aiResponse.imageUrl, aiResponse.prompt || '');
-        setHasUnsavedChanges(false);
       }
       
       toast.dismiss();
@@ -258,29 +257,60 @@ export function useDesignState() {
     try {
       if (!user) return;
 
-      // Create a new design record
-      const { data, error } = await supabase
-        .from('designs')
-        .insert({
-          user_id: user.id,
-          name: designName,
-          t_shirt_color: tshirtColor,
-          preview_url: imageUrl,
-          design_data: JSON.stringify({
-            answers: answers,
-            theme_id: selectedTheme?.id,
-            prompt: prompt
-          })
+      setIsSaving(true);
+      
+      // Create a new design record or update if designId exists
+      const designData = {
+        user_id: user.id,
+        name: designName,
+        t_shirt_color: tshirtColor,
+        preview_url: imageUrl,
+        design_data: JSON.stringify({
+          answers: answers,
+          theme_id: selectedTheme?.id,
+          prompt: prompt
         })
-        .select();
-        
+      };
+      
+      let result;
+      
+      if (designId) {
+        // Update existing design
+        result = await supabase
+          .from('designs')
+          .update(designData)
+          .eq('id', designId)
+          .select();
+      } else {
+        // Create new design
+        result = await supabase
+          .from('designs')
+          .insert(designData)
+          .select();
+      }
+      
+      const { data, error } = result;
+      
       if (error) throw error;
       
       if (data && data.length > 0) {
         setDesignId(data[0].id);
+        
+        // Update URL with the design ID if it's not already there
+        const params = new URLSearchParams(location.search);
+        if (!params.has('id') || params.get('id') !== data[0].id) {
+          navigate(`/design?id=${data[0].id}`, { replace: true });
+        }
       }
+      
+      setHasUnsavedChanges(false);
+      
+      return data?.[0]?.id;
     } catch (error) {
-      console.error("Error saving AI design to database:", error);
+      console.error("Error saving design to database:", error);
+      throw error;
+    } finally {
+      setIsSaving(false);
     }
   };
   
@@ -310,66 +340,8 @@ export function useDesignState() {
     try {
       setIsSaving(true);
       
-      // Convert the answers to a format that can be stored as JSON
-      const serializedAnswers = answers.map(answer => ({
-        question: answer.question,
-        answer: answer.answer
-      }));
+      await saveDesignToDatabase(designImage, "");
       
-      // Update or create the design
-      let result;
-      
-      if (designId) {
-        // Update existing design
-        result = await supabase
-          .from('designs')
-          .update({
-            name: designName,
-            preview_url: designImage,
-            t_shirt_color: tshirtColor,
-            theme: selectedTheme?.name || null,
-            design_data: JSON.stringify({
-              answers: serializedAnswers,
-              theme_id: selectedTheme?.id
-            })
-          })
-          .eq('id', designId)
-          .select();
-      } else {
-        // Create new design
-        result = await supabase
-          .from('designs')
-          .insert({
-            user_id: user.id,
-            name: designName,
-            preview_url: designImage,
-            t_shirt_color: tshirtColor,
-            theme: selectedTheme?.name || null,
-            design_data: JSON.stringify({
-              answers: serializedAnswers,
-              theme_id: selectedTheme?.id
-            })
-          })
-          .select();
-      }
-      
-      const { data, error } = result;
-      
-      if (error) {
-        throw error;
-      }
-      
-      if (data && data.length > 0) {
-        setDesignId(data[0].id as string);
-        
-        // Update URL with the design ID if it's not already there
-        const params = new URLSearchParams(location.search);
-        if (!params.has('id')) {
-          navigate(`/design?id=${data[0].id}`, { replace: true });
-        }
-      }
-      
-      setHasUnsavedChanges(false);
       toast.success("Design saved successfully!", {
         description: "You can find it in your saved designs."
       });
