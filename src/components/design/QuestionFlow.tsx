@@ -104,11 +104,25 @@ const QuestionFlow = ({ selectedTheme, onComplete, onBack }: QuestionFlowProps) 
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
-      console.log("All questions answered:", answers);
-      onComplete([...answers, { 
-        question: questions[currentQuestionIndex].question, 
-        answer: currentAnswer 
-      }]);
+      // Fixed: This was causing the bug - now we save the current answer and include all answers in the onComplete callback
+      const updatedAnswers = [...answers];
+      const currentQuestion = questions[currentQuestionIndex];
+      const existingIndex = answers.findIndex(a => a.question === currentQuestion.question);
+      
+      if (existingIndex >= 0) {
+        updatedAnswers[existingIndex] = { 
+          question: currentQuestion.question, 
+          answer: currentAnswer 
+        };
+      } else {
+        updatedAnswers.push({ 
+          question: currentQuestion.question, 
+          answer: currentAnswer 
+        });
+      }
+      
+      console.log("All questions answered:", updatedAnswers);
+      onComplete(updatedAnswers);
     }
   };
   

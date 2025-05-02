@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 const Dashboard = () => {
   const { user } = useUser();
   const [designCount, setDesignCount] = useState(0);
+  const [aiDesignCount, setAiDesignCount] = useState(0);
   const [orderCount, setOrderCount] = useState(0);
   
   useEffect(() => {
@@ -30,7 +31,23 @@ const Dashboard = () => {
         }
       };
       
+      // Fetch AI design count
+      const fetchAiDesignCount = async () => {
+        try {
+          const { count, error } = await supabase
+            .from("ai_generated_designs")
+            .select("*", { count: 'exact', head: true })
+            .eq("user_id", user.id);
+          
+          if (error) throw error;
+          setAiDesignCount(count || 0);
+        } catch (error) {
+          console.error("Error fetching AI design count:", error);
+        }
+      };
+      
       fetchDesignCount();
+      fetchAiDesignCount();
     }
   }, [user]);
   
@@ -46,7 +63,7 @@ const Dashboard = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">My Designs</CardTitle>

@@ -3,6 +3,7 @@ import TshirtCard from "@/components/TshirtCard";
 import { Button } from "@/components/ui/button";
 import { tshirtImages } from "../../assets";
 import { Link } from "react-router-dom";
+import { Wand2 } from "lucide-react";
 
 const Index = () => {
   // Featured t-shirt collection
@@ -10,86 +11,123 @@ const Index = () => {
     { id: 1, name: "Classic White Tee", price: "$24.99", image: tshirtImages.mockup1 },
     { id: 2, name: "Urban Black Design", price: "$29.99", image: tshirtImages.mockup2 },
     { id: 3, name: "Summer Collection", price: "$26.99", image: tshirtImages.mockup3 },
-    { id: 4, name: "Vintage Edition", price: "$32.99", image: tshirtImages.mockup4 },
-    { id: 5, name: "Modern Minimalist", price: "$27.99", image: tshirtImages.mockup5 },
-    { id: 6, name: "Artist Series", price: "$34.99", image: tshirtImages.mockup6 }
+    { id: 4, name: "Modern Minimalist", price: "$27.99", image: tshirtImages.mockup5 },
   ];
 
   return (
     <>
       {/* Hero Section */}
-        <section className="relative bg-white overflow-hidden">
-          <div className="container mx-auto px-4 py-16 md:py-24">
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              <div className="space-y-6">
-                <h1 className="text-4xl md:text-5xl font-bold text-gray-900">
-                  Custom T-shirts <br />
-                  <span className="text-blue-600">For Every Style</span>
-                </h1>
-                <p className="text-xl text-gray-600">
-                  Express yourself with unique designs, premium quality, and perfect fit.
-                  Create your own or shop our collections.
-                </p>
-                <div className="flex flex-wrap gap-4">
-                  <Button size="lg" className="bg-blue-600 hover:bg-blue-700" asChild>
-                    <Link to="/design">Design Your Own</Link>
-                  </Button>
-                  <Button variant="outline" size="lg" asChild>
-                    <Link to="/shop">View Collection</Link>
-                  </Button>
-                </div>
+      <section className="relative bg-white overflow-hidden">
+        <div className="container mx-auto px-4 py-16 md:py-24">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div className="space-y-6">
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900">
+                Custom T-shirts <br />
+                <span className="text-blue-600">For Every Style</span>
+              </h1>
+              <p className="text-xl text-gray-600">
+                Express yourself with unique designs, premium quality, and perfect fit.
+                Create your own or shop our collections.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <Button size="lg" className="bg-blue-600 hover:bg-blue-700" asChild>
+                  <Link to="/design">Design Your Own</Link>
+                </Button>
+                <Button variant="outline" size="lg" asChild>
+                  <Link to="/shop">View Collection</Link>
+                </Button>
               </div>
-              <div className="relative">
-                <img
-                  src={tshirtImages.mockup1}
-                  alt="Featured T-shirt"
-                  className="w-full h-auto rounded-lg shadow-lg"
-                />
-                <div className="absolute top-4 right-4 bg-white px-4 py-2 rounded-full shadow-md">
-                  <span className="font-medium text-blue-600">New Arrival</span>
-                </div>
+            </div>
+            <div className="relative">
+              <img
+                src={tshirtImages.mockup1}
+                alt="Featured T-shirt"
+                className="w-full h-auto rounded-lg shadow-lg"
+              />
+              <div className="absolute top-4 right-4 bg-white px-4 py-2 rounded-full shadow-md">
+                <span className="font-medium text-blue-600">New Arrival</span>
               </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Featured Collection */}
-        <section className="py-16 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Featured Collection</h2>
-              <Button variant="link" className="text-blue-600" asChild>
-                <Link to="/shop">View All</Link>
+      {/* AI Design Section */}
+      <section className="py-16 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div className="order-2 md:order-1">
+              <img 
+                src="/assets/images/design/placeholder.svg" 
+                alt="AI Design" 
+                className="w-full h-auto rounded-lg shadow-lg"
+              />
+            </div>
+            <div className="order-1 md:order-2 space-y-6">
+              <div className="inline-flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                <Wand2 className="h-4 w-4 mr-1" />
+                New Feature
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900">
+                Generate Unique Designs <br />with AI
+              </h2>
+              <p className="text-lg text-gray-600">
+                Describe your dream design, and our AI will bring it to life! Create one-of-a-kind t-shirts 
+                in seconds with our innovative AI design generator.
+              </p>
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700" asChild>
+                <Link to="/ai-design">Try AI Design Generator</Link>
               </Button>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
-              {featuredTshirts.map((tshirt) => (
-                <TshirtCard
-                  key={tshirt.id}
-                  id={tshirt.id}
-                  name={tshirt.name}
-                  price={tshirt.price}
-                  image={tshirt.image}
-                />
-              ))}
-            </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Design Your Own CTA */}
-        <section className="py-16 bg-gray-100">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Create Your Perfect T-shirt</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
-              Express your style with our easy-to-use design tool. Choose from various themes,
-              answer simple questions, and we'll create a custom design just for you.
-            </p>
+      {/* Featured Collection */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Featured Collection</h2>
+            <Button variant="link" className="text-blue-600" asChild>
+              <Link to="/shop">View All</Link>
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {featuredTshirts.map((tshirt) => (
+              <TshirtCard
+                key={tshirt.id}
+                id={tshirt.id}
+                name={tshirt.name}
+                price={tshirt.price}
+                image={tshirt.image}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Design Your Own CTA */}
+      <section className="py-16 bg-gray-100">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Create Your Perfect T-shirt</h2>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
+            Express your style with our easy-to-use design tool. Choose from various themes,
+            answer simple questions, and we'll create a custom design just for you.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
             <Button size="lg" className="bg-blue-600 hover:bg-blue-700" asChild>
               <Link to="/design">Start Designing Now</Link>
             </Button>
+            <Button variant="outline" size="lg" asChild>
+              <Link to="/ai-design">
+                <Wand2 className="h-4 w-4 mr-2" />
+                Use AI Generator
+              </Link>
+            </Button>
           </div>
-        </section>
+        </div>
+      </section>
     </>
   );
 };
