@@ -14,6 +14,7 @@ import {
   Italic,
   Underline,
   ArrowDown,
+  Trash2,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -43,6 +44,11 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     const containerWidth = canvasContainerRef.current?.clientWidth || 300;
     const canvasSize = Math.min(containerWidth, 300); // Max width of design area
 
+    // Cleanup any previous canvas instance
+    if (canvas) {
+      canvas.dispose();
+    }
+
     const fabricCanvas = new fabric.Canvas(canvasRef.current, {
       width: canvasSize,
       height: canvasSize,
@@ -50,16 +56,6 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     });
 
     setCanvas(fabricCanvas);
-
-    // Add guides to show printable area boundaries
-    const createGuide = (coords: { x1: number; y1: number; x2: number; y2: number }) => {
-      return new fabric.Line([coords.x1, coords.y1, coords.x2, coords.y2], {
-        stroke: "#aaaaaa",
-        strokeDashArray: [5, 5],
-        selectable: false,
-        evented: false,
-      });
-    };
 
     // Add dashed rectangle for safety area
     const safetyAreaRect = new fabric.Rect({
@@ -89,26 +85,48 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
         evented: false,
       });
       fabricCanvas.add(placeholderText);
+      fabricCanvas.renderAll();
     }
 
-    // Add color change listener to update selected objects
-    fabricCanvas.on('selection:created', updateSelectedObjectColor);
-    fabricCanvas.on('selection:updated', updateSelectedObjectColor);
+    // Setup event listeners after initialization
+    fabricCanvas.on('object:modified', updateDesign);
+    fabricCanvas.on('object:added', updateDesign);
+    fabricCanvas.on('object:removed', updateDesign);
 
     // Cleanup on component unmount
     return () => {
-      fabricCanvas.off('selection:created', updateSelectedObjectColor);
-      fabricCanvas.off('selection:updated', updateSelectedObjectColor);
+      fabricCanvas.off('object:modified', updateDesign);
+      fabricCanvas.off('object:added', updateDesign);
+      fabricCanvas.off('object:removed', updateDesign);
       fabricCanvas.dispose();
     };
-  }, []);
+  }, [canvasRef.current]); // Only re-initialize when canvas ref changes
+
+  // Function to update the design and notify parent
+  const updateDesign = () => {
+    if (!canvas || !onDesignChange) return;
+
+    const dataURL = canvas.toDataURL({
+      format: "png",
+      quality: 1,
+      multiplier: 2, // Higher resolution
+    });
+    onDesignChange(dataURL);
+  };
 
   // Load the initial image if provided
   useEffect(() => {
     if (!canvas || !initialImage) return;
 
-    // Clear the canvas first
-    canvas.clear();
+    // Remove placeholder text if it exists
+    const objects = canvas.getObjects();
+    const placeholderText = objects.find(obj => 
+      obj.type === 'text' && 
+      (obj as fabric.Text).text === 'upload your design'
+    );
+    if (placeholderText) {
+      canvas.remove(placeholderText);
+    }
 
     fabric.Image.fromURL(initialImage, (img) => {
       // Scale image to fit within the canvas
@@ -130,11 +148,12 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
       
       canvas.add(img);
       canvas.renderAll();
+      updateDesign(); // Notify parent of design change
     });
   }, [canvas, initialImage]);
 
   // Function to update color of selected objects when color changes
-  const updateSelectedObjectColor = () => {
+  useEffect(() => {
     if (!canvas) return;
     
     const activeObject = canvas.getActiveObject();
@@ -145,57 +164,9 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
         activeObject.set('fill', currentColor);
       }
       canvas.renderAll();
-      
-      // Update design preview
-      if (onDesignChange) {
-        const dataURL = canvas.toDataURL({
-          format: "png",
-          quality: 1,
-          multiplier: 2,
-        });
-        onDesignChange(dataURL);
-      }
+      updateDesign();
     }
-  };
-
-  // Update canvas when the t-shirt color changes
-  useEffect(() => {
-    if (!canvas) return;
-    canvas.renderAll();
-  }, [tshirtColor, canvas]);
-
-  // Update selected object when color changes
-  useEffect(() => {
-    if (!canvas) return;
-    updateSelectedObjectColor();
   }, [currentColor, canvas]);
-
-  // Notify parent when design changes
-  useEffect(() => {
-    if (!canvas) return;
-
-    const updateDesign = () => {
-      if (canvas && onDesignChange) {
-        const dataURL = canvas.toDataURL({
-          format: "png",
-          quality: 1,
-          multiplier: 2, // Higher resolution
-        });
-        onDesignChange(dataURL);
-      }
-    };
-
-    // Listen for canvas changes
-    canvas.on("object:modified", updateDesign);
-    canvas.on("object:added", updateDesign);
-    canvas.on("object:removed", updateDesign);
-
-    return () => {
-      canvas.off("object:modified", updateDesign);
-      canvas.off("object:added", updateDesign);
-      canvas.off("object:removed", updateDesign);
-    };
-  }, [canvas, onDesignChange]);
 
   const handleAddText = () => {
     if (!canvas || !text.trim()) return;
@@ -213,7 +184,9 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
 
     canvas.add(fabricText);
     canvas.setActiveObject(fabricText);
+    canvas.renderAll();
     setText("");
+    updateDesign();
   };
 
   const handleAddCircle = () => {
@@ -226,6 +199,8 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     });
     canvas.add(circle);
     canvas.setActiveObject(circle);
+    canvas.renderAll();
+    updateDesign();
   };
 
   const handleAddSquare = () => {
@@ -239,6 +214,8 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     });
     canvas.add(square);
     canvas.setActiveObject(square);
+    canvas.renderAll();
+    updateDesign();
   };
 
   const handleDeleteSelected = () => {
@@ -246,6 +223,8 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     const activeObject = canvas.getActiveObject();
     if (activeObject) {
       canvas.remove(activeObject);
+      canvas.renderAll();
+      updateDesign();
     }
   };
 
@@ -278,6 +257,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
           canvas.add(img);
           canvas.setActiveObject(img);
           canvas.renderAll();
+          updateDesign();
         });
       };
       reader.readAsDataURL(file);
@@ -390,8 +370,13 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
           onChange={(e) => setCurrentColor(e.target.value)}
           className="w-10 h-10 rounded-md cursor-pointer"
         />
-        <Button variant="outline" className="ml-auto" onClick={handleDeleteSelected}>
-          Delete Selected
+        <Button 
+          variant="outline" 
+          className="ml-auto flex items-center gap-1" 
+          onClick={handleDeleteSelected}
+        >
+          <Trash2 size={16} />
+          Delete
         </Button>
       </div>
 

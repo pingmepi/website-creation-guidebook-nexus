@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Answer } from "@/components/design/QuestionFlow";
 import { toast } from "sonner";
@@ -101,7 +102,10 @@ export function useDesignState() {
       
       // Parse the design data JSON
       if (data.design_data) {
-        const designData = JSON.parse(data.design_data as string);
+        const designData = typeof data.design_data === 'string' 
+          ? JSON.parse(data.design_data) 
+          : data.design_data;
+        
         console.log("Parsed design data:", designData);
         
         if (designData.answers) {
@@ -109,15 +113,24 @@ export function useDesignState() {
         }
         
         if (designData.theme_id) {
-          // Fetch the theme data
-          const { data: themeData } = await supabase
-            .from('themes')
-            .select('*')
-            .eq('id', designData.theme_id)
-            .single();
+          // Make sure the theme_id is a valid UUID
+          try {
+            // Fetch the theme data - ensure theme_id is a string
+            const themeId = String(designData.theme_id);
             
-          if (themeData) {
-            setSelectedTheme(themeData);
+            const { data: themeData, error: themeError } = await supabase
+              .from('themes')
+              .select('*')
+              .eq('id', themeId)
+              .single();
+              
+            if (themeError) {
+              console.error("Error fetching theme:", themeError);
+            } else if (themeData) {
+              setSelectedTheme(themeData);
+            }
+          } catch (themeError) {
+            console.error("Error processing theme:", themeError);
           }
         }
       }
