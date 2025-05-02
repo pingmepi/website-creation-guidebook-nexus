@@ -5,8 +5,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import TshirtDesignPreview from "./TshirtDesignPreview";
 import { Separator } from "@/components/ui/separator";
-import { ShirtIcon, Save, Loader2 } from "lucide-react";
+import { ShirtIcon, Save, Loader2, Text, Square, Circle, Palette } from "lucide-react";
 import { Answer } from "./QuestionFlow";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import DesignCanvas from "./DesignCanvas";
 
 interface CustomizationSectionProps {
   answers: Answer[];
@@ -35,6 +37,8 @@ const CustomizationSection = ({
     name,
     value
   }));
+  
+  const [designName, setDesignName] = useState<string>("My Awesome Design");
 
   return (
     <div className="py-6">
@@ -87,6 +91,16 @@ const CustomizationSection = ({
                 </Select>
               </div>
             </div>
+            
+            {/* Design Tools */}
+            <div className="mt-6">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Edit Design</h4>
+              <DesignCanvas 
+                tshirtColor={tshirtColor} 
+                onDesignChange={onDesignChange} 
+                initialImage={designImage}
+              />
+            </div>
           </div>
         </div>
         
@@ -103,6 +117,8 @@ const CustomizationSection = ({
                 <Input
                   id="design-name"
                   placeholder="My Awesome Design"
+                  value={designName}
+                  onChange={(e) => setDesignName(e.target.value)}
                   className="w-full"
                   disabled={isGenerating}
                 />

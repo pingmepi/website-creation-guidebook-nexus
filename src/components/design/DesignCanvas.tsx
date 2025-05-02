@@ -19,10 +19,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface DesignCanvasProps {
   tshirtColor: string;
+  initialImage?: string;
   onDesignChange?: (dataURL: string) => void;
 }
 
-const DesignCanvas = ({ tshirtColor, onDesignChange }: DesignCanvasProps) => {
+const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const [canvas, setCanvas] = useState<fabric.Canvas | null>(null);
@@ -74,19 +75,21 @@ const DesignCanvas = ({ tshirtColor, onDesignChange }: DesignCanvasProps) => {
     });
     fabricCanvas.add(safetyAreaRect);
 
-    // Add placeholder text
-    const placeholderText = new fabric.Text("upload your design", {
-      left: canvasSize / 2,
-      top: canvasSize / 2,
-      originX: 'center',
-      originY: 'center',
-      fontFamily: 'Arial',
-      fontSize: 20,
-      fill: '#999999',
-      selectable: false,
-      evented: false,
-    });
-    fabricCanvas.add(placeholderText);
+    // Add placeholder text only if there's no initial image
+    if (!initialImage) {
+      const placeholderText = new fabric.Text("upload your design", {
+        left: canvasSize / 2,
+        top: canvasSize / 2,
+        originX: 'center',
+        originY: 'center',
+        fontFamily: 'Arial',
+        fontSize: 20,
+        fill: '#999999',
+        selectable: false,
+        evented: false,
+      });
+      fabricCanvas.add(placeholderText);
+    }
 
     // Add color change listener to update selected objects
     fabricCanvas.on('selection:created', updateSelectedObjectColor);
@@ -99,6 +102,36 @@ const DesignCanvas = ({ tshirtColor, onDesignChange }: DesignCanvasProps) => {
       fabricCanvas.dispose();
     };
   }, []);
+
+  // Load the initial image if provided
+  useEffect(() => {
+    if (!canvas || !initialImage) return;
+
+    // Clear the canvas first
+    canvas.clear();
+
+    fabric.Image.fromURL(initialImage, (img) => {
+      // Scale image to fit within the canvas
+      const canvasWidth = canvas.width || 300;
+      const canvasHeight = canvas.height || 300;
+      
+      const scaleFactor = Math.min(
+        (canvasWidth - 40) / img.width!,
+        (canvasHeight - 40) / img.height!
+      );
+      
+      img.scale(scaleFactor);
+      img.set({
+        left: canvasWidth / 2,
+        top: canvasHeight / 2,
+        originX: 'center',
+        originY: 'center'
+      });
+      
+      canvas.add(img);
+      canvas.renderAll();
+    });
+  }, [canvas, initialImage]);
 
   // Function to update color of selected objects when color changes
   const updateSelectedObjectColor = () => {

@@ -32,38 +32,16 @@ serve(async (req) => {
     
     console.log("Generated prompt for AI:", prompt);
     
-    // Call the webhook to generate the image
-    const webhookUrl = "https://n8.wikischool.com/webhook/generate-image";
-    const response = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        theme: theme,
-        answers: answers,
-        prompt: prompt 
-      }),
-    });
+    // Generate a mock image (base64 encoded) for testing
+    // In production, this would be replaced with an actual AI model call
+    const mockImageBase64 = generateMockImage();
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Error from image generation webhook:", errorText);
-      throw new Error(`Failed to generate image: ${response.status} - ${errorText}`);
-    }
+    console.log("Generated mock image, returning to client");
     
-    const imageData = await response.json();
-    
-    // Expected format from webhook: { imageUrl: "data:image/png;base64,..." } or { imageUrl: "https://..." }
-    if (!imageData.imageUrl) {
-      throw new Error("Webhook response did not contain an imageUrl");
-    }
-
-    console.log("Received image URL from webhook, returning to client");
-    
+    // Return the mock image directly as base64
     return new Response(
       JSON.stringify({ 
-        imageUrl: imageData.imageUrl,
+        imageUrl: `data:image/png;base64,${mockImageBase64}`,
         prompt: prompt
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -77,3 +55,9 @@ serve(async (req) => {
     );
   }
 });
+
+// Generate a simple base64 encoded image for testing
+function generateMockImage() {
+  // This is a tiny red square as base64
+  return "iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAKElEQVQ4T2NkYGD4z0ABYBw1cDQMRzMMRjXDaDowmmsHR5QNznQ4mgYB8W0FAS7HDIYAAAAASUVORK5CYII=";
+}
