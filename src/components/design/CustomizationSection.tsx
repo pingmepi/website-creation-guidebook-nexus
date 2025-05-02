@@ -1,13 +1,12 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import TshirtDesignPreview from "./TshirtDesignPreview";
 import { Separator } from "@/components/ui/separator";
-import { ShirtIcon, Save, Loader2, Text, Square, Circle, Palette } from "lucide-react";
+import { Save, Loader2 } from "lucide-react";
 import { Answer } from "./QuestionFlow";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DesignCanvas from "./DesignCanvas";
 
 interface CustomizationSectionProps {
@@ -17,6 +16,8 @@ interface CustomizationSectionProps {
   isSaving: boolean;
   isGenerating?: boolean;
   tshirtColors: Record<string, string>;
+  designName: string;
+  onDesignNameChange?: (name: string) => void;
   onColorChange: (color: string) => void;
   onDesignChange: (designDataUrl: string) => void;
   onSaveDesign: () => void;
@@ -29,6 +30,8 @@ const CustomizationSection = ({
   isSaving,
   isGenerating,
   tshirtColors,
+  designName,
+  onDesignNameChange,
   onColorChange,
   onDesignChange,
   onSaveDesign
@@ -37,8 +40,6 @@ const CustomizationSection = ({
     name,
     value
   }));
-  
-  const [designName, setDesignName] = useState<string>("My Awesome Design");
 
   return (
     <div className="py-6">
@@ -48,7 +49,7 @@ const CustomizationSection = ({
           id="design-name"
           placeholder="My Awesome Design"
           value={designName}
-          onChange={(e) => setDesignName(e.target.value)}
+          onChange={(e) => onDesignNameChange && onDesignNameChange(e.target.value)}
           className="text-lg font-medium w-full max-w-xs"
           disabled={isGenerating}
         />

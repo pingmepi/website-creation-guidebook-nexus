@@ -23,9 +23,11 @@ const Design = () => {
     isSaving,
     isGenerating,
     isLoading,
+    designName,
     setShowConfirmation,
     setShowLoginDialog,
     setTshirtColor,
+    setDesignName,
     handleThemeSelect,
     handleQuestionFlowComplete,
     handleConfirmDesign,
@@ -66,6 +68,8 @@ const Design = () => {
                     isSaving={isSaving}
                     isGenerating={isGenerating}
                     tshirtColors={TSHIRT_COLORS}
+                    designName={designName}
+                    onDesignNameChange={setDesignName}
                     onColorChange={setTshirtColor}
                     onDesignChange={handleDesignChange}
                     onSaveDesign={handleSaveDesign}

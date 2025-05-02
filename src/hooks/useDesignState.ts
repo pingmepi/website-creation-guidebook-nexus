@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Answer } from "@/components/design/QuestionFlow";
 import { toast } from "sonner";
@@ -93,14 +92,17 @@ export function useDesignState() {
         return;
       }
       
+      console.log("Fetched design data:", data);
+      
       // Set the design data
-      setDesignName(data.name);
-      setTshirtColor(data.t_shirt_color);
+      setDesignName(data.name || "Untitled Design");
+      setTshirtColor(data.t_shirt_color || TSHIRT_COLORS.WHITE);
       setDesignImage(data.preview_url);
       
       // Parse the design data JSON
       if (data.design_data) {
         const designData = JSON.parse(data.design_data as string);
+        console.log("Parsed design data:", designData);
         
         if (designData.answers) {
           setAnswers(designData.answers);
@@ -201,10 +203,13 @@ export function useDesignState() {
             theme: selectedTheme,
             answers: answers
           },
+          method: 'POST'
         }
       );
       
       if (aiError) throw new Error(aiError.message);
+      
+      console.log("AI response:", aiResponse);
       
       if (!aiResponse || !aiResponse.imageUrl) {
         throw new Error("No design image was generated");
@@ -304,11 +309,12 @@ export function useDesignState() {
         answer: answer.answer
       }));
       
+      // Important: Include the current designImage in the save data
       const designData = {
-        id: designId || crypto.randomUUID(),
+        id: designId,
         user_id: user.id,
         name: designName,
-        preview_url: designImage,
+        preview_url: designImage, // Always save the current designImage
         t_shirt_color: tshirtColor,
         theme: selectedTheme?.name || null,
         design_data: JSON.stringify({
@@ -319,10 +325,33 @@ export function useDesignState() {
       
       console.log("Saving design with data:", designData);
       
-      const { data, error } = await supabase
-        .from('designs')
-        .upsert(designData)
-        .select();
+      let result;
+      
+      // If we have a designId, update the existing record
+      if (designId) {
+        result = await supabase
+          .from('designs')
+          .update({
+            name: designName,
+            preview_url: designImage,
+            t_shirt_color: tshirtColor,
+            theme: selectedTheme?.name || null,
+            design_data: JSON.stringify({
+              answers: serializedAnswers,
+              theme_id: selectedTheme?.id
+            })
+          })
+          .eq('id', designId)
+          .select();
+      } else {
+        // Otherwise insert a new record
+        result = await supabase
+          .from('designs')
+          .insert(designData)
+          .select();
+      }
+      
+      const { data, error } = result;
       
       if (error) {
         console.error("Error saving design:", error);
@@ -333,6 +362,12 @@ export function useDesignState() {
       
       if (data && data.length > 0) {
         setDesignId(data[0].id as string);
+        
+        // Update URL with the design ID if it's not already there
+        const params = new URLSearchParams(location.search);
+        if (!params.has('id')) {
+          navigate(`/design?id=${data[0].id}`, { replace: true });
+        }
       }
       
       toast.success("Design saved successfully!", {
@@ -365,6 +400,7 @@ export function useDesignState() {
     setShowConfirmation,
     setShowLoginDialog,
     setTshirtColor,
+    setDesignName,
     handleThemeSelect,
     handleQuestionFlowComplete,
     handleConfirmDesign,
