@@ -42,29 +42,29 @@ const CustomizationSection = ({
 
   return (
     <div className="py-6">
-      <div className="flex flex-col md:flex-row md:gap-8">
-        {/* T-shirt preview */}
-        <div className="md:w-1/2">
-          <div className="bg-white rounded-lg p-4">
-            <h3 className="font-medium text-lg mb-4">Preview</h3>
-            <div className="relative">
-              <TshirtDesignPreview 
-                color={tshirtColor} 
-                designImage={designImage}
-              />
+      {/* Design Name at Top Left */}
+      <div className="mb-6">
+        <Input
+          id="design-name"
+          placeholder="My Awesome Design"
+          value={designName}
+          onChange={(e) => setDesignName(e.target.value)}
+          className="text-lg font-medium w-full max-w-xs"
+          disabled={isGenerating}
+        />
+      </div>
 
-              {isGenerating && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 rounded-lg">
-                  <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
-                  <p className="mt-4 text-blue-800 font-medium">Generating your design...</p>
-                  <p className="text-sm text-gray-500 mt-2">This may take a few moments</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="mt-4 space-y-4">
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-1">
+      <div className="flex flex-col space-y-8">
+        {/* Top Section: Design Canvas and Tools */}
+        <div className="flex flex-col md:flex-row md:gap-6">
+          {/* Design Tools - Left Side */}
+          <div className="md:w-1/3">
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <h3 className="font-medium text-lg mb-4">Design Tools</h3>
+              
+              {/* T-shirt Color Selection */}
+              <div className="mb-6">
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
                   T-Shirt Color
                 </label>
                 <Select
@@ -90,73 +90,73 @@ const CustomizationSection = ({
                   </SelectContent>
                 </Select>
               </div>
+              
+              {/* Design Canvas Tools */}
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Canvas Tools</h4>
+                <DesignCanvas 
+                  tshirtColor={tshirtColor} 
+                  onDesignChange={onDesignChange} 
+                  initialImage={designImage}
+                />
+              </div>
+              
+              {/* Save Button */}
+              <div className="mt-6">
+                <Button 
+                  onClick={onSaveDesign}
+                  disabled={isSaving || !designImage || isGenerating}
+                  className="w-full flex items-center justify-center gap-2"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      Save Design
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-            
-            {/* Design Tools */}
-            <div className="mt-6">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Edit Design</h4>
-              <DesignCanvas 
-                tshirtColor={tshirtColor} 
-                onDesignChange={onDesignChange} 
-                initialImage={designImage}
-              />
+          </div>
+          
+          {/* Design Preview - Right Side */}
+          <div className="md:w-2/3 mt-6 md:mt-0">
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <h3 className="font-medium text-lg mb-4">Preview</h3>
+              <div className="relative">
+                <TshirtDesignPreview 
+                  color={tshirtColor} 
+                  designImage={designImage}
+                />
+
+                {isGenerating && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 rounded-lg">
+                    <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+                    <p className="mt-4 text-blue-800 font-medium">Generating your design...</p>
+                    <p className="text-sm text-gray-500 mt-2">This may take a few moments</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
         
-        {/* Design details */}
-        <div className="md:w-1/2 mt-6 md:mt-0">
-          <div className="bg-white rounded-lg p-4">
-            <h3 className="font-medium text-lg mb-4">Design Details</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="design-name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Design Name
-                </label>
-                <Input
-                  id="design-name"
-                  placeholder="My Awesome Design"
-                  value={designName}
-                  onChange={(e) => setDesignName(e.target.value)}
-                  className="w-full"
-                  disabled={isGenerating}
-                />
+        {/* Design Preferences - Below Main Content */}
+        <div className="bg-white rounded-lg p-4 shadow-sm">
+          <h3 className="font-medium text-lg mb-4">Design Preferences</h3>
+          <div className="border rounded-md p-3 bg-gray-50">
+            {answers.map((answer, index) => (
+              <div key={index} className="py-2">
+                <p className="text-sm font-medium">{answer.question}</p>
+                <p className="text-sm text-gray-600">{answer.answer}</p>
+                {index < answers.length - 1 && <Separator className="my-2" />}
               </div>
-            </div>
-            
-            <div className="mt-6">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Design Preferences</h4>
-              <div className="border rounded-md p-3 bg-gray-50">
-                {answers.map((answer, index) => (
-                  <div key={index} className="py-2">
-                    <p className="text-sm font-medium">{answer.question}</p>
-                    <p className="text-sm text-gray-600">{answer.answer}</p>
-                    {index < answers.length - 1 && <Separator className="my-2" />}
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="mt-6 flex justify-end">
-              <Button 
-                onClick={onSaveDesign}
-                disabled={isSaving || !designImage || isGenerating}
-                className="flex items-center gap-2"
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4" />
-                    Save Design
-                  </>
-                )}
-              </Button>
-            </div>
+            ))}
           </div>
         </div>
       </div>

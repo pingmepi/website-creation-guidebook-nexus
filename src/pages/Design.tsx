@@ -40,12 +40,12 @@ const Design = () => {
       <Header />
       <div className="flex-grow">
         <div className="container mx-auto px-4 py-8">
-          <section className="max-w-4xl mx-auto text-center mb-8">
+          <section className="max-w-5xl mx-auto text-center mb-8">
             <h1 className="text-4xl font-bold text-gray-900 mb-6">Design Your T-Shirt</h1>
             <DesignStepper currentStep={currentStep} />
           </section>
           
-          <section className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-6">
+          <section className="max-w-5xl mx-auto bg-white rounded-lg shadow-sm p-6">
             {isLoading ? (
               <LoadingSpinner message="Loading design..." />
             ) : (
