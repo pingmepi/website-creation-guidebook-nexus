@@ -64,6 +64,7 @@ const FabricCanvas = ({
       fill: "transparent",
       selectable: false,
       evented: false,
+      id: "safetyArea", // Add id for identification
     });
     fabricCanvas.add(safetyAreaRect);
 
@@ -79,6 +80,7 @@ const FabricCanvas = ({
         fill: '#999999',
         selectable: false,
         evented: false,
+        id: "placeholderText", // Add id for identification
       });
       fabricCanvas.add(placeholderText);
     }
@@ -92,8 +94,10 @@ const FabricCanvas = ({
       
       // Update content state if we have objects beyond the safety rectangle
       const objects = fabricCanvas.getObjects();
-      const contentObjects = objects.filter(obj => obj.stroke !== "#5cb85c" && 
-        (obj.type !== 'text' || (obj as fabric.Text).text !== 'upload your design'));
+      const contentObjects = objects.filter(obj => 
+        obj.id !== "safetyArea" && 
+        obj.id !== "placeholderText"
+      );
         
       setHasContent(contentObjects.length > 0);
       
@@ -161,7 +165,7 @@ const FabricCanvas = ({
         }
       }
     };
-  }, []);
+  }, [width, height, backgroundColor]);
 
   // Handle drawing mode changes
   useEffect(() => {
@@ -183,30 +187,27 @@ const FabricCanvas = ({
     
     // Only load image if it's different from the last one we processed
     // This prevents the image from being reloaded on every render
-    if (initialImage !== lastInitialImageRef.current) {
-      console.log("Loading new initial image:", initialImage?.substring(0, 100) + "...");
+    if (initialImage && initialImage !== lastInitialImageRef.current) {
+      console.log("Loading new initial image in FabricCanvas");
       lastInitialImageRef.current = initialImage;
 
       // Clear placeholder text if it exists
       const objects = fabricCanvas.getObjects();
-      const placeholderText = objects.find(obj => 
-        obj.type === 'text' && 
-        (obj as fabric.Text).text === 'upload your design'
-      );
+      const placeholderText = objects.find(obj => obj.id === "placeholderText");
       
       if (placeholderText) {
         fabricCanvas.remove(placeholderText);
       }
 
       // Clear existing objects except safety area rectangle
-      fabricCanvas.getObjects().forEach(obj => {
-        if (obj.stroke !== "#5cb85c") { // Keep only the safety area rectangle
+      objects.forEach(obj => {
+        if (obj.id !== "safetyArea") { // Keep only the safety area rectangle
           fabricCanvas.remove(obj);
         }
       });
 
       // Load the new image if provided
-      if (initialImage) {
+      try {
         fabric.Image.fromURL(initialImage, (img) => {
           try {
             // Scale image to fit within the canvas
@@ -223,7 +224,8 @@ const FabricCanvas = ({
               left: canvasWidth / 2,
               top: canvasHeight / 2,
               originX: 'center',
-              originY: 'center'
+              originY: 'center',
+              id: "uploadedImage" // Add id for identification
             });
             
             fabricCanvas.add(img);
@@ -247,6 +249,8 @@ const FabricCanvas = ({
             console.error("Error loading initial image:", error);
           }
         }, { crossOrigin: 'anonymous' });
+      } catch (error) {
+        console.error("Error creating fabric Image from URL:", error);
       }
     }
   }, [initialImage, canvasInitialized]);
