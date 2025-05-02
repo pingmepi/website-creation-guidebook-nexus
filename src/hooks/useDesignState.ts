@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Answer } from "@/components/design/QuestionFlow";
 import { toast } from "sonner";
@@ -98,7 +97,12 @@ export function useDesignState() {
       // Set the design data
       setDesignName(data.name || "Untitled Design");
       setTshirtColor(data.t_shirt_color || TSHIRT_COLORS.WHITE);
-      setDesignImage(data.preview_url);
+      
+      // Make sure to set the designImage from the preview_url in the database
+      if (data.preview_url) {
+        setDesignImage(data.preview_url);
+        console.log("Set design image from preview_url:", data.preview_url);
+      }
       
       // Parse the design data JSON
       if (data.design_data) {
@@ -110,24 +114,34 @@ export function useDesignState() {
         
         if (designData.answers) {
           setAnswers(designData.answers);
+          console.log("Set answers:", designData.answers);
         }
         
+        // Fix the theme_id handling - ensure it's a proper UUID string
         if (designData.theme_id) {
-          // Make sure the theme_id is a valid UUID
           try {
-            // Fetch the theme data - ensure theme_id is a string
+            // Ensure theme_id is a valid string format that can be used for the database query
             const themeId = String(designData.theme_id);
             
-            const { data: themeData, error: themeError } = await supabase
-              .from('themes')
-              .select('*')
-              .eq('id', themeId)
-              .single();
+            // Validate if this looks like a UUID before querying
+            if (themeId && themeId !== "3" && themeId !== "undefined" && 
+                /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(themeId)) {
+              console.log("Attempting to fetch theme with ID:", themeId);
               
-            if (themeError) {
-              console.error("Error fetching theme:", themeError);
-            } else if (themeData) {
-              setSelectedTheme(themeData);
+              const { data: themeData, error: themeError } = await supabase
+                .from('themes')
+                .select('*')
+                .eq('id', themeId)
+                .single();
+                
+              if (themeError) {
+                console.error("Error fetching theme:", themeError);
+              } else if (themeData) {
+                setSelectedTheme(themeData);
+                console.log("Set selected theme:", themeData);
+              }
+            } else {
+              console.warn("Invalid theme ID format:", themeId, "- skipping theme fetch");
             }
           } catch (themeError) {
             console.error("Error processing theme:", themeError);

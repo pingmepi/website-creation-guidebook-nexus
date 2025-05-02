@@ -35,20 +35,22 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
   const [isItalic, setIsItalic] = useState<boolean>(false);
   const [isUnderline, setIsUnderline] = useState<boolean>(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [canvasInitialized, setCanvasInitialized] = useState<boolean>(false);
 
   // Initialize fabric canvas
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || !canvasContainerRef.current) return;
 
     // Calculate dimensions based on the t-shirt mockup
-    const containerWidth = canvasContainerRef.current?.clientWidth || 300;
+    const containerWidth = canvasContainerRef.current.clientWidth || 300;
     const canvasSize = Math.min(containerWidth, 300); // Max width of design area
 
-    // Cleanup any previous canvas instance
+    // Cleanup any previous canvas instance to prevent memory leaks
     if (canvas) {
       canvas.dispose();
     }
 
+    // Create new canvas
     const fabricCanvas = new fabric.Canvas(canvasRef.current, {
       width: canvasSize,
       height: canvasSize,
@@ -56,6 +58,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     });
 
     setCanvas(fabricCanvas);
+    setCanvasInitialized(true);
 
     // Add dashed rectangle for safety area
     const safetyAreaRect = new fabric.Rect({
@@ -85,22 +88,35 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
         evented: false,
       });
       fabricCanvas.add(placeholderText);
-      fabricCanvas.renderAll();
     }
 
-    // Setup event listeners after initialization
-    fabricCanvas.on('object:modified', updateDesign);
-    fabricCanvas.on('object:added', updateDesign);
-    fabricCanvas.on('object:removed', updateDesign);
+    // Setup event listeners for canvas changes
+    const updateDesignCallback = () => {
+      if (fabricCanvas && onDesignChange) {
+        const dataURL = fabricCanvas.toDataURL({
+          format: "png",
+          quality: 1,
+          multiplier: 2, // Higher resolution
+        });
+        onDesignChange(dataURL);
+      }
+    };
+
+    fabricCanvas.on('object:modified', updateDesignCallback);
+    fabricCanvas.on('object:added', updateDesignCallback);
+    fabricCanvas.on('object:removed', updateDesignCallback);
+
+    // Force render all objects
+    fabricCanvas.renderAll();
 
     // Cleanup on component unmount
     return () => {
-      fabricCanvas.off('object:modified', updateDesign);
-      fabricCanvas.off('object:added', updateDesign);
-      fabricCanvas.off('object:removed', updateDesign);
+      fabricCanvas.off('object:modified', updateDesignCallback);
+      fabricCanvas.off('object:added', updateDesignCallback);
+      fabricCanvas.off('object:removed', updateDesignCallback);
       fabricCanvas.dispose();
     };
-  }, [canvasRef.current]); // Only re-initialize when canvas ref changes
+  }, [canvasRef.current, canvasContainerRef.current]); // Only re-initialize when canvas ref changes
 
   // Function to update the design and notify parent
   const updateDesign = () => {
@@ -116,9 +132,11 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
 
   // Load the initial image if provided
   useEffect(() => {
-    if (!canvas || !initialImage) return;
+    if (!canvas || !canvasInitialized || !initialImage) return;
 
-    // Remove placeholder text if it exists
+    console.log("Loading initial image into canvas:", initialImage);
+
+    // Clear placeholder text if it exists
     const objects = canvas.getObjects();
     const placeholderText = objects.find(obj => 
       obj.type === 'text' && 
@@ -127,6 +145,13 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     if (placeholderText) {
       canvas.remove(placeholderText);
     }
+
+    // Clear existing objects except safety area rectangle
+    canvas.getObjects().forEach(obj => {
+      if (obj.stroke !== "#5cb85c") { // Keep only the safety area rectangle
+        canvas.remove(obj);
+      }
+    });
 
     fabric.Image.fromURL(initialImage, (img) => {
       // Scale image to fit within the canvas
@@ -147,10 +172,11 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
       });
       
       canvas.add(img);
+      canvas.setActiveObject(img);
       canvas.renderAll();
       updateDesign(); // Notify parent of design change
-    });
-  }, [canvas, initialImage]);
+    }, { crossOrigin: 'anonymous' });
+  }, [canvas, initialImage, canvasInitialized]);
 
   // Function to update color of selected objects when color changes
   useEffect(() => {
@@ -384,6 +410,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
         <div 
           ref={canvasContainerRef}
           className="canvas-container relative border border-gray-300 shadow-md mb-4"
+          style={{ minHeight: "300px" }} /* Ensure the canvas container has a minimum height */
         >
           <canvas ref={canvasRef} />
         </div>
