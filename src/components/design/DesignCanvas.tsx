@@ -13,6 +13,8 @@ import ColorControls from "./canvas/ColorControls";
 import FabricCanvas from "./canvas/FabricCanvas";
 import ToolTab from "./canvas/ToolTab";
 import CanvasContainer from "./canvas/CanvasContainer";
+import { Button } from "@/components/ui/button";
+import { Save } from "lucide-react";
 
 interface DesignCanvasProps {
   tshirtColor: string;
@@ -29,6 +31,11 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
   const [isBold, setIsBold] = useState<boolean>(false);
   const [isItalic, setIsItalic] = useState<boolean>(false);
   const [isUnderline, setIsUnderline] = useState<boolean>(false);
+  
+  // Drawing tool states
+  const [isDrawingMode, setIsDrawingMode] = useState<boolean>(false);
+  const [brushSize, setBrushSize] = useState<number>(3);
+  const [pendingDesignChanges, setPendingDesignChanges] = useState<boolean>(false);
   
   const handleAddText = () => {
     if (!canvas || !text.trim()) return;
@@ -48,6 +55,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     canvas.setActiveObject(fabricText);
     canvas.renderAll();
     setText("");
+    setPendingDesignChanges(true);
   };
 
   const handleAddCircle = () => {
@@ -61,6 +69,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     canvas.add(circle);
     canvas.setActiveObject(circle);
     canvas.renderAll();
+    setPendingDesignChanges(true);
   };
 
   const handleAddSquare = () => {
@@ -75,6 +84,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     canvas.add(square);
     canvas.setActiveObject(square);
     canvas.renderAll();
+    setPendingDesignChanges(true);
   };
 
   const handleDeleteSelected = () => {
@@ -83,6 +93,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     if (activeObject) {
       canvas.remove(activeObject);
       canvas.renderAll();
+      setPendingDesignChanges(true);
     }
   };
 
@@ -114,10 +125,51 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
           canvas.add(img);
           canvas.setActiveObject(img);
           canvas.renderAll();
+          setPendingDesignChanges(true);
         });
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // Function to explicitly save design changes
+  const handleSaveDesignChanges = () => {
+    if (!canvas || !onDesignChange) return;
+    
+    const dataURL = canvas.toDataURL({
+      format: "png",
+      quality: 1,
+      multiplier: 2, // Higher resolution
+    });
+    
+    onDesignChange(dataURL);
+    setPendingDesignChanges(false);
+  };
+
+  // Function to toggle drawing mode
+  const handleToggleDrawingMode = () => {
+    setIsDrawingMode(!isDrawingMode);
+  };
+  
+  // Function to handle brush size changes
+  const handleBrushSizeChange = (values: number[]) => {
+    if (values.length > 0) {
+      setBrushSize(values[0]);
+    }
+  };
+  
+  // Function to clear canvas (except safety rectangle)
+  const handleClearCanvas = () => {
+    if (!canvas) return;
+    
+    canvas.getObjects().forEach(obj => {
+      if (obj.stroke !== "#5cb85c") { // Keep only the safety area rectangle
+        canvas.remove(obj);
+      }
+    });
+    
+    canvas.renderAll();
+    setPendingDesignChanges(true);
   };
 
   // Function to update color of selected objects when color changes
@@ -132,6 +184,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
         activeObject.set('fill', currentColor);
       }
       canvas.renderAll();
+      setPendingDesignChanges(true);
     }
   }, [currentColor, canvas]);
 
@@ -140,6 +193,12 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     if (!canvasContainerRef.current) return 300;
     const containerWidth = canvasContainerRef.current.clientWidth || 300;
     return Math.min(containerWidth, 300); // Max width of design area
+  };
+
+  // Handle design changes with better batching
+  const handleDesignChange = (dataURL: string) => {
+    setPendingDesignChanges(true);
+    // Don't immediately call onDesignChange, let the user explicitly save
   };
 
   return (
@@ -192,7 +251,13 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
         </ToolTab>
 
         <ToolTab value="drawing">
-          <DrawingTools />
+          <DrawingTools 
+            isDrawingMode={isDrawingMode}
+            onToggleDrawingMode={handleToggleDrawingMode}
+            brushSize={brushSize}
+            onBrushSizeChange={handleBrushSizeChange}
+            onClearCanvas={handleClearCanvas}
+          />
         </ToolTab>
       </Tabs>
       
@@ -210,10 +275,25 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
           height={getCanvasSize()}
           backgroundColor="#f0f0f0"
           onCanvasReady={setCanvas}
-          onDesignChange={onDesignChange}
+          onDesignChange={handleDesignChange}
           initialImage={initialImage}
+          isDrawingMode={isDrawingMode}
+          brushSize={brushSize}
         />
       </CanvasContainer>
+      
+      {pendingDesignChanges && (
+        <div className="mt-4 flex justify-end">
+          <Button 
+            variant="default" 
+            onClick={handleSaveDesignChanges}
+            className="flex items-center gap-2"
+          >
+            <Save size={16} />
+            Save Design Changes
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

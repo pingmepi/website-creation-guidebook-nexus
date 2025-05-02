@@ -9,6 +9,8 @@ interface FabricCanvasProps {
   onCanvasReady: (canvas: fabric.Canvas) => void;
   onDesignChange?: (dataURL: string) => void;
   initialImage?: string;
+  isDrawingMode?: boolean;
+  brushSize?: number;
 }
 
 const FabricCanvas = ({
@@ -18,10 +20,16 @@ const FabricCanvas = ({
   onCanvasReady,
   onDesignChange,
   initialImage,
+  isDrawingMode = false,
+  brushSize = 2,
 }: FabricCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   const [canvasInitialized, setCanvasInitialized] = useState(false);
+  const pendingChangesRef = useRef(false);
+  
+  // Track if design has actual content beyond placeholder
+  const [hasContent, setHasContent] = useState(false);
 
   // Initialize canvas
   useEffect(() => {
@@ -32,6 +40,7 @@ const FabricCanvas = ({
       width,
       height,
       backgroundColor,
+      preserveObjectStacking: true,
     });
     fabricCanvasRef.current = fabricCanvas;
 
@@ -65,21 +74,42 @@ const FabricCanvas = ({
       fabricCanvas.add(placeholderText);
     }
 
-    // Setup event listeners for canvas changes
+    // Setup debounced design update function
+    let debounceTimeout: number | null = null;
+    
     const updateDesignCallback = () => {
-      if (fabricCanvas && onDesignChange) {
-        const dataURL = fabricCanvas.toDataURL({
-          format: "png",
-          quality: 1,
-          multiplier: 2, // Higher resolution
-        });
-        onDesignChange(dataURL);
+      // Mark that there are pending changes
+      pendingChangesRef.current = true;
+      
+      // Update content state if we have objects beyond the safety rectangle
+      const objects = fabricCanvas.getObjects();
+      const contentObjects = objects.filter(obj => obj.stroke !== "#5cb85c" && 
+        (obj.type !== 'text' || (obj as fabric.Text).text !== 'upload your design'));
+        
+      setHasContent(contentObjects.length > 0);
+      
+      // Debounce the actual design change notification
+      if (debounceTimeout) {
+        window.clearTimeout(debounceTimeout);
       }
+      
+      debounceTimeout = window.setTimeout(() => {
+        if (fabricCanvas && onDesignChange && pendingChangesRef.current) {
+          const dataURL = fabricCanvas.toDataURL({
+            format: "png",
+            quality: 1,
+            multiplier: 2, // Higher resolution
+          });
+          onDesignChange(dataURL);
+          pendingChangesRef.current = false;
+        }
+      }, 500); // Wait 500ms after last change before triggering onDesignChange
     };
 
     fabricCanvas.on('object:modified', updateDesignCallback);
     fabricCanvas.on('object:added', updateDesignCallback);
     fabricCanvas.on('object:removed', updateDesignCallback);
+    fabricCanvas.on('path:created', updateDesignCallback);
 
     // Force render all objects
     fabricCanvas.renderAll();
@@ -90,26 +120,50 @@ const FabricCanvas = ({
 
     // Cleanup on component unmount - Fix for the removeChild error
     return () => {
-      // Remove event listeners first
-      fabricCanvas.off('object:modified', updateDesignCallback);
-      fabricCanvas.off('object:added', updateDesignCallback);
-      fabricCanvas.off('object:removed', updateDesignCallback);
+      if (debounceTimeout) {
+        window.clearTimeout(debounceTimeout);
+      }
       
-      // Safe dispose method to prevent the removeChild error
-      try {
-        if (fabricCanvas) {
-          // Clear all objects from canvas before disposal
+      // Remove event listeners first
+      if (fabricCanvas) {
+        fabricCanvas.off('object:modified', updateDesignCallback);
+        fabricCanvas.off('object:added', updateDesignCallback);
+        fabricCanvas.off('object:removed', updateDesignCallback);
+        fabricCanvas.off('path:created', updateDesignCallback);
+        
+        // Safe dispose method to prevent the removeChild error
+        try {
+          // Clear all objects from canvas before disposal to prevent errors
           fabricCanvas.getObjects().forEach((obj) => {
             fabricCanvas.remove(obj);
           });
+          
+          // These steps help prevent the "removeChild" error by ensuring
+          // we're not removing DOM elements that are already gone
           fabricCanvas.clear();
           fabricCanvas.dispose();
+          
+          // Clear the ref to avoid accessing disposed canvas
+          fabricCanvasRef.current = null;
+        } catch (error) {
+          console.error("Error during canvas disposal:", error);
         }
-      } catch (error) {
-        console.error("Error during canvas disposal:", error);
       }
     };
   }, []);
+
+  // Handle drawing mode changes
+  useEffect(() => {
+    const fabricCanvas = fabricCanvasRef.current;
+    if (!fabricCanvas || !canvasInitialized) return;
+    
+    fabricCanvas.isDrawingMode = isDrawingMode;
+    
+    if (isDrawingMode && fabricCanvas.freeDrawingBrush) {
+      fabricCanvas.freeDrawingBrush.width = brushSize;
+      fabricCanvas.freeDrawingBrush.color = "#000000";
+    }
+  }, [isDrawingMode, brushSize, canvasInitialized]);
 
   // Load the initial image if provided
   useEffect(() => {
@@ -158,6 +212,9 @@ const FabricCanvas = ({
       fabricCanvas.setActiveObject(img);
       fabricCanvas.renderAll();
       
+      // Mark that we have content
+      setHasContent(true);
+      
       // Notify parent of design change
       if (onDesignChange) {
         const dataURL = fabricCanvas.toDataURL({
@@ -169,6 +226,21 @@ const FabricCanvas = ({
       }
     }, { crossOrigin: 'anonymous' });
   }, [initialImage, canvasInitialized]);
+
+  // Function to save design explicitly
+  const saveDesign = () => {
+    const fabricCanvas = fabricCanvasRef.current;
+    if (!fabricCanvas || !onDesignChange || !hasContent) return;
+    
+    const dataURL = fabricCanvas.toDataURL({
+      format: "png",
+      quality: 1,
+      multiplier: 2,
+    });
+    
+    onDesignChange(dataURL);
+    pendingChangesRef.current = false;
+  };
 
   return <canvas ref={canvasRef} />;
 };
