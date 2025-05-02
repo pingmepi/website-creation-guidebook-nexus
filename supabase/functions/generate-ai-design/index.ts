@@ -1,5 +1,6 @@
 
-import { createClient } from '@supabase/supabase-js';
+// Import using npm: prefix for Node.js packages in Edge Functions
+import { createClient } from 'npm:@supabase/supabase-js';
 
 // CORS headers for all responses
 const corsHeaders = {
@@ -8,24 +9,28 @@ const corsHeaders = {
 };
 
 // This is now a Supabase Edge Function handler that works with Node.js
-export default async function handler(req, res) {
+export default async function handler(req) {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    res.writeHead(200, corsHeaders);
-    res.end();
-    return;
+    return new Response(null, { 
+      headers: corsHeaders 
+    });
   }
 
   try {
     // Parse the request body
-    const { theme, answers } = req.body;
+    const { theme, answers } = await req.json();
     console.log("Received design generation request with theme:", theme);
     console.log("User answers:", answers);
     
     if (!theme || !answers || answers.length === 0) {
-      res.writeHead(400, { ...corsHeaders, 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: "Theme and answers are required" }));
-      return;
+      return new Response(
+        JSON.stringify({ error: "Theme and answers are required" }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
     
     // Build a prompt based on the theme and answers
@@ -43,16 +48,25 @@ export default async function handler(req, res) {
     console.log("Generated mock image, returning to client");
     
     // Return the mock image directly as base64
-    res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ 
-      imageUrl: `data:image/png;base64,${mockImageBase64}`,
-      prompt: prompt
-    }));
+    return new Response(
+      JSON.stringify({ 
+        imageUrl: `data:image/png;base64,${mockImageBase64}`,
+        prompt: prompt
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   } catch (error) {
     console.error("Error in generate-ai-design function:", error);
     
-    res.writeHead(500, { ...corsHeaders, 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: error.message }));
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   }
 }
 
