@@ -1,8 +1,8 @@
+
 import { useState, useRef } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Image, Palette, Pencil, Square, Text as TextIcon, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { fabric } from "fabric";
 
 // Import our components
@@ -10,10 +10,10 @@ import TextTools from "./canvas/TextTools";
 import ShapeTools from "./canvas/ShapeTools";
 import ImageTools from "./canvas/ImageTools";
 import DrawingTools from "./canvas/DrawingTools";
-import ColorControls from "./canvas/ColorControls";
 import FabricCanvas from "./canvas/FabricCanvas";
 import ToolTab from "./canvas/ToolTab";
 import CanvasContainer from "./canvas/CanvasContainer";
+import ShapeOperations from "./canvas/ShapeOperations";
 
 interface DesignCanvasProps {
   tshirtColor: string;
@@ -27,7 +27,6 @@ const DesignCanvas = ({
   onDesignChange 
 }: DesignCanvasProps) => {
   const canvasContainerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvas, setCanvas] = useState<fabric.Canvas | null>(null);
   
   // State for text editing
@@ -46,17 +45,15 @@ const DesignCanvas = ({
   const [brushSize, setBrushSize] = useState<number>(2);
   
   // Refs to track state
-  const canvasInitializedRef = useRef(false);
   const updateInProgressRef = useRef(false);
-  const lastProcessedImageRef = useRef<string | null>(null);
-  const initialImageLoadedRef = useRef(false);
-  const isGeneratingDataURLRef = useRef(false);
-  
-  // Create a stable reference to the onDesignChange callback
   const onDesignChangeRef = useRef(onDesignChange);
   
+  // Create stable reference to callback
+  useState(() => {
+    onDesignChangeRef.current = onDesignChange;
+  });
+  
   const handleAddText = () => {
-    // Simple validation - avoid excessive checks that might cause issues
     if (!canvas || !text.trim() || updateInProgressRef.current) return;
 
     try {
@@ -81,34 +78,8 @@ const DesignCanvas = ({
       canvas.setActiveObject(fabricText);
       canvas.renderAll();
       setText("");
-
-      // Generate data URL directly instead of calling updateDesign
-      setTimeout(() => {
-        try {
-          if (canvas && onDesignChangeRef.current) {
-            // Set flag to prevent loops
-            isGeneratingDataURLRef.current = true;
-
-            const dataURL = canvas.toDataURL({
-              format: "png",
-              quality: 1,
-              multiplier: 2,
-            });
-
-            onDesignChangeRef.current(dataURL);
-
-            // Reset flag after a short delay
-            setTimeout(() => {
-              isGeneratingDataURLRef.current = false;
-            }, 100);
-          }
-        } catch (dataURLError) {
-          console.error("Error generating data URL:", dataURLError);
-          isGeneratingDataURLRef.current = false;
-        } finally {
-          updateInProgressRef.current = false;
-        }
-      }, 100);
+      
+      updateInProgressRef.current = false;
     } catch (error) {
       console.error("Error adding text:", error);
       updateInProgressRef.current = false;
@@ -116,11 +87,9 @@ const DesignCanvas = ({
   };
 
   const handleAddCircle = () => {
-    // Simple validation - avoid excessive checks that might cause issues
     if (!canvas || updateInProgressRef.current) return;
 
     try {
-      console.log("Adding circle element");
       updateInProgressRef.current = true;
 
       // Create the circle
@@ -129,41 +98,15 @@ const DesignCanvas = ({
         fill: currentColor,
         left: 100,
         top: 100,
-        id: `circle_${Date.now()}` // Add unique ID
+        id: `circle_${Date.now()}`
       });
 
       // Add the circle to canvas
       canvas.add(circle);
       canvas.setActiveObject(circle);
       canvas.renderAll();
-
-      // Generate data URL directly instead of calling updateDesign
-      setTimeout(() => {
-        try {
-          if (canvas && onDesignChangeRef.current) {
-            // Set flag to prevent loops
-            isGeneratingDataURLRef.current = true;
-
-            const dataURL = canvas.toDataURL({
-              format: "png",
-              quality: 1,
-              multiplier: 2,
-            });
-
-            onDesignChangeRef.current(dataURL);
-
-            // Reset flag after a short delay
-            setTimeout(() => {
-              isGeneratingDataURLRef.current = false;
-            }, 100);
-          }
-        } catch (dataURLError) {
-          console.error("Error generating data URL:", dataURLError);
-          isGeneratingDataURLRef.current = false;
-        } finally {
-          updateInProgressRef.current = false;
-        }
-      }, 100);
+      
+      updateInProgressRef.current = false;
     } catch (error) {
       console.error("Error adding circle:", error);
       updateInProgressRef.current = false;
@@ -171,11 +114,9 @@ const DesignCanvas = ({
   };
 
   const handleAddSquare = () => {
-    // Simple validation - avoid excessive checks that might cause issues
     if (!canvas || updateInProgressRef.current) return;
 
     try {
-      console.log("Adding square element");
       updateInProgressRef.current = true;
 
       // Create the square
@@ -185,41 +126,15 @@ const DesignCanvas = ({
         fill: currentColor,
         left: 100,
         top: 100,
-        id: `square_${Date.now()}` // Add unique ID
+        id: `square_${Date.now()}`
       });
 
       // Add the square to canvas
       canvas.add(square);
       canvas.setActiveObject(square);
       canvas.renderAll();
-
-      // Generate data URL directly instead of calling updateDesign
-      setTimeout(() => {
-        try {
-          if (canvas && onDesignChangeRef.current) {
-            // Set flag to prevent loops
-            isGeneratingDataURLRef.current = true;
-
-            const dataURL = canvas.toDataURL({
-              format: "png",
-              quality: 1,
-              multiplier: 2,
-            });
-
-            onDesignChangeRef.current(dataURL);
-
-            // Reset flag after a short delay
-            setTimeout(() => {
-              isGeneratingDataURLRef.current = false;
-            }, 100);
-          }
-        } catch (dataURLError) {
-          console.error("Error generating data URL:", dataURLError);
-          isGeneratingDataURLRef.current = false;
-        } finally {
-          updateInProgressRef.current = false;
-        }
-      }, 100);
+      
+      updateInProgressRef.current = false;
     } catch (error) {
       console.error("Error adding square:", error);
       updateInProgressRef.current = false;
@@ -227,7 +142,6 @@ const DesignCanvas = ({
   };
 
   const handleDeleteSelected = () => {
-    // Simple validation - avoid excessive checks that might cause issues
     if (!canvas || updateInProgressRef.current) return;
 
     try {
@@ -243,34 +157,8 @@ const DesignCanvas = ({
         console.log(`Deleting object: ${activeObject.type} (id: ${activeObject.id})`);
         canvas.remove(activeObject);
         canvas.renderAll();
-
-        // Generate data URL directly instead of calling updateDesign
-        setTimeout(() => {
-          try {
-            if (canvas && onDesignChangeRef.current) {
-              // Set flag to prevent loops
-              isGeneratingDataURLRef.current = true;
-
-              const dataURL = canvas.toDataURL({
-                format: "png",
-                quality: 1,
-                multiplier: 2,
-              });
-
-              onDesignChangeRef.current(dataURL);
-
-              // Reset flag after a short delay
-              setTimeout(() => {
-                isGeneratingDataURLRef.current = false;
-              }, 100);
-            }
-          } catch (dataURLError) {
-            console.error("Error generating data URL:", dataURLError);
-            isGeneratingDataURLRef.current = false;
-          } finally {
-            updateInProgressRef.current = false;
-          }
-        }, 100);
+        
+        updateInProgressRef.current = false;
       }
     } catch (error) {
       console.error("Error deleting object:", error);
@@ -280,7 +168,7 @@ const DesignCanvas = ({
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !canvas || !canvas.getContext || updateInProgressRef.current) return;
+    if (!file || !canvas || updateInProgressRef.current) return;
 
     console.log("Processing uploaded image");
     updateInProgressRef.current = true;
@@ -288,15 +176,7 @@ const DesignCanvas = ({
     try {
       const reader = new FileReader();
       reader.onload = (event) => {
-
         try {
-          // Check if canvas is still valid
-          if (!canvas || !canvas.getContext) {
-            console.error("Canvas is no longer valid during image data processing");
-            updateInProgressRef.current = false;
-            return;
-          }
-
           const imgData = event.target?.result as string;
           setUploadedImage(imgData);
 
@@ -310,98 +190,45 @@ const DesignCanvas = ({
             canvas.remove(placeholderText);
           }
 
-          // Remove existing images
-          const existingImages = objects.filter((obj: any) => obj.type === 'image');
-          if (existingImages.length > 0) {
-            console.log(`Removing ${existingImages.length} existing images`);
-            existingImages.forEach((img: any) => canvas.remove(img));
-          }
-
           // Now add the new image
-          try {
-            fabric.Image.fromURL(imgData, (img: any) => {
-              try {
-                // Check if canvas is still valid
-                if (!canvas || !canvas.getContext) {
-                  console.error("Canvas is no longer valid during image processing");
-                  updateInProgressRef.current = false;
-                  return;
-                }
+          fabric.Image.fromURL(imgData, (img: any) => {
+            try {
+              // Scale image to fit within the canvas
+              const canvasWidth = canvas.width || 300;
+              const canvasHeight = canvas.height || 300;
 
-                // Scale image to fit within the canvas
-                const canvasWidth = canvas.width || 300;
-                const canvasHeight = canvas.height || 300;
+              const scaleFactor = Math.min(
+                (canvasWidth - 40) / img.width!,
+                (canvasHeight - 40) / img.height!
+              );
 
-                const scaleFactor = Math.min(
-                  (canvasWidth - 40) / img.width!,
-                  (canvasHeight - 40) / img.height!
-                );
+              img.scale(scaleFactor);
+              img.set({
+                left: canvasWidth / 2,
+                top: canvasHeight / 2,
+                originX: 'center',
+                originY: 'center',
+                id: "uploadedImage"
+              });
 
-                img.scale(scaleFactor);
-                img.set({
-                  left: canvasWidth / 2,
-                  top: canvasHeight / 2,
-                  originX: 'center',
-                  originY: 'center',
-                  id: "uploadedImage" // Add an ID to identify this object
-                });
-
-                // Final check that canvas is still valid before adding the image
-                if (canvas && canvas.getContext) {
-                  canvas.add(img);
-                  canvas.setActiveObject(img);
-                  canvas.renderAll();
-                  console.log("Uploaded image added to canvas");
-
-                  // Generate data URL directly instead of calling updateDesign
-                  setTimeout(() => {
-                    try {
-                      if (onDesignChangeRef.current && canvas) {
-                        // Set flag to prevent loops
-                        isGeneratingDataURLRef.current = true;
-
-                        const dataURL = canvas.toDataURL({
-                          format: "png",
-                          quality: 1,
-                          multiplier: 2,
-                        });
-
-                        onDesignChangeRef.current(dataURL);
-
-                        // Reset flag after a short delay
-                        setTimeout(() => {
-                          isGeneratingDataURLRef.current = false;
-                        }, 100);
-                      }
-                    } catch (dataURLError) {
-                      console.error("Error generating data URL:", dataURLError);
-                      isGeneratingDataURLRef.current = false;
-                    } finally {
-                      updateInProgressRef.current = false;
-                    }
-                  }, 200);
-                } else {
-                  console.error("Canvas became invalid before adding image");
-                  updateInProgressRef.current = false;
-                }
-              } catch (imgError) {
-                console.error("Error processing uploaded image:", imgError);
-                updateInProgressRef.current = false;
-              }
-            });
-          } catch (imgLoadError) {
-            console.error("Error loading image from data URL:", imgLoadError);
-            updateInProgressRef.current = false;
-          }
-        } catch (dataError) {
-          console.error("Error reading image data:", dataError);
+              canvas.add(img);
+              canvas.setActiveObject(img);
+              canvas.renderAll();
+              console.log("Uploaded image added to canvas");
+            } catch (imgError) {
+              console.error("Error processing uploaded image:", imgError);
+            } finally {
+              updateInProgressRef.current = false;
+            }
+          });
+        } catch (error) {
+          console.error("Error processing image data:", error);
           updateInProgressRef.current = false;
         }
       };
       reader.onerror = (error) => {
         console.error("Error reading file:", error);
         updateInProgressRef.current = false;
-
       };
       reader.readAsDataURL(file);
     } catch (fileError) {
@@ -433,6 +260,14 @@ const DesignCanvas = ({
     });
     
     canvas.renderAll();
+  };
+  
+  // Track the design changes from the canvas
+  const handleDesignUpdate = (dataURL: string) => {
+    console.log("Design updated in DesignCanvas component");
+    if (onDesignChange) {
+      onDesignChange(dataURL);
+    }
   };
 
   return (
@@ -474,9 +309,15 @@ const DesignCanvas = ({
         </ToolTab>
         
         <ToolTab value="shapes">
-          <ShapeTools
-            onAddCircle={handleAddCircle}
-            onAddSquare={handleAddSquare}
+          <ShapeOperations
+            currentColor={currentColor}
+            addObject={(obj) => {
+              if (canvas) {
+                canvas.add(obj);
+                canvas.setActiveObject(obj);
+                canvas.renderAll();
+              }
+            }}
           />
         </ToolTab>
         
@@ -520,7 +361,7 @@ const DesignCanvas = ({
       <CanvasContainer>
         <FabricCanvas
           initialImage={initialImage}
-          onDesignChange={onDesignChange}
+          onDesignChange={handleDesignUpdate}
           isDrawingMode={isDrawingMode}
           brushSize={brushSize}
           onCanvasReady={setCanvas}

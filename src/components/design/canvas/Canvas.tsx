@@ -80,6 +80,7 @@ const Canvas = ({
       
       // Set up event handlers
       fabricCanvas.on('object:modified', handleCanvasChange);
+      fabricCanvas.on('object:added', handleCanvasChange);
       fabricCanvas.on('object:removed', handleCanvasChange);
       
       fabricCanvas.renderAll();
@@ -205,7 +206,8 @@ const Canvas = ({
           } finally {
             updateInProgressRef.current = false;
           }
-        }
+        },
+        { crossOrigin: 'anonymous' }
       );
     } catch (error) {
       console.error("Error in initialImage effect:", error);

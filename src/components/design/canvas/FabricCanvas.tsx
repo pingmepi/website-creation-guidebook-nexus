@@ -28,13 +28,21 @@ const FabricCanvas = ({
   const [canvasInitialized, setCanvasInitialized] = useState(false);
   const pendingChangesRef = useRef(false);
   const lastInitialImageRef = useRef<string | undefined>(initialImage);
+  const onDesignChangeRef = useRef(onDesignChange);
   
   // Track if design has actual content beyond placeholder
   const [hasContent, setHasContent] = useState(false);
-
+  
+  // Update reference when callback changes
+  useEffect(() => {
+    onDesignChangeRef.current = onDesignChange;
+  }, [onDesignChange]);
+  
   // Initialize canvas
   useEffect(() => {
     if (!canvasRef.current) return;
+
+    console.log("Initializing FabricCanvas component");
 
     // Create new canvas
     const fabricCanvas = new fabric.Canvas(canvasRef.current, {
@@ -95,16 +103,17 @@ const FabricCanvas = ({
       }
       
       debounceTimeout = window.setTimeout(() => {
-        if (fabricCanvas && onDesignChange && pendingChangesRef.current) {
+        if (fabricCanvas && onDesignChangeRef.current && pendingChangesRef.current) {
           const dataURL = fabricCanvas.toDataURL({
             format: "png",
             quality: 1,
             multiplier: 2, // Higher resolution
           });
-          onDesignChange(dataURL);
+          onDesignChangeRef.current(dataURL);
           pendingChangesRef.current = false;
+          console.log("Design change triggered from FabricCanvas");
         }
-      }, 500); // Wait 500ms after last change before triggering onDesignChange
+      }, 300); // Wait 300ms after last change before triggering onDesignChange
     };
 
     fabricCanvas.on('object:modified', updateDesignCallback);
@@ -175,7 +184,7 @@ const FabricCanvas = ({
     // Only load image if it's different from the last one we processed
     // This prevents the image from being reloaded on every render
     if (initialImage !== lastInitialImageRef.current) {
-      console.log("Loading new initial image:", initialImage);
+      console.log("Loading new initial image:", initialImage?.substring(0, 100) + "...");
       lastInitialImageRef.current = initialImage;
 
       // Clear placeholder text if it exists
@@ -199,38 +208,43 @@ const FabricCanvas = ({
       // Load the new image if provided
       if (initialImage) {
         fabric.Image.fromURL(initialImage, (img) => {
-          // Scale image to fit within the canvas
-          const canvasWidth = fabricCanvas.width || 300;
-          const canvasHeight = fabricCanvas.height || 300;
-          
-          const scaleFactor = Math.min(
-            (canvasWidth - 40) / img.width!,
-            (canvasHeight - 40) / img.height!
-          );
-          
-          img.scale(scaleFactor);
-          img.set({
-            left: canvasWidth / 2,
-            top: canvasHeight / 2,
-            originX: 'center',
-            originY: 'center'
-          });
-          
-          fabricCanvas.add(img);
-          fabricCanvas.setActiveObject(img);
-          fabricCanvas.renderAll();
-          
-          // Mark that we have content
-          setHasContent(true);
-          
-          // Notify parent of design change
-          if (onDesignChange) {
-            const dataURL = fabricCanvas.toDataURL({
-              format: "png",
-              quality: 1,
-              multiplier: 2,
+          try {
+            // Scale image to fit within the canvas
+            const canvasWidth = fabricCanvas.width || 300;
+            const canvasHeight = fabricCanvas.height || 300;
+            
+            const scaleFactor = Math.min(
+              (canvasWidth - 40) / img.width!,
+              (canvasHeight - 40) / img.height!
+            );
+            
+            img.scale(scaleFactor);
+            img.set({
+              left: canvasWidth / 2,
+              top: canvasHeight / 2,
+              originX: 'center',
+              originY: 'center'
             });
-            onDesignChange(dataURL);
+            
+            fabricCanvas.add(img);
+            fabricCanvas.setActiveObject(img);
+            fabricCanvas.renderAll();
+            
+            // Mark that we have content
+            setHasContent(true);
+            
+            // Notify parent of design change
+            if (onDesignChangeRef.current) {
+              console.log("Notifying parent of design change after image load");
+              const dataURL = fabricCanvas.toDataURL({
+                format: "png",
+                quality: 1,
+                multiplier: 2,
+              });
+              onDesignChangeRef.current(dataURL);
+            }
+          } catch (error) {
+            console.error("Error loading initial image:", error);
           }
         }, { crossOrigin: 'anonymous' });
       }

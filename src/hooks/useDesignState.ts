@@ -53,6 +53,7 @@ export function useDesignState() {
     const id = params.get('id');
     
     if (id) {
+      console.log("Design ID found in URL:", id);
       setDesignId(id);
       fetchDesignData(
         id,

@@ -23,6 +23,8 @@ export function useDesignFetch() {
     try {
       setIsLoading(true);
       
+      console.log("Fetching design data for ID:", id);
+      
       const { data, error } = await supabase
         .from('designs')
         .select('*')
@@ -39,12 +41,15 @@ export function useDesignFetch() {
         return;
       }
       
+      console.log("Design data loaded:", data);
+      
       // Set the design data
       setDesignName(data.name || "Untitled Design");
       setTshirtColor(data.t_shirt_color);
       
       // Set the design image if available
       if (data.preview_url) {
+        console.log("Setting preview URL:", data.preview_url.substring(0, 50) + "...");
         setDesignImage(data.preview_url);
       }
       

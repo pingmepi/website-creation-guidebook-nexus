@@ -35,7 +35,7 @@ export function useDesignStorage() {
         designId,
         designName,
         tshirtColor,
-        imageUrl: imageUrl.substring(0, 50) + "..." // Log truncated image URL
+        imageUrl: imageUrl?.substring(0, 50) + "..." // Log truncated image URL
       });
       
       // Create a new design record or update if designId exists
