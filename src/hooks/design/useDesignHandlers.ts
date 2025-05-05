@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Answer } from "@/components/design/QuestionFlow";
 import { Theme, DesignStage, DesignStep } from "./useDesignTypes";
@@ -57,15 +56,12 @@ export function useDesignHandlers() {
     
     // Generate design with AI using the selected theme and answers
     if (selectedTheme && answers.length > 0) {
+      // Fix the argument list to match the expected number of parameters
       await generateDesignWithAI(
         selectedTheme, 
         answers, 
         tshirtColor,
-        designId,
-        designName,
-        setDesignImage,
-        setHasUnsavedChanges,
-        setDesignId
+        designName
       );
     } else {
       // Set placeholder design image if no theme or answers
@@ -97,16 +93,12 @@ export function useDesignHandlers() {
     }
     
     try {
+      // Fix the argument list to match the expected number of parameters
       await saveDesignToDatabase(
         designImage, 
         "", 
         answers, 
-        selectedTheme, 
-        tshirtColor, 
-        designId, 
-        designName,
-        setDesignId,
-        setHasUnsavedChanges
+        selectedTheme
       );
       
       toast.success("Design saved successfully!", {

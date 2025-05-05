@@ -1,3 +1,4 @@
+
 declare module 'fabric' {
   export const fabric: {
     Canvas: any;
@@ -5,7 +6,7 @@ declare module 'fabric' {
     Circle: any;
     Text: any;
     Image: {
-      fromURL: (url: string, callback: (img: any) => void) => void;
+      fromURL: (url: string, callback: (img: any) => void, options?: any) => void;
     };
     Object: any;
   };
