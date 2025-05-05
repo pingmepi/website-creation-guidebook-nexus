@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Answer } from "@/components/design/QuestionFlow";
 import { Theme, DesignStage, DesignStep } from "./useDesignTypes";
@@ -56,13 +57,19 @@ export function useDesignHandlers() {
     
     // Generate design with AI using the selected theme and answers
     if (selectedTheme && answers.length > 0) {
-      // Fix the argument list to match the expected number of parameters
-      await generateDesignWithAI(
-        selectedTheme, 
-        answers, 
-        tshirtColor,
-        designName
-      );
+      try {
+        const generatedImage = await generateDesignWithAI(
+          selectedTheme, 
+          answers, 
+          tshirtColor,
+          designName
+        );
+        setDesignImage(generatedImage);
+      } catch (error) {
+        console.error("Error generating design:", error);
+        // Set placeholder design image if generation fails
+        setDesignImage("/assets/images/design/placeholder.svg");
+      }
     } else {
       // Set placeholder design image if no theme or answers
       setDesignImage("/assets/images/design/placeholder.svg");
@@ -93,17 +100,23 @@ export function useDesignHandlers() {
     }
     
     try {
-      // Fix the argument list to match the expected number of parameters
-      await saveDesignToDatabase(
-        designImage, 
-        "", 
-        answers, 
-        selectedTheme
+      const savedId = await saveDesignToDatabase(
+        designImage,
+        "",
+        answers,
+        selectedTheme,
+        tshirtColor,
+        designId,
+        designName,
+        setDesignId,
+        setHasUnsavedChanges
       );
       
-      toast.success("Design saved successfully!", {
-        description: "You can find it in your saved designs."
-      });
+      if (savedId) {
+        toast.success("Design saved successfully!", {
+          description: "You can find it in your saved designs."
+        });
+      }
     } catch (error) {
       console.error("Error saving design:", error);
       toast.error("Failed to save design", {

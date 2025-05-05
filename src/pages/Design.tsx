@@ -7,6 +7,7 @@ import { TSHIRT_COLORS, useDesignState } from "@/hooks/design";
 import LoadingSpinner from "@/components/design/LoadingSpinner";
 import PreferencesSection from "@/components/design/PreferencesSection";
 import CustomizationSection from "@/components/design/CustomizationSection";
+import DesignCanvasRefactored from "@/components/design/canvas/DesignCanvasRefactored";
 
 const Design = () => {
   const {
@@ -67,6 +68,7 @@ const Design = () => {
                 onColorChange={setTshirtColor}
                 onDesignChange={handleDesignChange}
                 onSaveDesign={handleSaveDesign}
+                CustomCanvas={DesignCanvasRefactored}
               />
             )}
           </>

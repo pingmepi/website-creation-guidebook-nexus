@@ -1,26 +1,37 @@
 
-import React from "react";
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Save } from "lucide-react";
 import TshirtDesignPreview from "./TshirtDesignPreview";
-import { Separator } from "@/components/ui/separator";
-import { Save, Loader2 } from "lucide-react";
 import { Answer } from "./QuestionFlow";
 import DesignCanvas from "./DesignCanvas";
+import LoadingSpinner from "./LoadingSpinner";
+
+interface TshirtColor {
+  name: string;
+  value: string;
+}
 
 interface CustomizationSectionProps {
   answers: Answer[];
   tshirtColor: string;
   designImage?: string;
   isSaving: boolean;
-  isGenerating?: boolean;
-  tshirtColors: Record<string, string>;
+  isGenerating: boolean;
+  tshirtColors: TshirtColor[];
   designName: string;
-  onDesignNameChange?: (name: string) => void;
+  onDesignNameChange: (name: string) => void;
   onColorChange: (color: string) => void;
-  onDesignChange: (designDataUrl: string) => void;
+  onDesignChange: (designImage: string) => void;
   onSaveDesign: () => void;
+  CustomCanvas?: React.ComponentType<{
+    tshirtColor: string;
+    initialImage?: string;
+    onDesignChange?: (dataURL: string) => void;
+  }>;
 }
 
 const CustomizationSection = ({
@@ -34,141 +45,112 @@ const CustomizationSection = ({
   onDesignNameChange,
   onColorChange,
   onDesignChange,
-  onSaveDesign
+  onSaveDesign,
+  CustomCanvas = DesignCanvas
 }: CustomizationSectionProps) => {
-  const tshirtColorOptions = Object.entries(tshirtColors).map(([name, value]) => ({
-    name,
-    value
-  }));
+  const [activeTab, setActiveTab] = useState("canvas");
 
-  // Debounced design name change to prevent excessive logging
-  const handleDesignNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (onDesignNameChange) {
-      onDesignNameChange(e.target.value);
-    }
-  };
+  const isLoading = isGenerating || isSaving;
 
   return (
-    <div className="py-6">
-      {/* Design Name at Top Left */}
-      <div className="mb-6">
-        <Input
-          id="design-name"
-          placeholder="My Awesome Design"
-          value={designName}
-          onChange={handleDesignNameChange}
-          className="text-lg font-medium w-full max-w-xs"
-          disabled={isGenerating}
-        />
-      </div>
-
-      <div className="flex flex-col space-y-8">
-        {/* Top Section: Design Canvas and Preview side by side */}
-        <div className="flex flex-col lg:flex-row lg:gap-6">
-          {/* Design Tools & Canvas - Left Side */}
-          <div className="w-full lg:w-1/2 mb-6 lg:mb-0">
-            <div className="bg-white rounded-lg p-4 shadow-sm">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-medium text-lg">Design Tools</h3>
-                
-                {/* T-shirt Color Selection */}
-                <div className="flex items-center">
-                  <label className="text-sm font-medium text-gray-700 mr-2">
-                    T-Shirt Color:
-                  </label>
-                  <Select
-                    value={tshirtColor}
-                    onValueChange={onColorChange}
-                    disabled={isGenerating}
-                  >
-                    <SelectTrigger className="bg-white w-36">
-                      <SelectValue placeholder="Select a color" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tshirtColorOptions.map(option => (
-                        <SelectItem key={option.name} value={option.value}>
-                          <div className="flex items-center">
-                            <div 
-                              className="w-4 h-4 rounded-full mr-2 border border-gray-300" 
-                              style={{ backgroundColor: option.value }}
-                            />
-                            {option.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              {/* Design Canvas Tools */}
-              <div className="mb-4">
-                <DesignCanvas 
-                  tshirtColor={tshirtColor} 
-                  onDesignChange={onDesignChange} 
+    <div>
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex-1 order-2 md:order-1">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="canvas">Design Canvas</TabsTrigger>
+              <TabsTrigger value="preview">T-Shirt Preview</TabsTrigger>
+            </TabsList>
+            <TabsContent value="canvas" className="border rounded-md p-4">
+              {isLoading ? (
+                <LoadingSpinner 
+                  message={isGenerating ? "Generating your design..." : "Saving your design..."} 
+                />
+              ) : (
+                <CustomCanvas
+                  tshirtColor={tshirtColor}
                   initialImage={designImage}
+                  onDesignChange={onDesignChange}
+                />
+              )}
+            </TabsContent>
+            <TabsContent value="preview" className="border rounded-md p-4">
+              <TshirtDesignPreview
+                tshirtColor={tshirtColor}
+                designImage={designImage}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+        
+        <div className="md:w-1/3 order-1 md:order-2">
+          <div className="bg-slate-50 rounded-lg p-4 mb-4">
+            <h3 className="text-lg font-semibold mb-4">Design Settings</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="design-name">Design Name</Label>
+                <Input
+                  id="design-name"
+                  value={designName}
+                  onChange={(e) => onDesignNameChange(e.target.value)}
+                  placeholder="My Awesome Design"
+                  className="mt-1"
                 />
               </div>
+              
+              <div>
+                <Label>T-Shirt Color</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {tshirtColors.map((color) => (
+                    <button
+                      key={color.value}
+                      type="button"
+                      className={`w-8 h-8 rounded-full ${
+                        tshirtColor === color.value
+                          ? "ring-2 ring-offset-2 ring-black"
+                          : ""
+                      }`}
+                      style={{ backgroundColor: color.value }}
+                      title={color.name}
+                      onClick={() => onColorChange(color.value)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <Button
+                onClick={onSaveDesign}
+                disabled={isLoading}
+                className="w-full"
+              >
+                <Save className="mr-2 h-4 w-4" />
+                Save Design
+              </Button>
             </div>
           </div>
           
-          {/* Design Preview - Right Side */}
-          <div className="w-full lg:w-1/2">
-            <div className="bg-white rounded-lg p-4 shadow-sm h-full">
-              <h3 className="font-medium text-lg mb-4">Preview</h3>
-              <div className="relative flex items-center justify-center">
-                <TshirtDesignPreview 
-                  color={tshirtColor} 
-                  designImage={designImage}
-                />
-
-                {isGenerating && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 rounded-lg">
-                    <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
-                    <p className="mt-4 text-blue-800 font-medium">Generating your design...</p>
-                    <p className="text-sm text-gray-500 mt-2">This may take a few moments</p>
-                  </div>
-                )}
-              </div>
-              
-              {/* Save Button - Below Preview */}
-              <div className="mt-6">
-                <Button 
-                  onClick={onSaveDesign}
-                  disabled={isSaving || !designImage || isGenerating}
-                  className="w-full flex items-center justify-center gap-2"
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" />
-                      Save Design
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Design Preferences - Below Main Content */}
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <h3 className="font-medium text-lg mb-4">Design Preferences</h3>
-          <div className="border rounded-md p-3 bg-gray-50">
+          <div className="bg-slate-50 rounded-lg p-4">
+            <h3 className="text-lg font-semibold mb-2">Design Information</h3>
             {answers.length > 0 ? (
-              answers.map((answer, index) => (
-                <div key={index} className="py-2">
-                  <p className="text-sm font-medium">{answer.question}</p>
-                  <p className="text-sm text-gray-600">{answer.answer}</p>
-                  {index < answers.length - 1 && <Separator className="my-2" />}
-                </div>
-              ))
+              <ul className="space-y-2 text-sm">
+                {answers.map((answer, index) => (
+                  <li key={index} className="flex">
+                    <span className="font-medium text-slate-700 mr-2">
+                      {answer.question}:
+                    </span>
+                    <span className="text-slate-600">
+                      {Array.isArray(answer.answer)
+                        ? answer.answer.join(", ")
+                        : answer.answer.toString()}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             ) : (
-              <p className="text-sm text-gray-500">No design preferences set.</p>
+              <p className="text-sm text-slate-500">
+                No design information available.
+              </p>
             )}
           </div>
         </div>
