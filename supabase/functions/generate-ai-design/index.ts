@@ -34,7 +34,10 @@ interface RequestData {
 export default async function handler(req: Request) {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, {
+      headers: corsHeaders,
+      status: 204 // Explicitly set 204 No Content status
+    });
   }
 
   try {
@@ -60,7 +63,7 @@ export default async function handler(req: Request) {
     console.log("Generated prompt for AI:", prompt);
 
     // Log webhook call attempt
-    console.log("🔄 WEBHOOK CALL ATTEMPT - Calling webhook at:", 'https://n8.wikischool.com/webhook/generate-image');
+    console.log("🔄 WEBHOOK CALL ATTEMPT - Calling webhook at:", 'https://webhook.miles-api.com/webhook/testing-1243');
 
     // Track timing
     const startTime = Date.now();
@@ -77,7 +80,7 @@ export default async function handler(req: Request) {
 
     try {
       try {
-        response = await fetch('https://n8.wikischool.com/webhook/generate-image', {
+        response = await fetch('https://webhook.miles-api.com/webhook/testing-1243', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt }),
@@ -106,9 +109,12 @@ export default async function handler(req: Request) {
       // Save to ai_generated_designs if userId is provided
       if (userId && imageData.image_base64) {
         try {
-          // Get Supabase environment variables using our helper function
+          // Get Supabase environment variables with detailed logging
+          console.log("🔍 Attempting to retrieve Supabase credentials");
           const supabaseUrl = getEnvVariable('SUPABASE_URL', true);
+          console.log("✅ SUPABASE_URL retrieved successfully");
           const supabaseServiceRoleKey = getEnvVariable('SUPABASE_SERVICE_ROLE_KEY', true);
+          console.log("✅ SUPABASE_SERVICE_ROLE_KEY retrieved successfully");
 
           // Create Supabase client using validated environment variables
           const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
