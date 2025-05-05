@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { fabric } from "fabric";
 
@@ -29,6 +28,8 @@ const FabricCanvas = ({
   const pendingChangesRef = useRef(false);
   const lastInitialImageRef = useRef<string | undefined>(initialImage);
   const onDesignChangeRef = useRef(onDesignChange);
+  const safetyAreaManagedRef = useRef(false); // Track if we've already managed safety areas
+  const updateInProgressRef = useRef(false); // Track if an update is in progress
   
   // Track if design has actual content beyond placeholder
   const [hasContent, setHasContent] = useState(false);
@@ -37,6 +38,65 @@ const FabricCanvas = ({
   useEffect(() => {
     onDesignChangeRef.current = onDesignChange;
   }, [onDesignChange]);
+  
+  // Improved function to ensure a single safety area exists
+  const ensureSingleSafetyArea = (fabricCanvas: fabric.Canvas) => {
+    if (updateInProgressRef.current || safetyAreaManagedRef.current) {
+      return false;
+    }
+    
+    updateInProgressRef.current = true;
+    safetyAreaManagedRef.current = true;
+    
+    try {
+      // Find all safety areas
+      const objects = fabricCanvas.getObjects();
+      const safetyAreas = objects.filter(obj => 
+        obj.id === "safetyArea"
+      );
+      
+      if (safetyAreas.length > 1) {
+        console.log(`Found ${safetyAreas.length} safety areas, removing duplicates`);
+        
+        // Keep only the first one and remove others
+        for (let i = 1; i < safetyAreas.length; i++) {
+          fabricCanvas.remove(safetyAreas[i]);
+        }
+        
+        // Make sure it's at the back
+        fabricCanvas.sendToBack(safetyAreas[0]);
+        return true;
+      } else if (safetyAreas.length === 1) {
+        // We already have exactly one safety area, just make sure it's at the back
+        fabricCanvas.sendToBack(safetyAreas[0]);
+        return true;
+      }
+      
+      // If no safety area exists, create one
+      const safetyAreaRect = new fabric.Rect({
+        width: width - 20,
+        height: height - 20,
+        left: 10,
+        top: 10,
+        stroke: "#5cb85c", // green for safety area
+        strokeDashArray: [5, 5],
+        fill: "transparent",
+        selectable: false,
+        evented: false,
+        id: "safetyArea",
+      });
+      
+      fabricCanvas.add(safetyAreaRect);
+      fabricCanvas.sendToBack(safetyAreaRect);
+      
+      return true;
+    } catch (error) {
+      console.error("Error managing safety area:", error);
+      return false;
+    } finally {
+      updateInProgressRef.current = false;
+    }
+  };
   
   // Initialize canvas
   useEffect(() => {
@@ -54,19 +114,7 @@ const FabricCanvas = ({
     fabricCanvasRef.current = fabricCanvas;
 
     // Add dashed rectangle for safety area
-    const safetyAreaRect = new fabric.Rect({
-      width: width - 20,
-      height: height - 20,
-      left: 10,
-      top: 10,
-      stroke: "#5cb85c", // green for safety area
-      strokeDashArray: [5, 5],
-      fill: "transparent",
-      selectable: false,
-      evented: false,
-      id: "safetyArea", // Add id for identification
-    });
-    fabricCanvas.add(safetyAreaRect);
+    ensureSingleSafetyArea(fabricCanvas);
 
     // Add placeholder text if no initial image
     if (!initialImage) {
@@ -80,15 +128,18 @@ const FabricCanvas = ({
         fill: '#999999',
         selectable: false,
         evented: false,
-        id: "placeholderText", // Add id for identification
+        id: "placeholderText",
       });
       fabricCanvas.add(placeholderText);
     }
 
-    // Setup debounced design update function
+    // Debounced update function to prevent too many updates
     let debounceTimeout: number | null = null;
     
-    const updateDesignCallback = () => {
+    const safeUpdateDesign = () => {
+      // Skip if update is already in progress
+      if (updateInProgressRef.current) return;
+      
       // Mark that there are pending changes
       pendingChangesRef.current = true;
       
@@ -108,22 +159,91 @@ const FabricCanvas = ({
       
       debounceTimeout = window.setTimeout(() => {
         if (fabricCanvas && onDesignChangeRef.current && pendingChangesRef.current) {
+          updateInProgressRef.current = true;
+          
+          // Ensure a single safety area exists
+          ensureSingleSafetyArea(fabricCanvas);
+          
           const dataURL = fabricCanvas.toDataURL({
             format: "png",
             quality: 1,
-            multiplier: 2, // Higher resolution
+            multiplier: 2,
           });
+          
           onDesignChangeRef.current(dataURL);
           pendingChangesRef.current = false;
+          
           console.log("Design change triggered from FabricCanvas");
+          
+          // Reset flags
+          setTimeout(() => {
+            updateInProgressRef.current = false;
+            safetyAreaManagedRef.current = false;
+          }, 100);
         }
-      }, 300); // Wait 300ms after last change before triggering onDesignChange
+      }, 300);
     };
 
-    fabricCanvas.on('object:modified', updateDesignCallback);
-    fabricCanvas.on('object:added', updateDesignCallback);
-    fabricCanvas.on('object:removed', updateDesignCallback);
-    fabricCanvas.on('path:created', updateDesignCallback);
+    // Set up object event handlers with improved safety
+    const handleObjectModified = () => {
+      if (!updateInProgressRef.current) {
+        safeUpdateDesign();
+      }
+    };
+    
+    const handleObjectAdded = (e: any) => {
+      // Don't trigger update for safety area to avoid loops
+      if (e.target && e.target.id === "safetyArea") {
+        return;
+      }
+      
+      if (!updateInProgressRef.current) {
+        safeUpdateDesign();
+      }
+    };
+    
+    const handleObjectRemoved = (e: any) => {
+      // If safety area was removed, recreate it
+      if (e.target && e.target.id === "safetyArea") {
+        safetyAreaManagedRef.current = false;
+        setTimeout(() => ensureSingleSafetyArea(fabricCanvas), 0);
+        return;
+      }
+      
+      if (!updateInProgressRef.current) {
+        safeUpdateDesign();
+      }
+    };
+    
+    // Add proper handlers for selection
+    const handleSelectionCreated = () => {
+      // Fix safety area visibility on selection
+      if (!updateInProgressRef.current) {
+        setTimeout(() => {
+          ensureSingleSafetyArea(fabricCanvas);
+        }, 0);
+      }
+    };
+
+    fabricCanvas.on('object:modified', handleObjectModified);
+    fabricCanvas.on('object:added', handleObjectAdded);
+    fabricCanvas.on('object:removed', handleObjectRemoved);
+    fabricCanvas.on('path:created', handleObjectModified);
+    fabricCanvas.on('selection:created', handleSelectionCreated);
+    fabricCanvas.on('selection:updated', handleSelectionCreated);
+
+    // Add periodic checker for safety area
+    const intervalId = setInterval(() => {
+      if (!updateInProgressRef.current && !safetyAreaManagedRef.current) {
+        const objects = fabricCanvas.getObjects();
+        const safetyAreas = objects.filter(obj => obj.id === "safetyArea");
+        
+        if (safetyAreas.length !== 1) {
+          console.log(`Found ${safetyAreas.length} safety areas during interval check, fixing...`);
+          ensureSingleSafetyArea(fabricCanvas);
+        }
+      }
+    }, 2000);
 
     // Force render all objects
     fabricCanvas.renderAll();
@@ -133,18 +253,22 @@ const FabricCanvas = ({
     setCanvasInitialized(true);
     lastInitialImageRef.current = initialImage;
 
-    // Cleanup on component unmount - Fix for the removeChild error
+    // Cleanup on component unmount
     return () => {
       if (debounceTimeout) {
         window.clearTimeout(debounceTimeout);
       }
       
+      clearInterval(intervalId);
+      
       // Remove event listeners first
       if (fabricCanvas) {
-        fabricCanvas.off('object:modified', updateDesignCallback);
-        fabricCanvas.off('object:added', updateDesignCallback);
-        fabricCanvas.off('object:removed', updateDesignCallback);
-        fabricCanvas.off('path:created', updateDesignCallback);
+        fabricCanvas.off('object:modified', handleObjectModified);
+        fabricCanvas.off('object:added', handleObjectAdded);
+        fabricCanvas.off('object:removed', handleObjectRemoved);
+        fabricCanvas.off('path:created', handleObjectModified);
+        fabricCanvas.off('selection:created', handleSelectionCreated);
+        fabricCanvas.off('selection:updated', handleSelectionCreated);
         
         // Safe dispose method to prevent the removeChild error
         try {
@@ -190,6 +314,10 @@ const FabricCanvas = ({
     if (initialImage && initialImage !== lastInitialImageRef.current) {
       console.log("Loading new initial image in FabricCanvas");
       lastInitialImageRef.current = initialImage;
+      
+      // Set update flags to prevent duplicate safety areas
+      updateInProgressRef.current = true;
+      safetyAreaManagedRef.current = true;
 
       // Clear placeholder text if it exists
       const objects = fabricCanvas.getObjects();
@@ -230,6 +358,10 @@ const FabricCanvas = ({
             
             fabricCanvas.add(img);
             fabricCanvas.setActiveObject(img);
+            
+            // Ensure a single safety area exists
+            ensureSingleSafetyArea(fabricCanvas);
+            
             fabricCanvas.renderAll();
             
             // Mark that we have content
@@ -245,12 +377,23 @@ const FabricCanvas = ({
               });
               onDesignChangeRef.current(dataURL);
             }
+            
+            // Reset flags after a delay
+            setTimeout(() => {
+              updateInProgressRef.current = false;
+              safetyAreaManagedRef.current = false;
+            }, 200);
+            
           } catch (error) {
             console.error("Error loading initial image:", error);
+            updateInProgressRef.current = false;
+            safetyAreaManagedRef.current = false;
           }
         }, { crossOrigin: 'anonymous' });
       } catch (error) {
         console.error("Error creating fabric Image from URL:", error);
+        updateInProgressRef.current = false;
+        safetyAreaManagedRef.current = false;
       }
     }
   }, [initialImage, canvasInitialized]);
