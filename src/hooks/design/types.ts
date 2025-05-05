@@ -1,14 +1,7 @@
-
 import { Answer } from "@/components/design/QuestionFlow";
 
-// Define t-shirt color type
-export interface TshirtColor {
-  name: string;
-  value: string;
-}
-
 // Define t-shirt color options
-export const TSHIRT_COLORS: { [key: string]: string } = {
+export const TSHIRT_COLORS = {
   BLACK: "#000000",
   WHITE: "#FFFFFF",
   GREY: "#8A898C",

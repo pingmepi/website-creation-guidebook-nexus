@@ -289,7 +289,7 @@ const FabricCanvas = ({
         }
       }
     };
-  }, [width, height, backgroundColor, onCanvasReady]);
+  }, [width, height, backgroundColor]);
 
   // Handle drawing mode changes
   useEffect(() => {
@@ -312,7 +312,7 @@ const FabricCanvas = ({
     // Only load image if it's different from the last one we processed
     // This prevents the image from being reloaded on every render
     if (initialImage && initialImage !== lastInitialImageRef.current) {
-      console.log("Loading new initial image in FabricCanvas:", initialImage.substring(0, 50) + "...");
+      console.log("Loading new initial image in FabricCanvas");
       lastInitialImageRef.current = initialImage;
       
       // Set update flags to prevent duplicate safety areas
@@ -336,64 +336,60 @@ const FabricCanvas = ({
 
       // Load the new image if provided
       try {
-        fabric.Image.fromURL(
-          initialImage,
-          (img) => {
-            try {
-              // Scale image to fit within the canvas
-              const canvasWidth = fabricCanvas.width || 300;
-              const canvasHeight = fabricCanvas.height || 300;
-              
-              const scaleFactor = Math.min(
-                (canvasWidth - 40) / img.width!,
-                (canvasHeight - 40) / img.height!
-              );
-              
-              img.scale(scaleFactor);
-              img.set({
-                left: canvasWidth / 2,
-                top: canvasHeight / 2,
-                originX: 'center',
-                originY: 'center',
-                id: "uploadedImage" // Add id for identification
+        fabric.Image.fromURL(initialImage, (img) => {
+          try {
+            // Scale image to fit within the canvas
+            const canvasWidth = fabricCanvas.width || 300;
+            const canvasHeight = fabricCanvas.height || 300;
+            
+            const scaleFactor = Math.min(
+              (canvasWidth - 40) / img.width!,
+              (canvasHeight - 40) / img.height!
+            );
+            
+            img.scale(scaleFactor);
+            img.set({
+              left: canvasWidth / 2,
+              top: canvasHeight / 2,
+              originX: 'center',
+              originY: 'center',
+              id: "uploadedImage" // Add id for identification
+            });
+            
+            fabricCanvas.add(img);
+            fabricCanvas.setActiveObject(img);
+            
+            // Ensure a single safety area exists
+            ensureSingleSafetyArea(fabricCanvas);
+            
+            fabricCanvas.renderAll();
+            
+            // Mark that we have content
+            setHasContent(true);
+            
+            // Notify parent of design change
+            if (onDesignChangeRef.current) {
+              console.log("Notifying parent of design change after image load");
+              const dataURL = fabricCanvas.toDataURL({
+                format: "png",
+                quality: 1,
+                multiplier: 2,
               });
-              
-              fabricCanvas.add(img);
-              fabricCanvas.setActiveObject(img);
-              
-              // Ensure a single safety area exists
-              ensureSingleSafetyArea(fabricCanvas);
-              
-              fabricCanvas.renderAll();
-              
-              // Mark that we have content
-              setHasContent(true);
-              
-              // Notify parent of design change
-              if (onDesignChangeRef.current) {
-                console.log("Notifying parent of design change after image load");
-                const dataURL = fabricCanvas.toDataURL({
-                  format: "png",
-                  quality: 1,
-                  multiplier: 2,
-                });
-                onDesignChangeRef.current(dataURL);
-              }
-              
-              // Reset flags after a delay
-              setTimeout(() => {
-                updateInProgressRef.current = false;
-                safetyAreaManagedRef.current = false;
-              }, 200);
-              
-            } catch (error) {
-              console.error("Error loading initial image:", error);
+              onDesignChangeRef.current(dataURL);
+            }
+            
+            // Reset flags after a delay
+            setTimeout(() => {
               updateInProgressRef.current = false;
               safetyAreaManagedRef.current = false;
-            }
-          }, 
-          { crossOrigin: 'anonymous' }
-        );
+            }, 200);
+            
+          } catch (error) {
+            console.error("Error loading initial image:", error);
+            updateInProgressRef.current = false;
+            safetyAreaManagedRef.current = false;
+          }
+        }, { crossOrigin: 'anonymous' });
       } catch (error) {
         console.error("Error creating fabric Image from URL:", error);
         updateInProgressRef.current = false;

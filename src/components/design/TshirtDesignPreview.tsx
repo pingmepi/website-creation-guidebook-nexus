@@ -2,16 +2,12 @@
 import { useState } from "react";
 
 interface TshirtDesignPreviewProps {
-  tshirtColor?: string;
+  color?: string;
   designImage?: string;
-  color?: string; // Adding for backward compatibility
 }
 
-const TshirtDesignPreview = ({ color = "#FFFFFF", tshirtColor, designImage }: TshirtDesignPreviewProps) => {
+const TshirtDesignPreview = ({ color = "#FFFFFF", designImage }: TshirtDesignPreviewProps) => {
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Use tshirtColor if provided, otherwise fall back to color
-  const finalColor = tshirtColor || color;
   
   return (
     <div className="relative flex items-center justify-center bg-white rounded-lg p-4">
@@ -19,7 +15,7 @@ const TshirtDesignPreview = ({ color = "#FFFFFF", tshirtColor, designImage }: Ts
         {/* T-shirt mockup */}
         <div 
           className="w-full aspect-[3/4] rounded-lg shadow-sm relative flex items-center justify-center overflow-hidden"
-          style={{ backgroundColor: finalColor }}
+          style={{ backgroundColor: color }}
         >
           {/* T-shirt outline */}
           <svg 
