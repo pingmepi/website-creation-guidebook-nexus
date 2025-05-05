@@ -4,6 +4,43 @@
 
 This directory contains comprehensive documentation for the Custom T-Shirt Hub project.
 
+## Environment Setup
+
+### Environment Variables
+
+The project uses environment variables for configuration. To set up your local environment:
+
+1. Copy the `.env.example` file to a new file named `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit the `.env` file and fill in the actual values for your environment:
+   ```
+   VITE_SUPABASE_URL=your_actual_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_actual_anon_key
+   # ... other variables
+   ```
+
+3. The environment variables are loaded by Vite and made available to the client-side code through `import.meta.env.VITE_*`.
+
+4. Only variables prefixed with `VITE_` will be exposed to your client-side code.
+
+### Required Environment Variables
+
+- `VITE_SUPABASE_URL`: Your Supabase project URL
+- `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key (public)
+
+### Optional Environment Variables
+
+- `VITE_USE_MOCK_IMAGE`: Set to "true" to use mock images instead of generating real ones
+- `VITE_API_WEBHOOK_URL`: URL for the image generation webhook
+- `VITE_AUTH_COOKIE_SECURE`: Set to "true" for production
+- `VITE_AUTH_COOKIE_SAME_SITE`: Set to "lax" or "strict"
+- `VITE_AUTH_COOKIE_DOMAIN`: Your domain name
+- `VITE_ENABLE_RATE_LIMITING`: Set to "true" for production
+- `VITE_CORS_ALLOWED_ORIGINS`: Comma-separated list of allowed origins
+
 ## Key Documentation Files
 
 ### Project Status & Planning

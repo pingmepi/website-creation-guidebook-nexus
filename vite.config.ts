@@ -15,21 +15,24 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
-      mode === 'development' && componentTagger(),
+      mode === 'development' &&
+      componentTagger(),
     ].filter(Boolean),
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
       },
     },
-    // Define environment variables to expose to the client
+    // Make env variables available to the client
     define: {
-      // Ensure environment variables are properly passed to the client
-      // Only include variables that are safe to expose to the client
-      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL),
-      'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
-      'import.meta.env.VITE_USE_MOCK_IMAGE': JSON.stringify(env.VITE_USE_MOCK_IMAGE),
-      'import.meta.env.VITE_API_WEBHOOK_URL': JSON.stringify(env.VITE_API_WEBHOOK_URL)
+      // Stringify the values to ensure they're properly passed as strings
+      // Only expose variables prefixed with VITE_ to the client
+      ...Object.keys(env).reduce<Record<string, string>>((acc, key) => {
+        if (key.startsWith('VITE_')) {
+          acc[`import.meta.env.${key}`] = JSON.stringify(env[key]);
+        }
+        return acc;
+      }, {})
     }
   };
 });

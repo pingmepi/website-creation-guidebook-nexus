@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useUser } from "@/contexts/UserContext";
 
 export function useDesignGeneration() {
-  const { user } = useUser();
+  const { user, isAuthenticated } = useUser();
   const [isGenerating, setIsGenerating] = useState(false);
 
   const generateDesignWithAI = async (
@@ -22,111 +22,93 @@ export function useDesignGeneration() {
 
     try {
       setIsGenerating(true);
-      const toastId = toast.loading("Generating your design with AI...");
-      const startTime = Date.now();
+      toast.loading("Generating your design with AI...");
 
-      // Prepare the payload
+      // Check authentication status
+      console.log("CLIENT: Authentication status:", isAuthenticated);
+      console.log("🔍 CLIENT: User data:", user ? `ID: ${user.id}` : "No user");
+
+      // Prepare payload with explicit userId
       const payload = {
         theme: selectedTheme,
         answers: answers,
-        userId: user?.id
+        userId: user?.id || null
       };
 
-      console.log("📡 CLIENT: Preparing to call Edge Function with payload:", {
+      console.log("CLIENT: Invoking generate-ai-design function with:", {
         theme: selectedTheme.name,
         answersCount: answers.length,
-        hasUserId: !!user?.id
+        userId: user?.id || "not provided"
       });
+
+      // Log the exact payload being sent
+      console.log("📦 CLIENT: Sending exact payload:", JSON.stringify(payload, null, 2));
+
+      const startTime = Date.now();
 
       // Get the current session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        console.error("❌ CLIENT: Session error:", sessionError);
-        throw new Error("Authentication error: " + sessionError.message);
-      }
-
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log("Session details:", session);
       console.log("🔑 CLIENT: Session available:", !!session);
 
-      // We'll use a simple timeout without AbortController since we removed the signal
-      let functionTimedOut = false;
-      const timeoutId = setTimeout(() => {
-        functionTimedOut = true;
-      }, 15000); // 15 second timeout
-
-      try {
-        console.log("📡 CLIENT: Calling supabase.functions.invoke now...");
-
-        const { data: aiResponse, error: aiError } = await supabase.functions.invoke(
-          'generate-ai-design',
-          {
-            body: payload,
-            headers: session ? {
-              Authorization: `Bearer ${session.access_token}`
-            } : undefined,
-            method: 'POST'
-            // Remove signal property as it's not supported in the FunctionInvokeOptions type
-          }
-        );
-
-        console.log(`✅ CLIENT: Function invocation completed in ${Date.now() - startTime}ms`);
-
-        if (aiError) {
-          console.error("❌ CLIENT: Function returned error:", aiError);
-          throw new Error(aiError.message);
+      // Call the edge function to generate the design with explicit headers
+      console.log("📡 CLIENT: Calling supabase.functions.invoke now...");
+      const { data: aiResponse, error: aiError } = await supabase.functions.invoke(
+        'generate-ai-design',
+        {
+          body: payload,
+          headers: session ? {
+            Authorization: `Bearer ${session.access_token}`
+          } : undefined,
+          method: 'POST'
         }
+      );
 
-        if (!aiResponse) {
-          console.error("❌ CLIENT: No response data from function");
-          throw new Error("No response data from design generation function");
-        }
+      console.log(`✅ CLIENT: Function invocation completed in ${Date.now() - startTime}ms`);
 
-        console.log("✅ CLIENT: Received AI response:", {
-          hasImageUrl: !!aiResponse.imageUrl,
-          isMock: aiResponse.isMock || false,
-          hasError: !!aiResponse.error
-        });
-
-        // Set the image in the UI
-        setDesignImage(aiResponse.imageUrl);
-
-        // Save to database if not already saved by the function
-        if (user?.id && !aiResponse.savedToDatabase) {
-          await saveDesignToDatabase(aiResponse.imageUrl, aiResponse.prompt, user.id);
-        }
-
-        toast.dismiss(toastId);
-
-        if (aiResponse.isMock) {
-          toast.warning("Using placeholder design", {
-            description: aiResponse.error || "The design service is currently unavailable."
-          });
-        } else {
-          toast.success("Design generated successfully!");
-        }
-
-      } catch (error) {
-        console.error("❌ CLIENT: Function call error:", error);
-
-        if (functionTimedOut) {
-          console.error("❌ CLIENT: Function call timed out");
-          throw new Error("Design generation timed out. Please try again later.");
-        }
-        throw error;
-      } finally {
-        clearTimeout(timeoutId);
+      if (aiError) {
+        console.error("❌ CLIENT: Function returned error:", aiError);
+        throw new Error(aiError.message);
       }
 
-    } catch (error) {
-      console.error("❌ CLIENT: Error generating design with AI:", error);
+      console.log("✅ CLIENT: AI response received:", {
+        hasImageUrl: !!aiResponse?.imageUrl,
+        promptLength: aiResponse?.prompt?.length || 0,
+        responseSize: JSON.stringify(aiResponse).length
+      });
 
-      // Use placeholder image as fallback
-      setDesignImage("/assets/images/design/placeholder.svg");
+      if (!aiResponse || !aiResponse.imageUrl) {
+        console.error("❌ CLIENT: Missing image URL in response");
+        throw new Error("No design image was generated");
+      }
+
+      // Set the generated design image
+      setDesignImage(aiResponse.imageUrl);
+
+      // Save the design image with the answers and theme
+      if (user) {
+        await saveDesignToDatabase(aiResponse.imageUrl, aiResponse.prompt || '', user.id);
+      }
 
       toast.dismiss();
-      toast.error("Design generation failed", {
-        description: error.message || "Please try again later."
+      toast.success("Your design is ready!", {
+        description: "We've created a custom t-shirt design based on your preferences."
       });
+    } catch (error) {
+      console.error("❌ CLIENT: Error generating design with AI:", error);
+      console.error("❌ CLIENT: Error details:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+
+      toast.dismiss();
+      toast.error("Failed to generate design", {
+        description: "Please try again later."
+      });
+
+      // Set placeholder design image if generation fails
+      setDesignImage("/assets/images/design/placeholder.svg");
     } finally {
       setIsGenerating(false);
     }

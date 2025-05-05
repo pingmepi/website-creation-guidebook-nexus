@@ -28,3 +28,4 @@ enabled = false
 [[functions]]
 name = "generate-ai-design"
 verify_jwt = true
+cors = {origin = ["http://localhost:8080", "http://localhost:3000", "*"], headers = ["authorization", "x-client-info", "apikey", "content-type"], methods = ["POST", "OPTIONS"]}
