@@ -64,7 +64,10 @@ export function useDesignHandlers() {
           tshirtColor,
           designName
         );
-        setDesignImage(generatedImage);
+        
+        if (generatedImage) {
+          setDesignImage(generatedImage);
+        }
       } catch (error) {
         console.error("Error generating design:", error);
         // Set placeholder design image if generation fails
@@ -107,12 +110,13 @@ export function useDesignHandlers() {
         selectedTheme,
         tshirtColor,
         designId,
-        designName,
-        setDesignId,
-        setHasUnsavedChanges
+        designName
       );
       
       if (savedId) {
+        setDesignId(savedId);
+        setHasUnsavedChanges(false);
+        
         toast.success("Design saved successfully!", {
           description: "You can find it in your saved designs."
         });

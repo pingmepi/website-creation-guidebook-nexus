@@ -3,11 +3,25 @@ import { useState } from "react";
 import DesignStepper from "@/components/design/DesignStepper";
 import ConfirmationDialog from "@/components/design/ConfirmationDialog";
 import LoginDialog from "@/components/auth/LoginDialog";
-import { TSHIRT_COLORS, useDesignState } from "@/hooks/design";
+import { useDesignState } from "@/hooks/design";
 import LoadingSpinner from "@/components/design/LoadingSpinner";
 import PreferencesSection from "@/components/design/PreferencesSection";
 import CustomizationSection from "@/components/design/CustomizationSection";
 import DesignCanvasRefactored from "@/components/design/canvas/DesignCanvasRefactored";
+
+// Define TshirtColor type for proper type checking
+interface TshirtColor {
+  name: string;
+  value: string;
+}
+
+// Convert TSHIRT_COLORS object to an array of TshirtColor objects
+const TSHIRT_COLORS: TshirtColor[] = [
+  { name: "Black", value: "#000000" },
+  { name: "White", value: "#FFFFFF" },
+  { name: "Grey", value: "#8A898C" },
+  { name: "Blue", value: "#1EAEDB" }
+];
 
 const Design = () => {
   const {
