@@ -48,6 +48,80 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     onDesignChangeRef.current = onDesignChange;
   }, [onDesignChange]);
 
+  // Reference to the safety area object
+  const safetyAreaRef = useRef<any>(null);
+
+  // Function to ensure a single safety area exists
+  const ensureSingleSafetyArea = (targetCanvas: any) => {
+    if (!targetCanvas || !targetCanvas.getContext) {
+      console.error("Cannot manage safety area: Invalid canvas");
+      return false;
+    }
+
+    try {
+      // First, remove ALL existing safety areas
+      const objects = targetCanvas.getObjects();
+      const safetyAreas = objects.filter((obj: any) => obj.id === "safetyArea");
+
+      if (safetyAreas.length > 0) {
+        console.log(`Removing ${safetyAreas.length} existing safety areas`);
+        safetyAreas.forEach((area: any) => {
+          targetCanvas.remove(area);
+        });
+      }
+
+      // Now create a new safety area
+      const canvasSize = targetCanvas.width || 300;
+      const safetyAreaRect = new fabric.Rect({
+        width: canvasSize - 20,
+        height: canvasSize - 20,
+        left: 10,
+        top: 10,
+        stroke: "#5cb85c",
+        strokeDashArray: [5, 5],
+        fill: "transparent",
+        selectable: false,
+        evented: false,
+        id: "safetyArea",
+      });
+
+      // Add it to the canvas and send to back
+      targetCanvas.add(safetyAreaRect);
+      targetCanvas.sendToBack(safetyAreaRect);
+
+      // Store a reference to the safety area
+      safetyAreaRef.current = safetyAreaRect;
+
+      return true;
+    } catch (error) {
+      console.error("Error managing safety area:", error);
+      return false;
+    }
+  };
+
+  // Add a special effect to monitor and fix safety areas if needed
+  useEffect(() => {
+    if (!canvas) return;
+
+    // Check for and fix safety areas every 2 seconds
+    const intervalId = setInterval(() => {
+      if (!updateInProgressRef.current) {
+        const objects = canvas.getObjects();
+        const safetyAreas = objects.filter((obj: any) => obj.id === "safetyArea");
+
+        if (safetyAreas.length > 1) {
+          console.warn(`Found ${safetyAreas.length} safety areas during interval check, fixing...`);
+          ensureSingleSafetyArea(canvas);
+        } else if (safetyAreas.length === 0) {
+          console.warn("No safety area found during interval check, adding one...");
+          ensureSingleSafetyArea(canvas);
+        }
+      }
+    }, 2000);
+
+    return () => clearInterval(intervalId);
+  }, [canvas]);
+
   // Initialize canvas once on mount - with no dependencies to ensure it only runs once
   useEffect(() => {
     if (canvasInitializedRef.current || !canvasRef.current) return;
@@ -88,25 +162,10 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
         return;
       }
 
-      // Add safety area
-      try {
-        const safetyAreaRect = new fabric.Rect({
-          width: canvasSize - 20,
-          height: canvasSize - 20,
-          left: 10,
-          top: 10,
-          stroke: "#5cb85c",
-          strokeDashArray: [5, 5],
-          fill: "transparent",
-          selectable: false,
-          evented: false,
-          id: "safetyArea",
-        });
-        fabricCanvas.add(safetyAreaRect);
-      } catch (safetyError) {
-        console.error("Error adding safety area:", safetyError);
-        // Continue even if safety area fails
-      }
+      // Add the initial safety area
+      console.log("Adding initial safety area to canvas");
+      const safetyAreaAdded = ensureSingleSafetyArea(fabricCanvas);
+      console.log("Initial safety area added:", safetyAreaAdded);
 
       // Add placeholder text (will be removed if initialImage is provided in a separate effect)
       try {
@@ -139,21 +198,28 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
       try {
         fabricCanvas.on('object:modified', () => {
           if (!updateInProgressRef.current) {
+            console.log("Object modified event triggered");
             // Use a local reference to updateDesign to avoid dependency issues
             const currentCanvas = fabricCanvas;
             if (!currentCanvas || !currentCanvas.getContext || !onDesignChangeRef.current || updateInProgressRef.current) return;
 
             updateInProgressRef.current = true;
 
+            // Ensure a single safety area exists
+            ensureSingleSafetyArea(currentCanvas);
+
             setTimeout(() => {
               try {
                 if (onDesignChangeRef.current && currentCanvas && currentCanvas.getContext) {
-                  const dataURL = currentCanvas.toDataURL({
-                    format: "png",
-                    quality: 1,
-                    multiplier: 2,
-                  });
-                  onDesignChangeRef.current(dataURL);
+                  // Check if the canvas still exists and has a valid context
+                  if (currentCanvas.getContext) {
+                    const dataURL = currentCanvas.toDataURL({
+                      format: "png",
+                      quality: 1,
+                      multiplier: 2,
+                    });
+                    onDesignChangeRef.current(dataURL);
+                  }
                 }
               } catch (dataURLError) {
                 console.error("Error generating data URL:", dataURLError);
@@ -164,16 +230,57 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
           }
         });
 
-        // Don't trigger updateDesign on object:added to prevent loops
-        // We'll manually call updateDesign after adding objects
+        // Add an event handler for object:added to clean up safety areas
+        fabricCanvas.on('object:added', (e: any) => {
+          // Skip if we're in the middle of an update
+          if (updateInProgressRef.current) return;
+
+          // If the added object is a safety area, check if we already have one
+          if (e.target && e.target.id === "safetyArea") {
+            console.log("Safety area added, checking for duplicates");
+            const objects = fabricCanvas.getObjects();
+            const safetyAreas = objects.filter((obj: any) => obj.id === "safetyArea");
+
+            if (safetyAreas.length > 1) {
+              console.warn(`Found ${safetyAreas.length} safety areas, removing duplicates`);
+              // Set a flag to prevent recursive calls
+              updateInProgressRef.current = true;
+
+              // Keep only the most recently added safety area (which is the one in the event)
+              for (let i = 0; i < safetyAreas.length; i++) {
+                if (safetyAreas[i] !== e.target) {
+                  fabricCanvas.remove(safetyAreas[i]);
+                }
+              }
+
+              // Make sure the safety area is at the back
+              fabricCanvas.sendToBack(e.target);
+              fabricCanvas.renderAll();
+
+              // Reset the flag
+              setTimeout(() => {
+                updateInProgressRef.current = false;
+              }, 100);
+            }
+            return;
+          }
+
+          console.log("Object added event triggered");
+          // Ensure a single safety area exists
+          ensureSingleSafetyArea(fabricCanvas);
+        });
 
         fabricCanvas.on('object:removed', () => {
           if (!updateInProgressRef.current) {
+            console.log("Object removed event triggered");
             // Use a local reference to updateDesign to avoid dependency issues
             const currentCanvas = fabricCanvas;
             if (!currentCanvas || !currentCanvas.getContext || !onDesignChangeRef.current || updateInProgressRef.current) return;
 
             updateInProgressRef.current = true;
+
+            // Ensure a single safety area exists
+            ensureSingleSafetyArea(currentCanvas);
 
             setTimeout(() => {
               try {
@@ -303,12 +410,20 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
 
             canvas.add(img);
             canvas.setActiveObject(img);
+
+            // Ensure a single safety area exists
+            ensureSingleSafetyArea(canvas);
+
             canvas.renderAll();
 
             // Update the design data URL
             setTimeout(() => {
-              if (onDesignChangeRef.current && canvas) {
+              if (onDesignChangeRef.current && canvas && canvas.getContext) {
                 isGeneratingDataURLRef.current = true;
+
+                // Final check for safety area before generating data URL
+                ensureSingleSafetyArea(canvas);
+
                 const dataURL = canvas.toDataURL({
                   format: "png",
                   quality: 1,
@@ -328,7 +443,6 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
             updateInProgressRef.current = false;
           }
         },
-        { crossOrigin: 'anonymous' }
       );
     } catch (error) {
       console.error("Error in image processing:", error);
@@ -355,6 +469,10 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
           // Don't change color of images
           activeObject.set('fill', color);
         }
+
+        // Ensure a single safety area exists
+        ensureSingleSafetyArea(canvas);
+
         canvas.renderAll();
 
         // Generate data URL directly instead of calling updateDesign
@@ -415,6 +533,10 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
       // Add the text to canvas
       canvas.add(fabricText);
       canvas.setActiveObject(fabricText);
+
+      // Ensure a single safety area exists
+      ensureSingleSafetyArea(canvas);
+
       canvas.renderAll();
       setText("");
 
@@ -471,6 +593,10 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
       // Add the circle to canvas
       canvas.add(circle);
       canvas.setActiveObject(circle);
+
+      // Ensure a single safety area exists
+      ensureSingleSafetyArea(canvas);
+
       canvas.renderAll();
 
       // Generate data URL directly instead of calling updateDesign
@@ -527,6 +653,10 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
       // Add the square to canvas
       canvas.add(square);
       canvas.setActiveObject(square);
+
+      // Ensure a single safety area exists
+      ensureSingleSafetyArea(canvas);
+
       canvas.renderAll();
 
       // Generate data URL directly instead of calling updateDesign
@@ -578,6 +708,10 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
         updateInProgressRef.current = true;
         console.log(`Deleting object: ${activeObject.type} (id: ${activeObject.id})`);
         canvas.remove(activeObject);
+
+        // Ensure a single safety area exists after deletion
+        ensureSingleSafetyArea(canvas);
+
         canvas.renderAll();
 
         // Generate data URL directly instead of calling updateDesign
@@ -687,15 +821,22 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
                 if (canvas && canvas.getContext) {
                   canvas.add(img);
                   canvas.setActiveObject(img);
+
+                  // Ensure a single safety area exists
+                  ensureSingleSafetyArea(canvas);
+
                   canvas.renderAll();
                   console.log("Uploaded image added to canvas");
 
                   // Generate data URL directly instead of calling updateDesign
                   setTimeout(() => {
                     try {
-                      if (onDesignChangeRef.current && canvas) {
+                      if (onDesignChangeRef.current && canvas && canvas.getContext) {
                         // Set flag to prevent loops
                         isGeneratingDataURLRef.current = true;
+
+                        // Final check for safety area before generating data URL
+                        ensureSingleSafetyArea(canvas);
 
                         const dataURL = canvas.toDataURL({
                           format: "png",
