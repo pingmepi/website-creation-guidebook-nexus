@@ -111,7 +111,9 @@ export function useDesignHandlers() {
         selectedTheme,
         tshirtColor,
         designId,
-        designName
+        designName,
+        hasUnsavedChanges,
+        user.id
       );
       
       if (savedId) {
