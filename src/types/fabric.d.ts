@@ -6,7 +6,7 @@ declare module 'fabric' {
     Circle: any;
     Text: any;
     Image: {
-      fromURL: (url: string, callback: (img: any) => void, options?: any) => void;
+      fromURL: (url: string, callback: (img: any) => void, options?: {crossOrigin?: string}) => void;
     };
     Object: any;
     IText: any;

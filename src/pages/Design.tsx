@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DesignStepper from "@/components/design/DesignStepper";
 import ConfirmationDialog from "@/components/design/ConfirmationDialog";
 import LoginDialog from "@/components/auth/LoginDialog";
@@ -8,6 +8,9 @@ import LoadingSpinner from "@/components/design/LoadingSpinner";
 import PreferencesSection from "@/components/design/PreferencesSection";
 import CustomizationSection from "@/components/design/CustomizationSection";
 import DesignCanvasRefactored from "@/components/design/canvas/DesignCanvasRefactored";
+import { useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Define TshirtColor type for proper type checking
 interface TshirtColor {
@@ -24,6 +27,7 @@ const TSHIRT_COLORS: TshirtColor[] = [
 ];
 
 const Design = () => {
+  const location = useLocation();
   const {
     currentStep,
     currentStage,
@@ -47,8 +51,50 @@ const Design = () => {
     handleLoginSuccess,
     handleBackToThemes,
     handleDesignChange,
-    handleSaveDesign
+    handleSaveDesign,
+    loadSavedDesign
   } = useDesignState();
+
+  // Check for design ID in the URL query parameters
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const designId = params.get('id');
+    
+    if (designId) {
+      fetchDesign(designId);
+    }
+  }, [location.search]);
+
+  // Fetch design data from Supabase
+  const fetchDesign = async (id: string) => {
+    try {
+      console.log("Fetching design with ID:", id);
+      
+      const { data, error } = await supabase
+        .from('designs')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (!data) {
+        toast.error("Design not found");
+        return;
+      }
+      
+      console.log("Design loaded:", data);
+      loadSavedDesign(data);
+      
+    } catch (error) {
+      console.error("Error fetching design:", error);
+      toast.error("Failed to load design", {
+        description: "Please try again later."
+      });
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">

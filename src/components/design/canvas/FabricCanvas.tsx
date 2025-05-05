@@ -289,7 +289,7 @@ const FabricCanvas = ({
         }
       }
     };
-  }, [width, height, backgroundColor]);
+  }, [width, height, backgroundColor, onCanvasReady]);
 
   // Handle drawing mode changes
   useEffect(() => {
@@ -312,7 +312,7 @@ const FabricCanvas = ({
     // Only load image if it's different from the last one we processed
     // This prevents the image from being reloaded on every render
     if (initialImage && initialImage !== lastInitialImageRef.current) {
-      console.log("Loading new initial image in FabricCanvas");
+      console.log("Loading new initial image in FabricCanvas:", initialImage.substring(0, 50) + "...");
       lastInitialImageRef.current = initialImage;
       
       // Set update flags to prevent duplicate safety areas
@@ -392,7 +392,7 @@ const FabricCanvas = ({
               safetyAreaManagedRef.current = false;
             }
           }, 
-          { crossOrigin: 'anonymous' } // Fix: Properly provide the options as a single object
+          { crossOrigin: 'anonymous' }
         );
       } catch (error) {
         console.error("Error creating fabric Image from URL:", error);

@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Answer } from "@/components/design/QuestionFlow";
-import { Theme, DesignStage, DesignStep } from "./useDesignTypes";
+import { Theme, DesignStage, DesignStep } from "./types";
 import { useUser } from "@/contexts/UserContext";
 import { toast } from "sonner";
 import { useDesignStorage } from "./useDesignStorage";
@@ -20,6 +20,7 @@ export function useDesignHandlers() {
   const [tshirtColor, setTshirtColor] = useState("#FFFFFF");
   const [designImage, setDesignImage] = useState<string | undefined>(undefined);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   const { saveDesignToDatabase, isSaving } = useDesignStorage();
   const { generateDesignWithAI, isGenerating } = useDesignGeneration();
@@ -58,15 +59,15 @@ export function useDesignHandlers() {
     // Generate design with AI using the selected theme and answers
     if (selectedTheme && answers.length > 0) {
       try {
-        const generatedImage = await generateDesignWithAI(
+        const generatedImageUrl = await generateDesignWithAI(
           selectedTheme, 
           answers, 
           tshirtColor,
           designName
         );
         
-        if (generatedImage) {
-          setDesignImage(generatedImage);
+        if (generatedImageUrl) {
+          setDesignImage(generatedImageUrl);
         }
       } catch (error) {
         console.error("Error generating design:", error);
@@ -129,6 +130,61 @@ export function useDesignHandlers() {
     }
   };
 
+  // Load an existing design
+  const loadSavedDesign = (savedDesign: any) => {
+    setIsLoading(true);
+    try {
+      console.log("Loading saved design:", savedDesign);
+      
+      if (savedDesign.name) {
+        setDesignName(savedDesign.name);
+      }
+      
+      if (savedDesign.t_shirt_color) {
+        setTshirtColor(savedDesign.t_shirt_color);
+      }
+      
+      if (savedDesign.preview_url) {
+        console.log("Setting design image from preview URL:", savedDesign.preview_url.substring(0, 50) + "...");
+        setDesignImage(savedDesign.preview_url);
+      }
+      
+      if (savedDesign.id) {
+        setDesignId(savedDesign.id);
+      }
+      
+      // Parse design data if available
+      if (savedDesign.design_data) {
+        const designData = typeof savedDesign.design_data === 'string'
+          ? JSON.parse(savedDesign.design_data)
+          : savedDesign.design_data;
+          
+        console.log("Parsed design data:", designData);
+        
+        if (designData.answers) {
+          setAnswers(designData.answers);
+        }
+        
+        if (designData.theme_id && designData.theme) {
+          setSelectedTheme(designData.theme);
+        }
+      }
+      
+      // Skip to customization stage
+      setCurrentStep("design");
+      setCurrentStage("customization");
+      setHasUnsavedChanges(false);
+      
+    } catch (error) {
+      console.error("Error loading saved design:", error);
+      toast.error("Failed to load design", {
+        description: "There was an error loading your design. Please try again later."
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     currentStep,
     currentStage,
@@ -140,6 +196,7 @@ export function useDesignHandlers() {
     designImage,
     isSaving,
     isGenerating,
+    isLoading,
     designId,
     designName,
     hasUnsavedChanges,
@@ -153,6 +210,7 @@ export function useDesignHandlers() {
     setCurrentStep,
     setCurrentStage,
     setDesignId,
+    loadSavedDesign,
     handleThemeSelect,
     handleQuestionFlowComplete,
     handleConfirmDesign,
