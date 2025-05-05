@@ -1,77 +1,103 @@
-
-// Import using npm: prefix for Node.js packages in Edge Functions
 import { createClient } from 'npm:@supabase/supabase-js';
-
-// CORS headers for all responses
+// Import Deno Edge Runtime types
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+// CORS headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
-
-// This is now a Supabase Edge Function handler that works with Node.js
-export default async function handler(req) {
-  // Handle CORS preflight requests
+// Start Edge Function
+Deno.serve(async (req)=>{
   if (req.method === 'OPTIONS') {
-    return new Response(null, { 
-      headers: corsHeaders 
+    return new Response('ok', {
+      headers: corsHeaders,
+      status: 204
     });
   }
-
+  console.log("✅ Function invoked");
   try {
-    // Parse the request body
-    const { theme, answers } = await req.json();
-    console.log("Received design generation request with theme:", theme?.name || 'Unknown theme');
-    console.log("User answers count:", answers?.length || 0);
-    
-    if (!theme || !answers || answers.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "Theme and answers are required" }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+    // Parse JSON safely
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      return jsonError("Invalid JSON", 400);
     }
-    
-    // Build a prompt based on the theme and answers
+    const { theme, answers, userId } = body;
+    if (!theme || !answers || answers.length === 0) {
+      return jsonError("Theme and answers are required", 400);
+    }
+    // Generate prompt
     let prompt = `Create a t-shirt design with theme: ${theme.name}. `;
-    answers.forEach(answer => {
-      prompt += `${answer.question}: ${answer.answer}. `;
+    answers.forEach((a)=>{
+      prompt += `${a.question}: ${a.answer}. `;
     });
-    
-    console.log("Generated prompt for AI:", prompt);
-    
-    // Generate a mock image (base64 encoded) for testing
-    // In production, this would be replaced with an actual AI model call
-    const mockImageBase64 = generateMockImage();
-    
-    console.log("Generated mock image, returning to client");
-    
-    // Return the mock image directly as base64
-    return new Response(
-      JSON.stringify({ 
-        imageUrl: `data:image/png;base64,${mockImageBase64}`,
-        prompt: prompt
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    console.log("🧠 Prompt:", prompt);
+    // Call webhook
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(), 30000);
+    let webhookResponse;
+    try {
+      webhookResponse = await fetch('https://webhook.miles-api.com/webhook/testing-1243', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt
+        }),
+        signal: controller.signal
+      });
+    } finally{
+      clearTimeout(timeout);
+    }
+    if (!webhookResponse.ok) {
+      return jsonError(`Webhook error: ${webhookResponse.status}`, 500);
+    }
+    const imageData = await webhookResponse.json();
+    console.log("📦 Webhook response received");
+    // Save to DB if userId is provided
+    if (userId && imageData.image_base64) {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL');
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+      if (!supabaseUrl || !supabaseKey) {
+        console.error("❌ Missing Supabase env vars");
+      } else {
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const { error } = await supabase.from('ai_generated_designs').insert({
+          user_id: userId,
+          design_image: `data:image/png;base64,${imageData.image_base64}`,
+          prompt: prompt,
+          theme_id: theme.id || null,
+          is_favorite: false
+        });
+        if (error) console.error("❌ DB Insert Error:", error);
       }
-    );
-  } catch (error) {
-    console.error("Error in generate-ai-design function:", error);
-    
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    }
+    return new Response(JSON.stringify({
+      imageUrl: `data:image/png;base64,${imageData.image_base64}`,
+      prompt
+    }), {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
       }
-    );
+    });
+  } catch (err) {
+    console.error("❌ Function error:", err);
+    return jsonError("Internal Server Error", 500);
   }
-}
-
-// Generate a simple base64 encoded image for testing
-function generateMockImage() {
-  // This is a tiny red square as base64
-  return "iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAKElEQVQ4T2NkYGD4z0ABYBw1cDQMRzMMRjXDaDowmmsHR5QNznQ4mgYB8W0FAS7HDIYAAAAASUVORK5CYII=";
+});
+// Utility: JSON error response
+function jsonError(message, status = 500) {
+  return new Response(JSON.stringify({
+    error: message
+  }), {
+    status,
+    headers: {
+      ...corsHeaders,
+      'Content-Type': 'application/json'
+    }
+  });
 }

@@ -4,7 +4,6 @@ import DesignStepper from "@/components/design/DesignStepper";
 import ConfirmationDialog from "@/components/design/ConfirmationDialog";
 import LoginDialog from "@/components/auth/LoginDialog";
 import { TSHIRT_COLORS, useDesignState } from "@/hooks/useDesignState";
-import MainLayout from "@/layouts/MainLayout";
 import LoadingSpinner from "@/components/design/LoadingSpinner";
 import PreferencesSection from "@/components/design/PreferencesSection";
 import CustomizationSection from "@/components/design/CustomizationSection";
@@ -37,7 +36,6 @@ const Design = () => {
   } = useDesignState();
 
   return (
-    <MainLayout>
       <div className="container mx-auto px-4 py-8">
         <section className="max-w-5xl mx-auto text-center mb-8">
           <DesignStepper currentStep={currentStep} />
@@ -89,7 +87,6 @@ const Design = () => {
           onSuccess={handleLoginSuccess}
         />
       </div>
-    </MainLayout>
   );
 };
 
