@@ -1,37 +1,66 @@
 
-import { useState } from "react";
-import { Answer } from "@/components/design/QuestionFlow";
-import { Theme, DesignStage, DesignStep } from "./types";
 import { useUser } from "@/contexts/UserContext";
 import { toast } from "sonner";
 import { useDesignStorage } from "./useDesignStorage";
 import { useDesignGeneration } from "./useDesignGeneration";
+import { useDesignSelectionState } from "./useDesignSelectionState";
+import { useDesignNavigationState } from "./useDesignNavigationState";
+import { useDesignAppearanceState } from "./useDesignAppearanceState";
+import { Theme } from "./types";
+import { Answer } from "@/components/design/QuestionFlow";
 
 export function useDesignHandlers() {
   const { isAuthenticated, user } = useUser();
-  const [currentStep, setCurrentStep] = useState<DesignStep>("preferences");
-  const [currentStage, setCurrentStage] = useState<DesignStage>("theme-selection");
-  const [selectedTheme, setSelectedTheme] = useState<Theme | null>(null);
-  const [answers, setAnswers] = useState<Answer[]>([]);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [showLoginDialog, setShowLoginDialog] = useState(false);
-  const [designId, setDesignId] = useState<string | null>(null);
-  const [designName, setDesignName] = useState<string>("");
-  const [tshirtColor, setTshirtColor] = useState("#FFFFFF");
-  const [designImage, setDesignImage] = useState<string | undefined>(undefined);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  
   const { saveDesignToDatabase, isSaving } = useDesignStorage();
   const { generateDesignWithAI, isGenerating } = useDesignGeneration();
-
+  
+  // Use the smaller, focused hooks
+  const {
+    selectedTheme, 
+    answers, 
+    setSelectedTheme,
+    setAnswers,
+    handleThemeSelect: selectTheme,
+    handleQuestionFlowComplete: completeQuestionFlow
+  } = useDesignSelectionState();
+  
+  const {
+    currentStep,
+    currentStage,
+    showConfirmation,
+    showLoginDialog,
+    setCurrentStep,
+    setCurrentStage,
+    setShowConfirmation,
+    setShowLoginDialog,
+    navigateToQuestionFlow,
+    navigateToCustomization,
+    navigateToThemeSelection
+  } = useDesignNavigationState();
+  
+  const {
+    designId,
+    designName,
+    tshirtColor,
+    designImage,
+    hasUnsavedChanges,
+    isLoading,
+    setDesignId,
+    setDesignName,
+    setTshirtColor,
+    setDesignImage,
+    setHasUnsavedChanges,
+    setIsLoading,
+    handleDesignChange
+  } = useDesignAppearanceState();
+  
   const handleThemeSelect = (theme: Theme) => {
-    setSelectedTheme(theme);
-    setCurrentStage("question-flow");
+    selectTheme(theme);
+    navigateToQuestionFlow();
   };
   
   const handleQuestionFlowComplete = (questionAnswers: Answer[]) => {
-    setAnswers(questionAnswers);
+    completeQuestionFlow(questionAnswers);
     setShowConfirmation(true);
   };
   
@@ -53,8 +82,7 @@ export function useDesignHandlers() {
   };
   
   const proceedToDesignStage = async () => {
-    setCurrentStep("design");
-    setCurrentStage("customization");
+    navigateToCustomization();
     
     // Generate design with AI using the selected theme and answers
     if (selectedTheme && answers.length > 0) {
@@ -81,15 +109,10 @@ export function useDesignHandlers() {
   };
   
   const handleBackToThemes = () => {
-    setCurrentStage("theme-selection");
+    navigateToThemeSelection();
     setSelectedTheme(null);
   };
 
-  const handleDesignChange = (designDataUrl: string) => {
-    setDesignImage(designDataUrl);
-    setHasUnsavedChanges(true);
-  };
-  
   const handleSaveDesign = async () => {
     if (!isAuthenticated) {
       setShowLoginDialog(true);
