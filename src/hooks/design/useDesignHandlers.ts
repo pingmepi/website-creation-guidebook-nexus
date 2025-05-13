@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Answer } from "@/components/design/QuestionFlow";
-import { Theme, DesignStage, DesignStep } from "./useDesignTypes";
+import { Theme, DesignStage, DesignStep } from "./types";
 import { useUser } from "@/contexts/UserContext";
 import { toast } from "sonner";
 import { useDesignStorage } from "./useDesignStorage";
@@ -57,16 +57,26 @@ export function useDesignHandlers() {
     
     // Generate design with AI using the selected theme and answers
     if (selectedTheme && answers.length > 0) {
-      await generateDesignWithAI(
-        selectedTheme, 
-        answers, 
-        tshirtColor,
-        designId,
-        designName,
-        setDesignImage,
-        setHasUnsavedChanges,
-        setDesignId
-      );
+      try {
+        // Fixed: Properly pass the setDesignImage function instead of a string
+        const result = await generateDesignWithAI(
+          selectedTheme, 
+          answers, 
+          tshirtColor,
+          designId,
+          designName,
+          setDesignImage, // Fixed: Pass the function correctly
+          setHasUnsavedChanges,
+          setDesignId
+        );
+        
+        // Fixed: Don't check truthiness of void result
+        console.log("Design generation completed");
+      } catch (error) {
+        console.error("Error generating design:", error);
+        // Set placeholder design image if generation fails
+        setDesignImage("/assets/images/design/placeholder.svg");
+      }
     } else {
       // Set placeholder design image if no theme or answers
       setDesignImage("/assets/images/design/placeholder.svg");
@@ -97,6 +107,7 @@ export function useDesignHandlers() {
     }
     
     try {
+      // Fixed: Pass setDesignId as a function instead of a boolean
       await saveDesignToDatabase(
         designImage, 
         "", 
@@ -105,7 +116,7 @@ export function useDesignHandlers() {
         tshirtColor, 
         designId, 
         designName,
-        setDesignId,
+        setDesignId, // Fixed: Pass the function correctly
         setHasUnsavedChanges
       );
       

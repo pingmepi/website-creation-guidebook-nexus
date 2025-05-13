@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useUser } from "@/contexts/UserContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Answer } from "@/components/design/QuestionFlow";
-import { Theme } from "./useDesignTypes";
+import { Theme } from "./types";
 
 export function useDesignStorage() {
   const { user } = useUser();
