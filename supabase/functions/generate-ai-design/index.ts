@@ -1,6 +1,6 @@
 
 import { createClient } from 'npm:@supabase/supabase-js';
-import OpenAI from 'npm:openai@4.29.1';
+import { OpenAI } from 'npm:openai@4.29.1';
 // Import Deno Edge Runtime types
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     }
     
     // Get OpenAI API Key
-    const openaiApiKey = Deno.env.get('OPEN_AI_API_KEY'); // Using the key as specified
+    const openaiApiKey = Deno.env.get('OPEN_AI_API_KEY'); 
     if (!openaiApiKey) {
       console.error("❌ Missing OpenAI API Key");
       return new Response(
@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error("❌ Function error:", err);
     return new Response(
-      JSON.stringify({ error: "Internal Server Error" }),
+      JSON.stringify({ error: "Internal Server Error", details: err.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

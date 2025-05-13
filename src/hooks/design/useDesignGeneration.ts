@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Theme } from "./types";
 import { Answer } from "@/components/design/QuestionFlow";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 import { useUser } from "@/contexts/UserContext";
 
 export function useDesignGeneration() {
@@ -17,13 +17,20 @@ export function useDesignGeneration() {
     saveDesignToDatabase: (imageUrl: string, prompt: string, userId: string) => Promise<void>
   ) => {
     if (!selectedTheme || answers.length === 0) {
-      toast.error("Theme and answers are required to generate design");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Theme and answers are required to generate design"
+      });
       return;
     }
 
     try {
       setIsGenerating(true);
-      toast.loading("Generating your design with AI...");
+      toast({
+        title: "Generating design...",
+        description: "Creating your custom t-shirt design with AI",
+      });
 
       // Check authentication status
       console.log("CLIENT: Authentication status:", isAuthenticated);
@@ -49,7 +56,6 @@ export function useDesignGeneration() {
 
       // Get the current session
       const { data: { session } } = await supabase.auth.getSession();
-      console.log("Session details:", session);
       console.log("🔑 CLIENT: Session available:", !!session);
 
       // Call the edge function to generate the design with explicit headers
@@ -61,7 +67,6 @@ export function useDesignGeneration() {
           headers: session ? {
             Authorization: `Bearer ${session.access_token}`
           } : undefined,
-          method: 'POST'
         }
       );
 
@@ -91,8 +96,8 @@ export function useDesignGeneration() {
         await saveDesignToDatabase(aiResponse.imageUrl, aiResponse.prompt || '', user.id);
       }
 
-      toast.dismiss();
-      toast.success("Your design is ready!", {
+      toast({
+        title: "Your design is ready!",
         description: "We've created a custom t-shirt design based on your preferences."
       });
     } catch (error) {
@@ -103,8 +108,9 @@ export function useDesignGeneration() {
         name: error.name
       });
 
-      toast.dismiss();
-      toast.error("Failed to generate design", {
+      toast({
+        variant: "destructive",
+        title: "Failed to generate design",
         description: "Please try again later."
       });
 

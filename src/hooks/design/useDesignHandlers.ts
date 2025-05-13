@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Answer } from "@/components/design/QuestionFlow";
 import { Theme, DesignStage, DesignStep } from "./useDesignTypes";
 import { useUser } from "@/contexts/UserContext";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 import { useDesignStorage } from "./useDesignStorage";
 import { useDesignGeneration } from "./useDesignGeneration";
 
@@ -64,7 +64,7 @@ export function useDesignHandlers() {
         setDesignImage,
         async (imageUrl: string, prompt: string, userId: string) => {
           if (user) {
-            await saveDesignToDatabase(imageUrl, prompt, userId, answers, selectedTheme);
+            await saveDesignToDatabase(imageUrl, prompt, userId);
           }
         }
       );
@@ -91,7 +91,9 @@ export function useDesignHandlers() {
     }
     
     if (!designImage || !user) {
-      toast.error("Cannot save design", { 
+      toast({
+        variant: "destructive",
+        title: "Cannot save design",
         description: "Please complete your design before saving"
       });
       return;
@@ -101,17 +103,18 @@ export function useDesignHandlers() {
       await saveDesignToDatabase(
         designImage, 
         "", 
-        user.id,
-        answers, 
-        selectedTheme
+        user.id
       );
       
-      toast.success("Design saved successfully!", {
+      toast({
+        title: "Design saved successfully!",
         description: "You can find it in your saved designs."
       });
     } catch (error) {
       console.error("Error saving design:", error);
-      toast.error("Failed to save design", {
+      toast({
+        variant: "destructive",
+        title: "Failed to save design",
         description: "Please try again later."
       });
     }
