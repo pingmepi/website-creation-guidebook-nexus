@@ -1,9 +1,8 @@
-
 import { useDesignNavigation } from "./useDesignNavigation";
 import { useDesignData } from "./useDesignData";
 import { useDesignGeneration } from "./useDesignGeneration";
 import { useDesignUI } from "./useDesignUI";
-import { TSHIRT_COLORS, Theme, TshirtColor } from "./types";
+import { Theme } from "./types";
 import { Answer } from "@/components/design/QuestionFlow";
 
 export function useDesignState() {
@@ -48,12 +47,8 @@ export function useDesignState() {
     await generation.generateDesignWithAI(
       data.selectedTheme,
       data.answers,
-      data.tshirtColor,
-      data.designId,
-      data.designName,
       data.setDesignImage,
-      data.setHasUnsavedChanges,
-      data.setDesignId
+      data.saveDesignToDatabase
     );
   };
 

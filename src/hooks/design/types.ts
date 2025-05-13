@@ -1,4 +1,3 @@
-
 import { Answer } from "@/components/design/QuestionFlow";
 
 // Define t-shirt color options
@@ -8,9 +7,6 @@ export const TSHIRT_COLORS = {
   GREY: "#8A898C",
   BLUE: "#1EAEDB"
 };
-
-// Define TshirtColor type explicitly
-export type TshirtColor = string;
 
 export type DesignStep = "preferences" | "design" | "options";
 export type DesignStage = "theme-selection" | "question-flow" | "customization";
@@ -43,7 +39,7 @@ export interface DesignState {
   // UI state
   showConfirmation: boolean;
   showLoginDialog: boolean;
-  tshirtColor: TshirtColor;
+  tshirtColor: string;
   designImage?: string;
   isSaving: boolean;
   isGenerating: boolean;
@@ -52,7 +48,7 @@ export interface DesignState {
   // Setters
   setShowConfirmation: (show: boolean) => void;
   setShowLoginDialog: (show: boolean) => void;
-  setTshirtColor: (color: TshirtColor) => void;
+  setTshirtColor: (color: string) => void;
   setDesignName: (name: string) => void;
   
   // Handlers
