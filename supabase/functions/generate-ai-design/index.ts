@@ -1,6 +1,6 @@
 
 import { createClient } from 'npm:@supabase/supabase-js';
-import OpenAI from 'openai';
+import OpenAI from 'npm:openai@4.29.1';
 // Import Deno Edge Runtime types
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 

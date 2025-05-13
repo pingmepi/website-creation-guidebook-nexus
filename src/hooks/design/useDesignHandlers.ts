@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Answer } from "@/components/design/QuestionFlow";
 import { Theme, DesignStage, DesignStep } from "./useDesignTypes";
@@ -24,6 +23,7 @@ export function useDesignHandlers() {
   const { saveDesignToDatabase, isSaving } = useDesignStorage();
   const { generateDesignWithAI, isGenerating } = useDesignGeneration();
 
+  
   const handleThemeSelect = (theme: Theme) => {
     setSelectedTheme(theme);
     setCurrentStage("question-flow");
@@ -60,12 +60,8 @@ export function useDesignHandlers() {
       await generateDesignWithAI(
         selectedTheme, 
         answers, 
-        tshirtColor,
-        designId,
-        designName,
-        setDesignImage,
-        setHasUnsavedChanges,
-        setDesignId
+        user?.id,
+        designName
       );
     } else {
       // Set placeholder design image if no theme or answers
@@ -101,12 +97,7 @@ export function useDesignHandlers() {
         designImage, 
         "", 
         answers, 
-        selectedTheme, 
-        tshirtColor, 
-        designId, 
-        designName,
-        setDesignId,
-        setHasUnsavedChanges
+        selectedTheme
       );
       
       toast.success("Design saved successfully!", {
