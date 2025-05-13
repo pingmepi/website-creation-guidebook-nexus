@@ -14,7 +14,7 @@ export function useDesignGeneration() {
     selectedTheme: Theme | null,
     answers: Answer[],
     setDesignImage: (image: string) => void,
-    saveDesignToDatabase: (imageUrl: string, prompt: string, userId: string) => Promise<void>
+    saveDesignCallback: (imageUrl: string, prompt: string, userId: string) => Promise<void>
   ) => {
     if (!selectedTheme || answers.length === 0) {
       toast({
@@ -93,7 +93,7 @@ export function useDesignGeneration() {
 
       // Save the design image with the answers and theme
       if (user) {
-        await saveDesignToDatabase(aiResponse.imageUrl, aiResponse.prompt || '', user.id);
+        await saveDesignCallback(aiResponse.imageUrl, aiResponse.prompt || '', user.id);
       }
 
       toast({

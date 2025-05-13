@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Answer } from "@/components/design/QuestionFlow";
 import { Theme, DesignStage, DesignStep } from "./useDesignTypes";
@@ -62,7 +61,21 @@ export function useDesignHandlers() {
         selectedTheme, 
         answers, 
         setDesignImage,
-        saveDesignToDatabase
+        async (imageUrl: string, prompt: string, userId: string) => {
+          if (user) {
+            await saveDesignToDatabase(
+              imageUrl,
+              prompt,
+              answers,
+              selectedTheme,
+              tshirtColor,
+              designId,
+              designName,
+              setDesignId,
+              setHasUnsavedChanges
+            );
+          }
+        }
       );
     } else {
       // Set placeholder design image if no theme or answers
@@ -97,9 +110,15 @@ export function useDesignHandlers() {
     
     try {
       await saveDesignToDatabase(
-        designImage, 
-        "", 
-        user.id
+        designImage,
+        "",
+        answers,
+        selectedTheme,
+        tshirtColor,
+        designId,
+        designName,
+        setDesignId,
+        setHasUnsavedChanges
       );
       
       toast({
