@@ -29,28 +29,34 @@ export function useDesignGeneration() {
       setIsGenerating(true);
       toast({
         title: "Generating design...",
-        description: "Creating your custom t-shirt design with AI",
+        description: "Creating your custom t-shirt design with AI"
       });
 
       // Check authentication status
       console.log("CLIENT: Authentication status:", isAuthenticated);
       console.log("🔍 CLIENT: User data:", user ? `ID: ${user.id}` : "No user");
 
+      // Validate answers to ensure they have the right format
+      const validAnswers = answers.filter(answer => 
+        answer && typeof answer.question === 'string' && typeof answer.answer === 'string'
+      );
+      
+      if (validAnswers.length === 0) {
+        throw new Error("No valid answers provided");
+      }
+
       // Prepare payload with explicit userId
       const payload = {
         theme: selectedTheme,
-        answers: answers,
+        answers: validAnswers,
         userId: user?.id || null
       };
 
       console.log("CLIENT: Invoking generate-ai-design function with:", {
         theme: selectedTheme.name,
-        answersCount: answers.length,
+        answersCount: validAnswers.length,
         userId: user?.id || "not provided"
       });
-
-      // Log the exact payload being sent
-      console.log("📦 CLIENT: Sending exact payload:", JSON.stringify(payload, null, 2));
 
       const startTime = Date.now();
 
@@ -97,8 +103,10 @@ export function useDesignGeneration() {
       }
 
       toast({
-        title: "Your design is ready!",
-        description: "We've created a custom t-shirt design based on your preferences."
+        title: aiResponse.fallback ? "Design created with fallback" : "Your design is ready!",
+        description: aiResponse.fallback 
+          ? "We used a simplified design due to content restrictions." 
+          : "We've created a custom t-shirt design based on your preferences."
       });
     } catch (error) {
       console.error("❌ CLIENT: Error generating design with AI:", error);
@@ -111,7 +119,7 @@ export function useDesignGeneration() {
       toast({
         variant: "destructive",
         title: "Failed to generate design",
-        description: "Please try again later."
+        description: "Please try again with different preferences."
       });
 
       // Set placeholder design image if generation fails

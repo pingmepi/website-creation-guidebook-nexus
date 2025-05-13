@@ -36,14 +36,15 @@ Deno.serve(async (req) => {
     
     const { theme, answers, userId } = body;
     if (!theme || !answers || answers.length === 0) {
+      console.error("❌ Missing required parameters", { hasTheme: !!theme, answersCount: answers?.length });
       return new Response(
         JSON.stringify({ error: "Theme and answers are required" }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
     
-    // Get OpenAI API Key
-    const openaiApiKey = Deno.env.get('OPEN_AI_API_KEY'); 
+    // Get OpenAI API Key - check both possible environment variable names
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY') || Deno.env.get('OPEN_AI_API_KEY'); 
     if (!openaiApiKey) {
       console.error("❌ Missing OpenAI API Key");
       return new Response(
@@ -52,9 +53,30 @@ Deno.serve(async (req) => {
       );
     }
     
+    // Validate answers input
+    for (const answer of answers) {
+      if (!answer.question || !answer.answer) {
+        console.error("❌ Invalid answer format", answer);
+        return new Response(
+          JSON.stringify({ error: "Invalid answer format" }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+      }
+    }
+    
     // Generate enhanced prompt using the template
     const prompt = generatePrompt(theme, answers);
     console.log("🧠 Generated Prompt:", prompt);
+    console.log("🧠 Prompt Length:", prompt.length);
+    
+    // Validate prompt
+    if (!prompt || prompt.length < 10) {
+      console.error("❌ Generated prompt is too short:", prompt);
+      return new Response(
+        JSON.stringify({ error: "Failed to generate a valid prompt" }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
+    }
     
     try {
       // Initialize OpenAI client
@@ -64,14 +86,13 @@ Deno.serve(async (req) => {
       
       console.log("🖼️ Generating image with AI...");
       
-      // Generate image with OpenAI API - fixing the request format
+      // Generate image with OpenAI API - simplified request format
       const response = await openai.images.generate({
         model: "dall-e-3",
         prompt: prompt,
         n: 1,
         size: "1024x1024",
-        response_format: "b64_json",
-        quality: "standard"
+        response_format: "b64_json"
       });
       
       console.log("✅ Image generation successful");
@@ -121,8 +142,48 @@ Deno.serve(async (req) => {
       
     } catch (apiError) {
       console.error("❌ API Error:", apiError);
+      console.error("❌ API Error Status:", apiError.status);
+      console.error("❌ API Error Type:", apiError.type);
+      console.error("❌ API Error Message:", apiError.message);
+      
+      if (apiError.status === 400) {
+        console.error("❌ OpenAI 400 Bad Request - Check prompt format or content policy violations");
+        
+        // Try with a fallback prompt to see if the API itself works
+        try {
+          console.log("🔄 Attempting fallback with simple prompt");
+          const openai = new OpenAI({ apiKey: openaiApiKey });
+          const fallbackResponse = await openai.images.generate({
+            model: "dall-e-3",
+            prompt: "A simple abstract t-shirt design with geometric shapes",
+            n: 1,
+            size: "1024x1024",
+            response_format: "b64_json"
+          });
+          
+          if (fallbackResponse.data[0]?.b64_json) {
+            console.log("✅ Fallback prompt succeeded - original prompt likely violated policies");
+            const fallbackImageBase64 = fallbackResponse.data[0].b64_json;
+            
+            return new Response(
+              JSON.stringify({
+                imageUrl: `data:image/png;base64,${fallbackImageBase64}`,
+                prompt: "A simple abstract t-shirt design with geometric shapes",
+                fallback: true
+              }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+        } catch (fallbackError) {
+          console.error("❌ Fallback also failed:", fallbackError);
+        }
+      }
+      
       return new Response(
-        JSON.stringify({ error: "Image generation API error", details: apiError.message }),
+        JSON.stringify({ 
+          error: "Image generation API error", 
+          details: `${apiError.status || 500} ${apiError.message || JSON.stringify(apiError)}` 
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
@@ -136,25 +197,35 @@ Deno.serve(async (req) => {
   }
 });
 
-// Enhanced prompt generator
+// Enhanced prompt generator with validation
 function generatePrompt(theme, answers) {
-  // Format theme information
-  const themeName = theme.name || 'Unknown Theme';
-  const themeDescription = theme.description || 'No description available';
-  
-  // Format Q&A section
-  const formattedQA = answers.map(a => `Question: ${a.question}\nAnswer: ${a.answer}`).join('\n\n');
-  
-  // Use the provided template
-  return `Create a visually compelling t-shirt design illustration based on the selected themes: ${themeName}
-These themes evoke the following ideas: ${themeDescription}
+  try {
+    // Format theme information
+    const themeName = theme.name || 'Unknown Theme';
+    const themeDescription = theme.description || 'No description available';
+    
+    // Format Q&A section
+    const formattedQA = answers.map(a => `Question: ${a.question}\nAnswer: ${a.answer}`).join('\n\n');
+    
+    // Use the provided template but clean up input
+    const sanitizedThemeName = themeName.replace(/[^\w\s\-,.]/g, '').trim();
+    const sanitizedDescription = themeDescription.replace(/[^\w\s\-,.]/g, '').trim();
+    
+    // Create a prompt that follows OpenAI guidelines
+    const prompt = `Create a visually compelling t-shirt design illustration based on the theme: ${sanitizedThemeName}.
+Theme description: ${sanitizedDescription}
 
-The design should align with the user's intent and preferences:
+The design should incorporate these preferences:
 ${formattedQA}
 
-Keep the design coherent, purposeful, and appropriate for the context described.
-Emphasize creativity and intent, and feel free to abstract or symbolize key elements from the answers.
-Avoid visual clutter and prioritize visual clarity and balance.
-
-The image should be well-balanced and suitable for placement on a t-shirt. Use colors creatively, possibly including hints of the theme's base colors.`;
+Keep the design coherent, purposeful, and suitable for a t-shirt print.
+Emphasize creativity with a balanced, professional layout.
+Use colors creatively while maintaining visual clarity.
+Make the design suitable for placement on a t-shirt front.`;
+    
+    return prompt;
+  } catch (error) {
+    console.error("❌ Error generating prompt:", error);
+    return "Create a simple, abstract t-shirt design with geometric shapes";
+  }
 }
