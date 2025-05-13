@@ -1,6 +1,6 @@
 
-import { createClient } from 'npm:@supabase/supabase-js';
-import { OpenAI } from 'npm:openai@4.29.1';
+import { createClient } from '@supabase/supabase-js';
+import { OpenAI } from 'openai';
 // Import Deno Edge Runtime types
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
@@ -64,13 +64,14 @@ Deno.serve(async (req) => {
       
       console.log("🖼️ Generating image with AI...");
       
-      // Generate image with OpenAI API
+      // Generate image with OpenAI API - fixing the request format
       const response = await openai.images.generate({
         model: "dall-e-3",
         prompt: prompt,
         n: 1,
         size: "1024x1024",
-        response_format: "b64_json"
+        response_format: "b64_json",
+        quality: "standard"
       });
       
       console.log("✅ Image generation successful");

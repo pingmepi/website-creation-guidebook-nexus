@@ -62,11 +62,7 @@ export function useDesignHandlers() {
         selectedTheme, 
         answers, 
         setDesignImage,
-        async (imageUrl: string, prompt: string, userId: string) => {
-          if (user) {
-            await saveDesignToDatabase(imageUrl, prompt, userId);
-          }
-        }
+        saveDesignToDatabase
       );
     } else {
       // Set placeholder design image if no theme or answers
