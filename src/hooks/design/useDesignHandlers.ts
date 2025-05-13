@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Answer } from "@/components/design/QuestionFlow";
 import { Theme, DesignStage, DesignStep } from "./useDesignTypes";
@@ -60,8 +61,12 @@ export function useDesignHandlers() {
       await generateDesignWithAI(
         selectedTheme, 
         answers, 
-        user?.id,
-        designName
+        setDesignImage,
+        async (imageUrl: string, prompt: string, userId: string) => {
+          if (user) {
+            await saveDesignToDatabase(imageUrl, prompt, userId, answers, selectedTheme);
+          }
+        }
       );
     } else {
       // Set placeholder design image if no theme or answers
@@ -96,6 +101,7 @@ export function useDesignHandlers() {
       await saveDesignToDatabase(
         designImage, 
         "", 
+        user.id,
         answers, 
         selectedTheme
       );

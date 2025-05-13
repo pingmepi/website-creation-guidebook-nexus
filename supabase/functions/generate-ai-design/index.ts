@@ -13,12 +13,14 @@ const corsHeaders = {
 
 // Start Edge Function
 Deno.serve(async (req) => {
+  // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
+    return new Response(null, {
       headers: corsHeaders,
       status: 204
     });
   }
+  
   console.log("✅ Function invoked");
   try {
     // Parse JSON safely
@@ -26,19 +28,28 @@ Deno.serve(async (req) => {
     try {
       body = await req.json();
     } catch (e) {
-      return jsonError("Invalid JSON", 400);
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON" }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
     }
     
     const { theme, answers, userId } = body;
     if (!theme || !answers || answers.length === 0) {
-      return jsonError("Theme and answers are required", 400);
+      return new Response(
+        JSON.stringify({ error: "Theme and answers are required" }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
     }
     
     // Get OpenAI API Key
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    const openaiApiKey = Deno.env.get('OPEN_AI_API_KEY'); // Using the key as specified
     if (!openaiApiKey) {
       console.error("❌ Missing OpenAI API Key");
-      return jsonError("Image generation service configuration error", 500);
+      return new Response(
+        JSON.stringify({ error: "Image generation service configuration error" }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
     }
     
     // Generate enhanced prompt using the template
@@ -69,7 +80,10 @@ Deno.serve(async (req) => {
       
       if (!imageBase64) {
         console.error("❌ No image data in response");
-        return jsonError("Failed to generate image", 500);
+        return new Response(
+          JSON.stringify({ error: "Failed to generate image" }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        );
       }
       
       // Save to DB if userId is provided
@@ -94,24 +108,30 @@ Deno.serve(async (req) => {
       }
       
       // Return the generated image
-      return new Response(JSON.stringify({
-        imageUrl: `data:image/png;base64,${imageBase64}`,
-        prompt
-      }), {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
+      return new Response(
+        JSON.stringify({
+          imageUrl: `data:image/png;base64,${imageBase64}`,
+          prompt
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
-      });
+      );
       
     } catch (apiError) {
       console.error("❌ API Error:", apiError);
-      return jsonError("Image generation API error", 500);
+      return new Response(
+        JSON.stringify({ error: "Image generation API error", details: apiError.message }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
     }
     
   } catch (err) {
     console.error("❌ Function error:", err);
-    return jsonError("Internal Server Error", 500);
+    return new Response(
+      JSON.stringify({ error: "Internal Server Error" }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+    );
   }
 });
 
@@ -136,17 +156,4 @@ Emphasize creativity and intent, and feel free to abstract or symbolize key elem
 Avoid visual clutter and prioritize visual clarity and balance.
 
 The image should be well-balanced and suitable for placement on a t-shirt. Use colors creatively, possibly including hints of the theme's base colors.`;
-}
-
-// Utility: JSON error response
-function jsonError(message, status = 500) {
-  return new Response(JSON.stringify({
-    error: message
-  }), {
-    status,
-    headers: {
-      ...corsHeaders,
-      'Content-Type': 'application/json'
-    }
-  });
 }
