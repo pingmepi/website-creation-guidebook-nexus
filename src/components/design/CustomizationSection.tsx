@@ -41,6 +41,13 @@ const CustomizationSection = ({
     value
   }));
 
+  // Debounced design name change to prevent excessive logging
+  const handleDesignNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (onDesignNameChange) {
+      onDesignNameChange(e.target.value);
+    }
+  };
+
   return (
     <div className="py-6">
       {/* Design Name at Top Left */}
@@ -49,7 +56,7 @@ const CustomizationSection = ({
           id="design-name"
           placeholder="My Awesome Design"
           value={designName}
-          onChange={(e) => onDesignNameChange && onDesignNameChange(e.target.value)}
+          onChange={handleDesignNameChange}
           className="text-lg font-medium w-full max-w-xs"
           disabled={isGenerating}
         />
