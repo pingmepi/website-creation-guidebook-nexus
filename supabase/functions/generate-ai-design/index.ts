@@ -1,8 +1,16 @@
-
-import { createClient } from '@supabase/supabase-js';
-import { OpenAI } from 'openai';
+import { createClient } from 'npm:@supabase/supabase-js';
+import { OpenAI } from 'npm:openai';
 // Import Deno Edge Runtime types
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+
+// Type definitions for OpenAI errors (to help with TypeScript validation)
+interface OpenAIError {
+  status: number;
+  type: string;
+  code?: string | null;
+  param?: string | null;
+  message: string;
+}
 
 // CORS headers
 const corsHeaders = {
@@ -10,6 +18,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
+
+// Retry configuration
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000; // Start with 1s delay, will increase with exponential backoff
+
+// OpenAI prompt safety filters
+const PROHIBITED_CONTENT = [
+  'explicit', 'sexual', 'violent', 'graphic', 'disturbing', 'harmful', 'illegal',
+  'unethical', 'hateful', 'discriminatory', 'offensive'
+];
 
 // Start Edge Function
 Deno.serve(async (req) => {
@@ -28,17 +46,30 @@ Deno.serve(async (req) => {
     try {
       body = await req.json();
     } catch (e) {
+      console.error("❌ Invalid request JSON:", e);
       return new Response(
         JSON.stringify({ error: "Invalid JSON" }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
     
+    // Log request payload for debugging
+    console.log("📦 Request Payload:", JSON.stringify(body, null, 2));
+    
     const { theme, answers, userId } = body;
-    if (!theme || !answers || answers.length === 0) {
-      console.error("❌ Missing required parameters", { hasTheme: !!theme, answersCount: answers?.length });
+    if (!theme || !answers) {
+      console.error("❌ Missing required parameters", { hasTheme: !!theme, hasAnswers: !!answers });
       return new Response(
         JSON.stringify({ error: "Theme and answers are required" }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+    
+    // Validate answers is an array with content
+    if (!Array.isArray(answers) || answers.length === 0) {
+      console.error("❌ Answers must be a non-empty array", { answersType: typeof answers, isArray: Array.isArray(answers), length: answers?.length });
+      return new Response(
+        JSON.stringify({ error: "Answers must be a non-empty array" }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
@@ -53,23 +84,25 @@ Deno.serve(async (req) => {
       );
     }
     
-    // Validate answers input
-    for (const answer of answers) {
-      if (!answer.question || !answer.answer) {
-        console.error("❌ Invalid answer format", answer);
-        return new Response(
-          JSON.stringify({ error: "Invalid answer format" }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-        );
-      }
+    // Validate answers input more thoroughly
+    const validAnswers = answers.filter(answer => 
+      answer && typeof answer.question === 'string' && typeof answer.answer === 'string'
+    );
+    
+    if (validAnswers.length === 0) {
+      console.error("❌ No valid answers provided", { answers });
+      return new Response(
+        JSON.stringify({ error: "No valid answers provided" }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
     }
     
     // Generate enhanced prompt using the template
-    const prompt = generatePrompt(theme, answers);
+    const prompt = generatePrompt(theme, validAnswers);
     console.log("🧠 Generated Prompt:", prompt);
     console.log("🧠 Prompt Length:", prompt.length);
     
-    // Validate prompt
+    // Enhanced prompt validation
     if (!prompt || prompt.length < 10) {
       console.error("❌ Generated prompt is too short:", prompt);
       return new Response(
@@ -78,32 +111,138 @@ Deno.serve(async (req) => {
       );
     }
     
+    // Check for prohibited content in the prompt
+    const containsProhibitedContent = PROHIBITED_CONTENT.some(term => 
+      prompt.toLowerCase().includes(term)
+    );
+    
+    if (containsProhibitedContent) {
+      console.error("❌ Prompt contains prohibited content");
+      return new Response(
+        JSON.stringify({ error: "The generated prompt contains prohibited content" }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+    
     try {
-      // Initialize OpenAI client
+      // Initialize OpenAI client with improved config
       const openai = new OpenAI({
         apiKey: openaiApiKey,
+        maxRetries: MAX_RETRIES, // Built-in retry mechanism
       });
       
       console.log("🖼️ Generating image with AI...");
       
-      // Generate image with OpenAI API - simplified request format
-      const response = await openai.images.generate({
+      // Prepare the API request payload
+      const imageGenRequest = {
         model: "dall-e-3",
         prompt: prompt,
         n: 1,
         size: "1024x1024",
         response_format: "b64_json"
-      });
+      };
+      
+      console.log("🔄 OpenAI Request Payload:", JSON.stringify({
+        ...imageGenRequest,
+        prompt: imageGenRequest.prompt.substring(0, 100) + '...' // Truncate for logging
+      }, null, 2));
+      
+      // Additional validation for OpenAI payload
+      const validationResult = validateOpenAIPayload(imageGenRequest);
+      if (!validationResult.valid) {
+        console.error("❌ Invalid OpenAI payload:", validationResult.issues);
+        return new Response(
+          JSON.stringify({ error: "Invalid OpenAI payload", details: validationResult.issues }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+      }
+      
+      // Measure request timing for debugging
+      const startTime = Date.now();
+      console.log(`⏱️ Starting OpenAI request at ${new Date().toISOString()}`);
+      
+      // Generate image with OpenAI API with retry logic
+      let response;
+      let retryCount = 0;
+      let lastError: OpenAIError | null = null;
+      
+      while (retryCount < MAX_RETRIES) {
+        try {
+          response = await openai.images.generate(imageGenRequest);
+          break; // Success, exit the retry loop
+        } catch (error) {
+          // Cast error to our defined OpenAI error type
+          lastError = error as OpenAIError;
+          console.error(`❌ API Error (attempt ${retryCount + 1}/${MAX_RETRIES}):`, lastError);
+          
+          // Only retry on rate limits or server errors (not validation errors)
+          if (lastError.status === 429 || (lastError.status >= 500 && lastError.status < 600)) {
+            retryCount++;
+            if (retryCount < MAX_RETRIES) {
+              const delay = RETRY_DELAY_MS * Math.pow(2, retryCount - 1); // Exponential backoff
+              console.log(`🕒 Retrying after ${delay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
+          } else {
+            break; // Don't retry client errors
+          }
+        }
+      }
+      
+      // Log timing information
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      console.log(`⏱️ OpenAI request completed in ${duration}ms`);
+      
+      if (!response) {
+        // If we've exhausted retries or had a client error
+        const errorStatus = lastError?.status || 500;
+        const errorType = lastError?.type || 'unknown_error';
+        const errorMessage = lastError?.message || 'Unknown error';
+        
+        console.error(`❌ OpenAI API Error: ${errorStatus} ${errorType} - ${errorMessage}`);
+        
+        // Customize error messages based on the error type
+        let userErrorMessage = "Failed to generate image";
+        switch (errorType) {
+          case 'invalid_request_error':
+            userErrorMessage = "Invalid request parameters";
+            // Try with fallback if it's a 400 error (likely prompt issue)
+            if (errorStatus === 400) {
+              return await handleFallbackPrompt(openaiApiKey, corsHeaders);
+            }
+            break;
+          case 'rate_limit_exceeded':
+            userErrorMessage = "Image generation service is currently busy, please try again later";
+            break;
+          case 'insufficient_quota':
+            userErrorMessage = "Image generation service is currently unavailable";
+            break;
+          default:
+            userErrorMessage = "Image generation service error";
+        }
+        
+        return new Response(
+          JSON.stringify({ 
+            error: userErrorMessage,
+            details: `${errorStatus} ${errorType}: ${errorMessage}`
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: errorStatus }
+        );
+      }
       
       console.log("✅ Image generation successful");
+      console.log(`✅ Response contains ${response.data?.length || 0} images`);
       
-      // Extract base64 image data
-      const imageBase64 = response.data[0]?.b64_json;
+      // Extract base64 image data with validation
+      const imageData = response.data?.[0];
+      const imageBase64 = imageData?.b64_json;
+      const imageUrl = imageData?.url; // Some APIs return URL instead of base64
       
-      if (!imageBase64) {
-        console.error("❌ No image data in response");
+      if (!imageBase64 && !imageUrl) {
+        console.error("❌ No image data in response:", JSON.stringify(response.data));
         return new Response(
-          JSON.stringify({ error: "Failed to generate image" }),
+          JSON.stringify({ error: "Failed to generate image - no image data returned" }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
         );
       }
@@ -141,48 +280,46 @@ Deno.serve(async (req) => {
       );
       
     } catch (apiError) {
+      // Enhanced error logging for OpenAI errors
       console.error("❌ API Error:", apiError);
-      console.error("❌ API Error Status:", apiError.status);
-      console.error("❌ API Error Type:", apiError.type);
-      console.error("❌ API Error Message:", apiError.message);
+      const typedError = apiError as OpenAIError;
+      console.error("❌ API Error Status:", typedError.status);
+      console.error("❌ API Error Type:", typedError.type);
+      console.error("❌ API Error Code:", typedError.code || "none");
+      console.error("❌ API Error Param:", typedError.param || "none");
+      console.error("❌ API Error Message:", typedError.message);
       
-      if (apiError.status === 400) {
-        console.error("❌ OpenAI 400 Bad Request - Check prompt format or content policy violations");
+      // Check for specific error codes that might help debugging
+      if (typedError.status === 400) {
+        const errorDetails = {
+          status: typedError.status,
+          type: typedError.type,
+          message: typedError.message,
+          code: typedError.code,
+          param: typedError.param
+        };
         
-        // Try with a fallback prompt to see if the API itself works
-        try {
-          console.log("🔄 Attempting fallback with simple prompt");
-          const openai = new OpenAI({ apiKey: openaiApiKey });
-          const fallbackResponse = await openai.images.generate({
-            model: "dall-e-3",
-            prompt: "A simple abstract t-shirt design with geometric shapes",
-            n: 1,
-            size: "1024x1024",
-            response_format: "b64_json"
-          });
-          
-          if (fallbackResponse.data[0]?.b64_json) {
-            console.log("✅ Fallback prompt succeeded - original prompt likely violated policies");
-            const fallbackImageBase64 = fallbackResponse.data[0].b64_json;
-            
-            return new Response(
-              JSON.stringify({
-                imageUrl: `data:image/png;base64,${fallbackImageBase64}`,
-                prompt: "A simple abstract t-shirt design with geometric shapes",
-                fallback: true
-              }),
-              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
-        } catch (fallbackError) {
-          console.error("❌ Fallback also failed:", fallbackError);
+        console.error("❌ 400 Bad Request Details:", JSON.stringify(errorDetails, null, 2));
+        
+        // Common 400 errors with OpenAI
+        if (typedError.code === 'content_policy_violation') {
+          console.error("❌ Content policy violation detected. Using fallback prompt.");
+          return await handleFallbackPrompt(openaiApiKey, corsHeaders);
         }
+        
+        if (typedError.param === 'prompt') {
+          console.error("❌ Issue with the prompt parameter. Using fallback prompt.");
+          return await handleFallbackPrompt(openaiApiKey, corsHeaders);
+        }
+        
+        // For any other 400 error, try the fallback
+        return await handleFallbackPrompt(openaiApiKey, corsHeaders);
       }
       
       return new Response(
         JSON.stringify({ 
           error: "Image generation API error", 
-          details: `${apiError.status || 500} ${apiError.message || JSON.stringify(apiError)}` 
+          details: `${typedError.status || 500} ${typedError.message || JSON.stringify(apiError)}` 
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
@@ -197,21 +334,99 @@ Deno.serve(async (req) => {
   }
 });
 
-// Enhanced prompt generator with validation
+// Extracted fallback prompt handler
+async function handleFallbackPrompt(apiKey, corsHeaders) {
+  console.log("🔄 Attempting fallback with simple prompt");
+  try {
+    const openai = new OpenAI({ apiKey });
+    
+    // Array of increasingly simple fallback prompts
+    const fallbackPrompts = [
+      "A simple abstract t-shirt design with basic geometric shapes in pastel colors",
+      "A minimalist t-shirt design with three colorful circles",
+      "A basic t-shirt design with a blue square"
+    ];
+    
+    // Try each prompt until one works
+    let fallbackImageBase64 = null;
+    let usedPrompt = "";
+    let lastError = null;
+    
+    for (const prompt of fallbackPrompts) {
+      try {
+        console.log("🔄 Trying fallback prompt:", prompt);
+        
+        const fallbackResponse = await openai.images.generate({
+          model: "dall-e-3",
+          prompt: prompt,
+          n: 1,
+          size: "1024x1024",
+          response_format: "b64_json",
+          quality: "standard" // Use standard quality for fallbacks to reduce potential issues
+        });
+        
+        fallbackImageBase64 = fallbackResponse.data[0]?.b64_json;
+        
+        if (fallbackImageBase64) {
+          console.log("✅ Fallback prompt succeeded:", prompt);
+          usedPrompt = prompt;
+          break;
+        }
+      } catch (error) {
+        console.error(`❌ Fallback attempt failed with prompt "${prompt}":`, error);
+        lastError = error;
+        // Continue to the next prompt
+      }
+    }
+    
+    if (fallbackImageBase64) {
+      return new Response(
+        JSON.stringify({
+          imageUrl: `data:image/png;base64,${fallbackImageBase64}`,
+          prompt: usedPrompt,
+          fallback: true
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } else {
+      throw new Error(lastError || new Error("All fallback prompts failed"));
+    }
+  } catch (fallbackError) {
+    console.error("❌ All fallbacks failed:", fallbackError);
+    
+    // Return a predefined static image as last resort
+    // This could be a base64 encoded placeholder image
+    return new Response(
+      JSON.stringify({ 
+        error: "Image generation service unavailable", 
+        details: `Fallback prompts failed: ${fallbackError.message || JSON.stringify(fallbackError)}`,
+        // Optionally include a placeholder image URL if available
+        placeholderImage: true
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 503 }
+    );
+  }
+}
+
+// Enhanced prompt generator with validation and sanitization
 function generatePrompt(theme, answers) {
   try {
     // Format theme information
     const themeName = theme.name || 'Unknown Theme';
     const themeDescription = theme.description || 'No description available';
     
-    // Format Q&A section
-    const formattedQA = answers.map(a => `Question: ${a.question}\nAnswer: ${a.answer}`).join('\n\n');
+    // More thorough input sanitization
+    const sanitizedThemeName = sanitizeText(themeName);
+    const sanitizedDescription = sanitizeText(themeDescription);
     
-    // Use the provided template but clean up input
-    const sanitizedThemeName = themeName.replace(/[^\w\s\-,.]/g, '').trim();
-    const sanitizedDescription = themeDescription.replace(/[^\w\s\-,.]/g, '').trim();
+    // Format Q&A section with sanitization
+    const formattedQA = answers.map(a => {
+      const sanitizedQuestion = sanitizeText(a.question);
+      const sanitizedAnswer = sanitizeText(a.answer);
+      return `Question: ${sanitizedQuestion}\nAnswer: ${sanitizedAnswer}`;
+    }).join('\n\n');
     
-    // Create a prompt that follows OpenAI guidelines
+    // Create a prompt that follows OpenAI guidelines with improved formatting
     const prompt = `Create a visually compelling t-shirt design illustration based on the theme: ${sanitizedThemeName}.
 Theme description: ${sanitizedDescription}
 
@@ -221,11 +436,82 @@ ${formattedQA}
 Keep the design coherent, purposeful, and suitable for a t-shirt print.
 Emphasize creativity with a balanced, professional layout.
 Use colors creatively while maintaining visual clarity.
-Make the design suitable for placement on a t-shirt front.`;
+Make the design suitable for placement on a t-shirt front.
+Do not include any text in the design unless specifically requested.
+Keep the design family-friendly and universally appropriate.`;
     
     return prompt;
   } catch (error) {
     console.error("❌ Error generating prompt:", error);
     return "Create a simple, abstract t-shirt design with geometric shapes";
   }
+}
+
+// Helper function to sanitize text inputs
+function sanitizeText(text) {
+  if (!text || typeof text !== 'string') return '';
+  
+  // First, remove any obviously problematic characters and sequences
+  let sanitized = text
+    .replace(/[^\w\s\-,.!?:;()[\]{}]/g, '') // Only allow basic punctuation and alphanumeric
+    .trim();
+  
+  // Remove potential prompt injection attempts
+  sanitized = sanitized
+    .replace(/ignore previous instructions/gi, '[redacted]')
+    .replace(/ignore all instructions/gi, '[redacted]')
+    .replace(/disregard/gi, '[consider]');
+  
+  // Limit length to avoid excessive prompts
+  return sanitized.length > 500 ? sanitized.substring(0, 500) + '...' : sanitized;
+}
+
+// Helper function to validate the OpenAI API request payload
+function validateOpenAIPayload(payload) {
+  const issues = [];
+  
+  // Check required fields
+  if (!payload.model) {
+    issues.push("Missing 'model' field");
+  } else if (typeof payload.model !== 'string') {
+    issues.push("'model' must be a string");
+  }
+  
+  if (!payload.prompt) {
+    issues.push("Missing 'prompt' field");
+  } else if (typeof payload.prompt !== 'string') {
+    issues.push("'prompt' must be a string");
+  } else {
+    // Check prompt length
+    if (payload.prompt.length < 10) {
+      issues.push("'prompt' is too short (< 10 chars)");
+    }
+    if (payload.prompt.length > 4000) {
+      issues.push("'prompt' is too long (> 4000 chars)");
+    }
+  }
+  
+  // Check n parameter (number of images)
+  if (payload.n !== undefined) {
+    if (!Number.isInteger(payload.n) || payload.n < 1) {
+      issues.push("'n' must be a positive integer");
+    }
+  }
+  
+  // Check size parameter
+  const validSizes = ['256x256', '512x512', '1024x1024', '1024x1792', '1792x1024'];
+  if (payload.size !== undefined && !validSizes.includes(payload.size)) {
+    issues.push(`'size' must be one of: ${validSizes.join(', ')}`);
+  }
+  
+  // Check response_format parameter
+  const validFormats = ['url', 'b64_json'];
+  if (payload.response_format !== undefined && !validFormats.includes(payload.response_format)) {
+    issues.push(`'response_format' must be one of: ${validFormats.join(', ')}`);
+  }
+  
+  return {
+    valid: issues.length === 0,
+    issues
+  };
 }
