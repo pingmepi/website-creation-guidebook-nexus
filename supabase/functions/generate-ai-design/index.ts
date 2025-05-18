@@ -338,72 +338,112 @@ Deno.serve(async (req) => {
 async function handleFallbackPrompt(apiKey, corsHeaders) {
   console.log("🔄 Attempting fallback with simple prompt");
   try {
-    const openai = new OpenAI({ apiKey });
+    const openai = new OpenAI({ 
+      apiKey,
+      maxRetries: 0 // Don't retry in fallback to avoid cascading timeouts
+    });
     
-    // Array of increasingly simple fallback prompts
-    const fallbackPrompts = [
-      "A simple abstract t-shirt design with basic geometric shapes in pastel colors",
-      "A minimalist t-shirt design with three colorful circles",
-      "A basic t-shirt design with a blue square"
-    ];
+    // Single very simple fallback that's less likely to trigger content filters
+    const fallbackPrompt = "A simple geometric pattern suitable for a t-shirt with blue and white colors";
     
-    // Try each prompt until one works
-    let fallbackImageBase64 = null;
-    let usedPrompt = "";
-    let lastError = null;
-    
-    for (const prompt of fallbackPrompts) {
+    try {
+      console.log("🔄 Trying fallback prompt with DALL-E 2");
+      
+      // Debug the request payload
+      console.log("📦 Fallback request payload:", JSON.stringify({
+        model: "dall-e-2",
+        prompt: fallbackPrompt,
+        n: 1,
+        size: "1024x1024",
+        response_format: "b64_json"
+      }, null, 2));
+      
+      // Use DALL-E 2 with minimal parameters
+      const fallbackResponse = await openai.images.generate({
+        model: "dall-e-2", 
+        prompt: fallbackPrompt,
+        n: 1,
+        size: "1024x1024", 
+        response_format: "b64_json"
+      });
+      
+      const fallbackImageBase64 = fallbackResponse.data[0]?.b64_json;
+      
+      if (fallbackImageBase64) {
+        console.log("✅ Fallback image generation succeeded");
+        return new Response(
+          JSON.stringify({
+            imageUrl: `data:image/png;base64,${fallbackImageBase64}`,
+            prompt: fallbackPrompt,
+            fallback: true
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      throw new Error("No image data in fallback response");
+    } catch (error) {
+      console.error("❌ DALL-E 2 fallback failed:", error);
+      
+      // Try URL response format as last resort
       try {
-        console.log("🔄 Trying fallback prompt:", prompt);
+        console.log("🔄 Trying URL response format as last resort");
         
-        const fallbackResponse = await openai.images.generate({
-          model: "dall-e-3",
-          prompt: prompt,
+        const urlFallbackResponse = await openai.images.generate({
+          model: "dall-e-2",
+          prompt: fallbackPrompt,
           n: 1,
-          size: "1024x1024",
-          response_format: "b64_json",
-          quality: "standard" // Use standard quality for fallbacks to reduce potential issues
+          size: "512x512", // Use smaller size for URL format
+          response_format: "url" // Try URL format instead of b64_json
         });
         
-        fallbackImageBase64 = fallbackResponse.data[0]?.b64_json;
+        const fallbackImageUrl = urlFallbackResponse.data[0]?.url;
         
-        if (fallbackImageBase64) {
-          console.log("✅ Fallback prompt succeeded:", prompt);
-          usedPrompt = prompt;
-          break;
+        if (fallbackImageUrl) {
+          console.log("✅ URL fallback succeeded");
+          return new Response(
+            JSON.stringify({
+              imageUrl: fallbackImageUrl,
+              prompt: fallbackPrompt,
+              fallback: true
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
-      } catch (error) {
-        console.error(`❌ Fallback attempt failed with prompt "${prompt}":`, error);
-        lastError = error;
-        // Continue to the next prompt
+        
+        throw new Error("No image URL in fallback response");
+      } catch (urlError) {
+        console.error("❌ URL fallback also failed:", urlError);
+        // Continue to static fallback
       }
     }
     
-    if (fallbackImageBase64) {
-      return new Response(
-        JSON.stringify({
-          imageUrl: `data:image/png;base64,${fallbackImageBase64}`,
-          prompt: usedPrompt,
-          fallback: true
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    } else {
-      throw new Error(lastError || new Error("All fallback prompts failed"));
-    }
-  } catch (fallbackError) {
-    console.error("❌ All fallbacks failed:", fallbackError);
-    
-    // Return a predefined static image as last resort
-    // This could be a base64 encoded placeholder image
+    // If all OpenAI attempts failed, use a static placeholder
+    console.log("🔄 Using static placeholder image as final fallback");
     return new Response(
       JSON.stringify({ 
-        error: "Image generation service unavailable", 
-        details: `Fallback prompts failed: ${fallbackError.message || JSON.stringify(fallbackError)}`,
-        // Optionally include a placeholder image URL if available
-        placeholderImage: true
+        error: "Image generation service unavailable",
+        fallback: true,
+        placeholderImage: true,
+        // Use existing placeholder in assets
+        imageUrl: "/assets/images/design/placeholder.svg"
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 503 }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 } // Return 200 with placeholder
+    );
+    
+  } catch (fallbackError) {
+    console.error("❌ Complete fallback failure:", fallbackError);
+    
+    // Return a predefined static image as last resort with 200 status
+    return new Response(
+      JSON.stringify({ 
+        error: "Image generation service unavailable",
+        fallback: true,
+        placeholderImage: true,
+        // Use existing placeholder in assets
+        imageUrl: "/assets/images/design/placeholder.svg"
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
   }
 }
