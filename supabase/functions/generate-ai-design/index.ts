@@ -1,7 +1,16 @@
-import { createClient } from 'npm:@supabase/supabase-js';
-import { OpenAI } from 'npm:openai';
+import { createClient } from '@supabase/supabase-js';
+// @ts-ignore
+import { OpenAI } from 'openai';
 // Import Deno Edge Runtime types
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+
+// Type declaration for Deno global
+declare const Deno: {
+  serve: (handler: (req: Request) => Promise<Response> | Response) => void;
+  env: {
+    get: (key: string) => string | undefined;
+  };
+};
 
 // Type definitions for OpenAI errors (to help with TypeScript validation)
 interface OpenAIError {
@@ -335,7 +344,7 @@ Deno.serve(async (req) => {
 });
 
 // Extracted fallback prompt handler
-async function handleFallbackPrompt(apiKey, corsHeaders) {
+async function handleFallbackPrompt(apiKey: string, corsHeaders: any): Promise<Response> {
   console.log("🔄 Attempting fallback with simple prompt");
   try {
     const openai = new OpenAI({ 
@@ -449,7 +458,7 @@ async function handleFallbackPrompt(apiKey, corsHeaders) {
 }
 
 // Enhanced prompt generator with validation and sanitization
-function generatePrompt(theme, answers) {
+function generatePrompt(theme: any, answers: any[]): string {
   try {
     // Format theme information
     const themeName = theme.name || 'Unknown Theme';
@@ -488,7 +497,7 @@ Keep the design family-friendly and universally appropriate.`;
 }
 
 // Helper function to sanitize text inputs
-function sanitizeText(text) {
+function sanitizeText(text: any): string {
   if (!text || typeof text !== 'string') return '';
   
   // First, remove any obviously problematic characters and sequences
@@ -507,8 +516,8 @@ function sanitizeText(text) {
 }
 
 // Helper function to validate the OpenAI API request payload
-function validateOpenAIPayload(payload) {
-  const issues = [];
+function validateOpenAIPayload(payload: any): { valid: boolean; issues: string[] } {
+  const issues: string[] = [];
   
   // Check required fields
   if (!payload.model) {
