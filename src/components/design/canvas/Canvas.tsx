@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { fabric } from "fabric";
 import CanvasContainer from "./CanvasContainer";
@@ -89,7 +88,9 @@ const Canvas = ({
       // Cleanup function
       return () => {
         try {
-          fabricCanvas.off();
+          fabricCanvas.off('object:modified', handleCanvasChange);
+          fabricCanvas.off('object:added', handleCanvasChange);
+          fabricCanvas.off('object:removed', handleCanvasChange);
           fabricCanvas.dispose();
         } catch (error) {
           console.error("Error disposing canvas:", error);
