@@ -1,3 +1,4 @@
+
 import { Answer } from "@/components/design/QuestionFlow";
 
 // Define t-shirt color options
@@ -25,39 +26,19 @@ export interface Theme {
   thumbnail_url?: string;
 }
 
-export interface DesignState {
-  // Navigation state
+export interface DesignStateData {
   currentStep: DesignStep;
   currentStage: DesignStage;
-  
-  // Design data
   selectedTheme: Theme | null;
   answers: Answer[];
-  designId: string | null;
-  designName: string;
-  
-  // UI state
   showConfirmation: boolean;
   showLoginDialog: boolean;
   tshirtColor: string;
   designImage?: string;
   isSaving: boolean;
   isGenerating: boolean;
+  designId: string | null;
+  designName: string;
   isLoading: boolean;
-  
-  // Setters
-  setShowConfirmation: (show: boolean) => void;
-  setShowLoginDialog: (show: boolean) => void;
-  setTshirtColor: (color: string) => void;
-  setDesignName: (name: string) => void;
-  
-  // Handlers
-  handleThemeSelect: (theme: Theme) => void;
-  handleQuestionFlowComplete: (answers: Answer[]) => void;
-  handleConfirmDesign: () => void;
-  handleLoginSuccess: () => void;
-  handleBackToThemes: () => void;
-  handleDesignChange: (designDataUrl: string) => void;
-  handleSaveDesign: () => Promise<void>;
-  generateDesignWithAI: () => Promise<void>;
+  hasUnsavedChanges: boolean;
 }
