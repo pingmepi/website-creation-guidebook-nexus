@@ -7,6 +7,8 @@ import { TSHIRT_COLORS, useDesignState } from "@/hooks/design";
 import LoadingSpinner from "@/components/design/LoadingSpinner";
 import PreferencesSection from "@/components/design/PreferencesSection";
 import CustomizationSection from "@/components/design/CustomizationSection";
+import { DesignErrorBoundary } from "@/components/error/DesignErrorBoundary";
+import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 
 const Design = () => {
   const {
@@ -36,57 +38,63 @@ const Design = () => {
   } = useDesignState();
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <section className="max-w-5xl mx-auto text-center mb-8">
-        <DesignStepper currentStep={currentStep} />
-      </section>
+    <DesignErrorBoundary>
+      <div className="container mx-auto px-4 py-8">
+        <ErrorBoundary context="DesignStepper">
+          <section className="max-w-5xl mx-auto text-center mb-8">
+            <DesignStepper currentStep={currentStep} />
+          </section>
+        </ErrorBoundary>
 
-      <section className="max-w-5xl mx-auto bg-white rounded-lg shadow-sm p-6">
-        {isLoading ? (
-          <LoadingSpinner message="Loading design..." />
-        ) : (
-          <>
-            {currentStage === "theme-selection" || currentStage === "question-flow" ? (
-              <PreferencesSection
-                selectedTheme={selectedTheme}
-                tshirtColor={tshirtColor}
-                onThemeSelect={handleThemeSelect}
-                onQuestionFlowComplete={handleQuestionFlowComplete}
-                onBackToThemes={handleBackToThemes}
-              />
-            ) : currentStage === "customization" && (
-              <CustomizationSection
-                answers={answers}
-                tshirtColor={tshirtColor}
-                designImage={designImage}
-                isSaving={isSaving}
-                isGenerating={isGenerating}
-                tshirtColors={TSHIRT_COLORS}
-                designName={designName}
-                onDesignNameChange={setDesignName}
-                onColorChange={setTshirtColor}
-                onDesignChange={handleDesignChange}
-                onSaveDesign={handleSaveDesign}
-              />
-            )}
-          </>
-        )}
-      </section>
+        <section className="max-w-5xl mx-auto bg-white rounded-lg shadow-sm p-6">
+          {isLoading ? (
+            <LoadingSpinner message="Loading design..." />
+          ) : (
+            <ErrorBoundary context="DesignContent">
+              {currentStage === "theme-selection" || currentStage === "question-flow" ? (
+                <PreferencesSection
+                  selectedTheme={selectedTheme}
+                  tshirtColor={tshirtColor}
+                  onThemeSelect={handleThemeSelect}
+                  onQuestionFlowComplete={handleQuestionFlowComplete}
+                  onBackToThemes={handleBackToThemes}
+                />
+              ) : currentStage === "customization" && (
+                <CustomizationSection
+                  answers={answers}
+                  tshirtColor={tshirtColor}
+                  designImage={designImage}
+                  isSaving={isSaving}
+                  isGenerating={isGenerating}
+                  tshirtColors={TSHIRT_COLORS}
+                  designName={designName}
+                  onDesignNameChange={setDesignName}
+                  onColorChange={setTshirtColor}
+                  onDesignChange={handleDesignChange}
+                  onSaveDesign={handleSaveDesign}
+                />
+              )}
+            </ErrorBoundary>
+          )}
+        </section>
 
-      <ConfirmationDialog
-        open={showConfirmation}
-        answers={answers}
-        onClose={() => setShowConfirmation(false)}
-        onConfirm={handleConfirmDesign}
-        onEdit={() => setShowConfirmation(false)}
-      />
+        <ErrorBoundary context="DesignDialogs">
+          <ConfirmationDialog
+            open={showConfirmation}
+            answers={answers}
+            onClose={() => setShowConfirmation(false)}
+            onConfirm={handleConfirmDesign}
+            onEdit={() => setShowConfirmation(false)}
+          />
 
-      <LoginDialog
-        open={showLoginDialog}
-        onClose={() => setShowLoginDialog(false)}
-        onSuccess={handleLoginSuccess}
-      />
-    </div>
+          <LoginDialog
+            open={showLoginDialog}
+            onClose={() => setShowLoginDialog(false)}
+            onSuccess={handleLoginSuccess}
+          />
+        </ErrorBoundary>
+      </div>
+    </DesignErrorBoundary>
   );
 };
 

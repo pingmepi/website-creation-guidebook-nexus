@@ -3,8 +3,9 @@ import { useState } from "react";
 import { Theme } from "./types";
 import { Answer } from "@/components/design/QuestionFlow";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
+import { ErrorLogger } from "@/services/ErrorLogger";
 
 export function useDesignGeneration() {
   const { user, isAuthenticated } = useUser();
@@ -17,6 +18,12 @@ export function useDesignGeneration() {
     saveDesignCallback: (imageUrl: string, prompt: string, userId: string) => Promise<void>
   ) => {
     if (!selectedTheme || answers.length === 0) {
+      const error = new Error("Theme and answers are required to generate design");
+      ErrorLogger.log(error, "DesignGeneration:Validation", {
+        hasTheme: !!selectedTheme,
+        answersLength: answers.length
+      });
+      
       toast({
         variant: "destructive",
         title: "Error",
@@ -80,6 +87,11 @@ export function useDesignGeneration() {
 
       if (aiError) {
         console.error("❌ CLIENT: Function returned error:", aiError);
+        ErrorLogger.log(new Error(aiError.message), "DesignGeneration:AIFunction", {
+          functionError: aiError,
+          theme: selectedTheme.name,
+          userId: user?.id
+        });
         throw new Error(aiError.message);
       }
 
@@ -91,6 +103,10 @@ export function useDesignGeneration() {
 
       if (!aiResponse || !aiResponse.imageUrl) {
         console.error("❌ CLIENT: Missing image URL in response");
+        ErrorLogger.log(new Error("No design image was generated"), "DesignGeneration:MissingImage", {
+          response: aiResponse,
+          theme: selectedTheme.name
+        });
         throw new Error("No design image was generated");
       }
 
@@ -114,6 +130,13 @@ export function useDesignGeneration() {
         message: error.message,
         stack: error.stack,
         name: error.name
+      });
+
+      ErrorLogger.log(error as Error, "DesignGeneration:GeneralError", {
+        theme: selectedTheme?.name,
+        answersCount: answers.length,
+        userId: user?.id,
+        isAuthenticated
       });
 
       toast({

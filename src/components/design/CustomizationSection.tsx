@@ -8,6 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { Save, Loader2 } from "lucide-react";
 import { Answer } from "./QuestionFlow";
 import DesignCanvas from "./DesignCanvas";
+import { CanvasErrorBoundary } from "@/components/error/CanvasErrorBoundary";
+import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 
 interface CustomizationSectionProps {
   answers: Answer[];
@@ -101,13 +103,15 @@ const CustomizationSection = ({
                 </div>
               </div>
               
-              {/* Design Canvas Tools */}
+              {/* Design Canvas Tools with Error Boundary */}
               <div className="mb-4">
-                <DesignCanvas 
-                  tshirtColor={tshirtColor} 
-                  onDesignChange={onDesignChange} 
-                  initialImage={designImage}
-                />
+                <CanvasErrorBoundary>
+                  <DesignCanvas 
+                    tshirtColor={tshirtColor} 
+                    onDesignChange={onDesignChange} 
+                    initialImage={designImage}
+                  />
+                </CanvasErrorBoundary>
               </div>
             </div>
           </div>
@@ -117,10 +121,12 @@ const CustomizationSection = ({
             <div className="bg-white rounded-lg p-4 shadow-sm h-full">
               <h3 className="font-medium text-lg mb-4">Preview</h3>
               <div className="relative flex items-center justify-center">
-                <TshirtDesignPreview 
-                  color={tshirtColor} 
-                  designImage={designImage}
-                />
+                <ErrorBoundary context="TshirtPreview">
+                  <TshirtDesignPreview 
+                    color={tshirtColor} 
+                    designImage={designImage}
+                  />
+                </ErrorBoundary>
 
                 {isGenerating && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 rounded-lg">
