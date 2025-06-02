@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
-import LoginDialog from "./auth/LoginDialog";
+import LoginButton from "./auth/LoginButton";
 import { CartSidebar } from "./cart/CartSidebar";
 
 const Header = () => {
@@ -55,7 +55,7 @@ const Header = () => {
                 </Button>
               </div>
             ) : (
-              <LoginDialog />
+              <LoginButton />
             )}
           </div>
 
@@ -117,7 +117,7 @@ const Header = () => {
                     </Button>
                   </div>
                 ) : (
-                  <LoginDialog />
+                  <LoginButton />
                 )}
               </div>
             </div>
