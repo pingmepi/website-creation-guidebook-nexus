@@ -1,160 +1,129 @@
 
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, LogIn, User } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
-import LoginDialog from "./auth/LoginDialog";
+import { Menu, X } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
-import { supabase } from "@/integrations/supabase/client";
+import LoginDialog from "./auth/LoginDialog";
+import { CartSidebar } from "./cart/CartSidebar";
 
 const Header = () => {
-  const [showLogin, setShowLogin] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
-  const { user, isLoading, logout } = useUser();
-  const location = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isAuthenticated, user, logout } = useUser();
 
-  useEffect(() => {
-    console.log("Header rendered with user state:", user ? `User: ${user.email}` : "No user", "isLoading:", isLoading);
-    
-    // Fetch cart count when user is authenticated
-    if (user) {
-      fetchCartCount();
-      
-      // Set up subscription for cart updates
-      const channel = supabase
-        .channel('cart-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*', // Listen for all events (INSERT, UPDATE, DELETE)
-            schema: 'public',
-            table: 'cart_items',
-            filter: `user_id=eq.${user.id}`
-          },
-          () => {
-            fetchCartCount(); // Refresh the cart count
-          }
-        )
-        .subscribe();
-        
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [user, isLoading]);
-  
-  const fetchCartCount = async () => {
-    if (!user) return;
-    
-    try {
-      const { count, error } = await supabase
-        .from('cart_items')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id);
-        
-      if (error) throw error;
-      
-      setCartCount(count || 0);
-    } catch (error) {
-      console.error("Error fetching cart count:", error);
-    }
-  };
-
-  const handleLoginClick = () => {
-    console.log("Login button clicked");
-    setShowLogin(true);
-  };
-
-  const handleLoginClose = () => {
-    console.log("Login dialog closed");
-    setShowLogin(false);
-  };
-
-  const handleLoginSuccess = () => {
-    console.log("Login success callback triggered");
-    setShowLogin(false);
-  };
-
-  const handleLogout = async () => {
-    console.log("Logout button clicked");
-    try {
-      await logout();
-      console.log("Logout completed in Header");
-      setCartCount(0); // Reset cart count on logout
-    } catch (error) {
-      console.error("Error during logout in Header:", error);
-    }
-  };
-
-  const isActive = (path: string) => {
-    return location.pathname === path ? "text-blue-600 font-medium" : "text-gray-700 hover:text-blue-600 transition-colors";
-  };
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   return (
-    <header className="bg-white shadow-sm">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center text-white font-bold">T</div>
-              <span className="font-bold text-xl">Custom T-Shirts</span>
+    <header className="bg-white shadow-sm border-b">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <div className="flex-shrink-0">
+            <Link to="/" className="text-2xl font-bold text-gray-900">
+              ThreadCraft
             </Link>
           </div>
-          
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link to="/" className={isActive("/")}>Home</Link>
-            <Link to="/shop" className={isActive("/shop")}>Shop</Link>
-            <Link to="/design" className={isActive("/design")}>Design Your Own</Link>
-            <Link to="/about" className={isActive("/about")}>About</Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex space-x-8">
+            <Link to="/" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium">
+              Home
+            </Link>
+            <Link to="/shop" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium">
+              Shop
+            </Link>
+            <Link to="/design" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium">
+              Design
+            </Link>
+            <Link to="/about" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium">
+              About
+            </Link>
           </nav>
-          
-          <div className="flex items-center gap-3">
-            {!isLoading && (
-              user ? (
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="ghost" 
-                    className="flex items-center gap-2"
-                    asChild
-                  >
-                    <Link to="/dashboard">
-                      <User size={18} />
-                      <span className="hidden sm:inline-block">
-                        {user.name || user.email.split('@')[0]}
-                      </span>
-                    </Link>
+
+          {/* Desktop Auth & Cart */}
+          <div className="hidden md:flex items-center space-x-4">
+            <CartSidebar />
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-4">
+                <Link to="/dashboard">
+                  <Button variant="ghost" size="sm">
+                    Dashboard
                   </Button>
-                  <Button variant="outline" onClick={handleLogout}>
-                    Log out
-                  </Button>
-                </div>
-              ) : (
-                <Button 
-                  variant="outline" 
-                  className="flex items-center gap-2"
-                  onClick={handleLoginClick}
-                >
-                  <LogIn size={18} />
-                  <span>Login</span>
+                </Link>
+                <Button variant="outline" size="sm" onClick={logout}>
+                  Logout
                 </Button>
-              )
+              </div>
+            ) : (
+              <LoginDialog />
             )}
-            
-            <Button variant="outline" className="flex items-center gap-2" asChild>
-              <Link to="/cart">
-                <ShoppingCart size={18} />
-                <span className="hidden sm:inline">Cart ({cartCount})</span>
-              </Link>
-            </Button>
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <button
+              onClick={toggleMenu}
+              className="text-gray-700 hover:text-gray-900 focus:outline-none focus:text-gray-900"
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation */}
+        {isMenuOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t">
+              <Link
+                to="/"
+                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900"
+                onClick={toggleMenu}
+              >
+                Home
+              </Link>
+              <Link
+                to="/shop"
+                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900"
+                onClick={toggleMenu}
+              >
+                Shop
+              </Link>
+              <Link
+                to="/design"
+                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900"
+                onClick={toggleMenu}
+              >
+                Design
+              </Link>
+              <Link
+                to="/about"
+                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900"
+                onClick={toggleMenu}
+              >
+                About
+              </Link>
+              
+              <div className="flex items-center justify-between px-3 py-2">
+                <CartSidebar />
+                {isAuthenticated ? (
+                  <div className="flex items-center space-x-2">
+                    <Link to="/dashboard">
+                      <Button variant="ghost" size="sm" onClick={toggleMenu}>
+                        Dashboard
+                      </Button>
+                    </Link>
+                    <Button variant="outline" size="sm" onClick={() => { logout(); toggleMenu(); }}>
+                      Logout
+                    </Button>
+                  </div>
+                ) : (
+                  <LoginDialog />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-      
-      <LoginDialog 
-        open={showLogin} 
-        onClose={handleLoginClose} 
-        onSuccess={handleLoginSuccess} 
-      />
     </header>
   );
 };

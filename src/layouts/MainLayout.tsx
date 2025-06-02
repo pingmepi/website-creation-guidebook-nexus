@@ -1,23 +1,20 @@
 
-import { ReactNode } from "react";
+import { Outlet } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { CartProvider } from "@/contexts/CartContext";
 
-interface MainLayoutProps {
-  children: ReactNode;
-  hideHeader?: boolean;
-  hideFooter?: boolean;
-}
-
-const MainLayout = ({ children, hideHeader = false, hideFooter = false }: MainLayoutProps) => {
+const MainLayout = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      {!hideHeader && <Header />}
-      <main className="flex-grow">
-        {children}
-      </main>
-      {!hideFooter && <Footer />}
-    </div>
+    <CartProvider>
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1">
+          <Outlet />
+        </main>
+        <Footer />
+      </div>
+    </CartProvider>
   );
 };
 
