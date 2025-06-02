@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Answer } from "@/components/design/QuestionFlow";
 import { Theme, DesignStage, DesignStep } from "./useDesignTypes";
@@ -16,7 +17,7 @@ export function useDesignHandlers() {
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [designId, setDesignId] = useState<string | null>(null);
   const [designName, setDesignName] = useState<string>("");
-  const [tshirtColor, setTshirtColor] = useState("#FFFFFF");
+  const [tshirtColor, setTshirtColor] = useState("#FFFFFF"); // Default to white
   const [designImage, setDesignImage] = useState<string | undefined>(undefined);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
@@ -89,6 +90,7 @@ export function useDesignHandlers() {
   };
 
   const handleDesignChange = (designDataUrl: string) => {
+    console.log("🎨 Design change received in handler:", designDataUrl.slice(0, 50) + "...");
     setDesignImage(designDataUrl);
     setHasUnsavedChanges(true);
   };

@@ -38,8 +38,14 @@ const CustomizationSection = ({
   onDesignChange,
   onSaveDesign
 }: CustomizationSectionProps) => {
-  const tshirtColorOptions = Object.entries(tshirtColors).map(([name, value]) => ({
-    name,
+  // Enhanced color options with proper names
+  const enhancedTshirtColors = {
+    ...tshirtColors,
+    RED: "#DC2626" // Add red to existing colors
+  };
+  
+  const tshirtColorOptions = Object.entries(enhancedTshirtColors).map(([name, value]) => ({
+    name: name.charAt(0) + name.slice(1).toLowerCase(), // Capitalize first letter
     value
   }));
 
@@ -48,6 +54,12 @@ const CustomizationSection = ({
     if (onDesignNameChange) {
       onDesignNameChange(e.target.value);
     }
+  };
+
+  // Handle design changes from canvas and sync with preview
+  const handleCanvasDesignChange = (designDataUrl: string) => {
+    console.log("🎨 Design change from canvas:", designDataUrl.slice(0, 50) + "...");
+    onDesignChange(designDataUrl);
   };
 
   return (
@@ -108,7 +120,7 @@ const CustomizationSection = ({
                 <CanvasErrorBoundary>
                   <DesignCanvas 
                     tshirtColor={tshirtColor} 
-                    onDesignChange={onDesignChange} 
+                    onDesignChange={handleCanvasDesignChange}
                     initialImage={designImage}
                   />
                 </CanvasErrorBoundary>
@@ -119,7 +131,7 @@ const CustomizationSection = ({
           {/* Design Preview - Right Side */}
           <div className="w-full lg:w-1/2">
             <div className="bg-white rounded-lg p-4 shadow-sm h-full">
-              <h3 className="font-medium text-lg mb-4">Preview</h3>
+              <h3 className="font-medium text-lg mb-4">T-Shirt Preview</h3>
               <div className="relative flex items-center justify-center">
                 <ErrorBoundary context="TshirtPreview">
                   <TshirtDesignPreview 

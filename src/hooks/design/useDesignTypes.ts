@@ -1,12 +1,22 @@
 
 import { Answer } from "@/components/design/QuestionFlow";
 
-// Define t-shirt color options
+// Define t-shirt color options with corresponding images
 export const TSHIRT_COLORS = {
   BLACK: "#000000",
   WHITE: "#FFFFFF",
+  RED: "#DC2626", 
   GREY: "#8A898C",
   BLUE: "#1EAEDB"
+};
+
+// Map colors to their corresponding t-shirt images
+export const TSHIRT_COLOR_IMAGES = {
+  "#000000": "/assets/images/tshirt/tshirt-black.png", // Black
+  "#FFFFFF": "/assets/images/tshirt/tshirt-white.png", // White
+  "#DC2626": "/assets/images/tshirt/tshirt-red.png",   // Red
+  "#8A898C": "/assets/images/tshirt/tshirt-white.png", // Grey (fallback to white)
+  "#1EAEDB": "/assets/images/tshirt/tshirt-white.png"  // Blue (fallback to white)
 };
 
 export type DesignStep = "preferences" | "design" | "options";

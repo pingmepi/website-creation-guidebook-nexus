@@ -15,7 +15,7 @@ interface TshirtCardProps {
   colorOptions?: string[];
 }
 
-const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#000000", "#0000FF"] }: TshirtCardProps) => {
+const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#000000", "#DC2626"] }: TshirtCardProps) => {
   const [selectedColor, setSelectedColor] = useState(colorOptions[0]);
   const [isAdding, setIsAdding] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
@@ -51,6 +51,18 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
   };
 
   const buttonContent = getButtonContent();
+
+  // Color name mapping for better UX
+  const getColorName = (color: string) => {
+    const colorNames: Record<string, string> = {
+      "#FFFFFF": "White",
+      "#000000": "Black", 
+      "#DC2626": "Red",
+      "#0000FF": "Blue",
+      "#8A898C": "Grey"
+    };
+    return colorNames[color] || "Color";
+  };
 
   return (
     <Card className="overflow-hidden group" data-testid={`tshirt-card-${id}`}>
@@ -92,7 +104,8 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
               className={`w-5 h-5 rounded-full border ${selectedColor === color ? 'ring-2 ring-blue-500 ring-offset-2' : 'border-gray-300'}`}
               style={{ backgroundColor: color }}
               onClick={() => setSelectedColor(color)}
-              aria-label={`Select ${color} color`}
+              aria-label={`Select ${getColorName(color)} color`}
+              title={getColorName(color)}
             />
           ))}
         </div>
