@@ -1,6 +1,6 @@
-import { lazy } from "react";
-import { Route } from "react-router-dom";
-import MainLayout from "@/layouts/MainLayout";
+
+import { Routes, Route } from "react-router-dom";
+import { lazy, Suspense } from "react";
 
 // Lazy load dashboard pages
 const Dashboard = lazy(() => import("@/pages/dashboard/Dashboard"));
@@ -9,13 +9,18 @@ const SavedDesigns = lazy(() => import("@/pages/dashboard/SavedDesigns"));
 const OrderHistory = lazy(() => import("@/pages/dashboard/OrderHistory"));
 const Settings = lazy(() => import("@/pages/dashboard/Settings"));
 
-// Export the dashboard routes as an array
-const dashboardRoutes = [
-  <Route key="dashboard" path="/dashboard" element={<MainLayout><Dashboard /></MainLayout>} />,
-  <Route key="profile" path="/dashboard/profile" element={<MainLayout><Profile /></MainLayout>} />,
-  <Route key="designs" path="/dashboard/designs" element={<MainLayout><SavedDesigns /></MainLayout>} />,
-  <Route key="orders" path="/dashboard/orders" element={<MainLayout><OrderHistory /></MainLayout>} />,
-  <Route key="settings" path="/dashboard/settings" element={<MainLayout><Settings /></MainLayout>} />
-];
+const DashboardRoutes = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <Routes>
+        <Route index element={<Dashboard />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="designs" element={<SavedDesigns />} />
+        <Route path="orders" element={<OrderHistory />} />
+        <Route path="settings" element={<Settings />} />
+      </Routes>
+    </Suspense>
+  );
+};
 
-export default dashboardRoutes;
+export default DashboardRoutes;

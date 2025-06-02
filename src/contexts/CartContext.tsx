@@ -1,8 +1,8 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useUser } from './UserContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { tshirtImages } from '../../assets';
 
 interface CartItem {
   id: string;
@@ -11,6 +11,11 @@ interface CartItem {
   user_id: string;
   created_at: string;
   updated_at: string;
+  product?: {
+    name: string;
+    price: string;
+    image: string;
+  };
 }
 
 interface CartContextType {
@@ -38,6 +43,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  const mockProducts = [
+    { id: "1", name: "Classic White Tee", price: "$24.99", image: tshirtImages.mockup1 },
+    { id: "2", name: "Urban Black Design", price: "$29.99", image: tshirtImages.mockup2 },
+    { id: "3", name: "Summer Collection", price: "$26.99", image: tshirtImages.mockup3 },
+    { id: "4", name: "Vintage Edition", price: "$32.99", image: tshirtImages.mockup4 },
+    { id: "5", name: "Modern Minimalist", price: "$27.99", image: tshirtImages.mockup5 },
+    { id: "6", name: "Artist Series", price: "$34.99", image: tshirtImages.mockup6 },
+    { id: "7", name: "Classic Blue Tee", price: "$24.99", image: tshirtImages.mockup1 },
+    { id: "8", name: "Urban Gray Design", price: "$29.99", image: tshirtImages.mockup2 },
+    { id: "9", name: "Winter Collection", price: "$26.99", image: tshirtImages.mockup3 }
+  ];
+
   const fetchCartItems = async () => {
     if (!user) {
       setCartItems([]);
@@ -52,7 +69,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('user_id', user.id);
 
       if (error) throw error;
-      setCartItems(data || []);
+      
+      // Attach product data from mock products
+      const itemsWithProducts = data?.map(item => {
+        const product = mockProducts.find(p => p.id === item.product_id);
+        return {
+          ...item,
+          product
+        };
+      }) || [];
+      
+      setCartItems(itemsWithProducts);
     } catch (error) {
       console.error('Error fetching cart items:', error);
     } finally {
