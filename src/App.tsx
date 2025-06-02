@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -12,6 +11,7 @@ import Design from "./pages/Design";
 import About from "./pages/About";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import TestPreview from "./pages/TestPreview";
 import DashboardRoutes from "./routes/DashboardRoutes";
 import NotFound from "./pages/NotFound";
 
@@ -30,6 +30,7 @@ function App() {
                   <Route index element={<Index />} />
                   <Route path="shop" element={<Shop />} />
                   <Route path="design" element={<Design />} />
+                  <Route path="test-preview" element={<TestPreview />} />
                   <Route path="about" element={<About />} />
                   <Route path="cart" element={<Cart />} />
                   <Route path="checkout" element={<Checkout />} />
