@@ -272,8 +272,8 @@ const Cart = () => {
                         <p className="font-semibold">${calculateSubtotal()}</p>
                       </div>
 
-                      <Button className="w-full" size="lg">
-                        Proceed to Checkout
+                      <Button className="w-full" size="lg" asChild>
+                        <Link to="/checkout">Proceed to Checkout</Link>
                       </Button>
 
                       <div className="text-center">

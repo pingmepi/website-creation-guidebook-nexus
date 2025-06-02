@@ -1,70 +1,45 @@
 
-import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-
-// Providers
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { UserProvider } from "@/contexts/UserContext";
-
-// UI Components
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-
-// Layouts
 import MainLayout from "@/layouts/MainLayout";
+import Index from "./pages/Index";
+import Shop from "./pages/Shop";
+import Design from "./pages/Design";
+import About from "./pages/About";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import DashboardRoutes from "./routes/DashboardRoutes";
+import NotFound from "./pages/NotFound";
 
-// Routes
-import dashboardRoutes from "@/routes/DashboardRoutes";
-
-// Lazy-loaded page components
-const Index = lazy(() => import("@/pages/Index"));
-const Shop = lazy(() => import("@/pages/Shop"));
-const Design = lazy(() => import("@/pages/Design"));
-const About = lazy(() => import("@/pages/About"));
-const Cart = lazy(() => import("@/pages/Cart"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
-
-// Create a new query client instance
 const queryClient = new QueryClient();
 
-// Loading fallback for lazy-loaded components
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-pulse text-gray-500">Loading...</div>
-  </div>
-);
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <UserProvider>
-        {/* Toast notifications */}
-        <Toaster />
-        <Sonner />
-
-        <BrowserRouter>
-          <Suspense fallback={<LoadingFallback />}>
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <UserProvider>
+          <Toaster />
+          <BrowserRouter>
             <Routes>
-              {/* Main Routes with MainLayout */}
-              <Route path="/" element={<MainLayout><Index /></MainLayout>} />
-              <Route path="/shop" element={<MainLayout><Shop /></MainLayout>} />
-              <Route path="/design" element={<MainLayout><Design /></MainLayout>} />
-              
-              <Route path="/about" element={<MainLayout><About /></MainLayout>} />
-              <Route path="/cart" element={<MainLayout><Cart /></MainLayout>} />
-
-              {/* Dashboard Routes */}
-              {dashboardRoutes}
-
-              {/* Catch-all route for 404 */}
-              <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
+              <Route path="/" element={<MainLayout />}>
+                <Route index element={<Index />} />
+                <Route path="shop" element={<Shop />} />
+                <Route path="design" element={<Design />} />
+                <Route path="about" element={<About />} />
+                <Route path="cart" element={<Cart />} />
+                <Route path="checkout" element={<Checkout />} />
+                <Route path="dashboard/*" element={<DashboardRoutes />} />
+                <Route path="*" element={<NotFound />} />
+              </Route>
             </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </UserProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+          </BrowserRouter>
+        </UserProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
