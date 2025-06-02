@@ -12,11 +12,11 @@ export const TSHIRT_COLORS = {
 
 // Map colors to their corresponding t-shirt images
 export const TSHIRT_COLOR_IMAGES = {
-  "#000000": "/assets/images/tshirt/tshirt-black.png", // Black
-  "#FFFFFF": "/assets/images/tshirt/tshirt-white.png", // White
-  "#DC2626": "/assets/images/tshirt/tshirt-red.png",   // Red
-  "#8A898C": "/assets/images/tshirt/tshirt-white.png", // Grey (fallback to white)
-  "#1EAEDB": "/assets/images/tshirt/tshirt-white.png"  // Blue (fallback to white)
+  "#000000": "/assets/images/tshirt/black tshirt.png", // Black
+  "#FFFFFF": "/assets/images/tshirt/white tshirt.png", // White
+  "#DC2626": "/assets/images/tshirt/red tshirt.jpg",   // Red
+  "#8A898C": "/assets/images/tshirt/grey tshirt.png", // Grey
+  "#1EAEDB": "/assets/images/tshirt/blue tshirt.png"  // Blue
 };
 
 export type DesignStep = "preferences" | "design" | "options";

@@ -8,9 +8,11 @@ import mockup5 from './images/tshirt/mockup-5.webp';
 import mockup6 from './images/tshirt/mockup-6.webp';
 
 // Actual t-shirt color images
-import tshirtBlack from './images/tshirt/tshirt-black.png';
-import tshirtRed from './images/tshirt/tshirt-red.png';
-import tshirtWhite from './images/tshirt/tshirt-white.png';
+import tshirtBlack from './images/tshirt/black tshirt.png';
+import tshirtWhite from './images/tshirt/white tshirt.png';
+import tshirtRed from './images/tshirt/red tshirt.jpg';
+import tshirtGrey from './images/tshirt/grey tshirt.png';
+import tshirtBlue from './images/tshirt/blue tshirt.png';
 
 // Design images
 import designFlow from './images/design/designFlow.webp';
@@ -32,8 +34,10 @@ export const tshirtImages = {
 
 export const tshirtColors = {
   black: tshirtBlack,
+  white: tshirtWhite,
   red: tshirtRed,
-  white: tshirtWhite
+  grey: tshirtGrey,
+  blue: tshirtBlue
 };
 
 export const designImages = {
