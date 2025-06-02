@@ -24,16 +24,21 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
   
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
+      console.log("🔒 User not authenticated for cart action");
       return;
     }
     
     try {
+      console.log("🛒 Adding item to cart:", { id, name });
       setIsAdding(true);
       await addToCart(id.toString());
       
       // Show success state briefly
       setJustAdded(true);
+      console.log("✅ Item added to cart successfully");
       setTimeout(() => setJustAdded(false), 2000);
+    } catch (error) {
+      console.error("❌ Failed to add item to cart:", error);
     } finally {
       setIsAdding(false);
     }
@@ -48,7 +53,7 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
   const buttonContent = getButtonContent();
 
   return (
-    <Card className="overflow-hidden group">
+    <Card className="overflow-hidden group" data-testid={`tshirt-card-${id}`}>
       <div className="relative pb-[125%] overflow-hidden">
         <img 
           src={image} 
@@ -68,6 +73,7 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
             }`}
             onClick={handleAddToCart}
             disabled={isAdding || !isAuthenticated}
+            data-testid="add-to-cart-button"
           >
             <buttonContent.icon size={16} />
             <span>{buttonContent.text}</span>
