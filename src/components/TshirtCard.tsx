@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, ShoppingCart } from "lucide-react";
+import { Eye, ShoppingCart, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
 import { useCart } from "@/contexts/CartContext";
@@ -18,6 +18,7 @@ interface TshirtCardProps {
 const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#000000", "#0000FF"] }: TshirtCardProps) => {
   const [selectedColor, setSelectedColor] = useState(colorOptions[0]);
   const [isAdding, setIsAdding] = useState(false);
+  const [justAdded, setJustAdded] = useState(false);
   const { isAuthenticated } = useUser();
   const { addToCart } = useCart();
   
@@ -29,10 +30,22 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
     try {
       setIsAdding(true);
       await addToCart(id.toString());
+      
+      // Show success state briefly
+      setJustAdded(true);
+      setTimeout(() => setJustAdded(false), 2000);
     } finally {
       setIsAdding(false);
     }
   };
+
+  const getButtonContent = () => {
+    if (isAdding) return { icon: ShoppingCart, text: "Adding..." };
+    if (justAdded) return { icon: Check, text: "Added!" };
+    return { icon: ShoppingCart, text: "Add to cart" };
+  };
+
+  const buttonContent = getButtonContent();
 
   return (
     <Card className="overflow-hidden group">
@@ -50,12 +63,14 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
           </Button>
           <Button 
             size="sm" 
-            className="opacity-90 flex items-center gap-1"
+            className={`opacity-90 flex items-center gap-1 transition-colors ${
+              justAdded ? 'bg-green-600 hover:bg-green-700' : ''
+            }`}
             onClick={handleAddToCart}
             disabled={isAdding || !isAuthenticated}
           >
-            <ShoppingCart size={16} />
-            <span>{isAdding ? "Adding..." : "Add to cart"}</span>
+            <buttonContent.icon size={16} />
+            <span>{buttonContent.text}</span>
           </Button>
         </div>
       </div>
