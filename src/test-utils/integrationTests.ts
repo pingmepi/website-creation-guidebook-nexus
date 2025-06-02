@@ -39,7 +39,7 @@ export const integrationTests = {
 
     // Summary
     console.log("\n📊 INTEGRATION TEST SUMMARY");
-    console.log("=" * 50);
+    console.log("=".repeat(50));
     
     results.forEach(result => {
       const status = result.passed ? "✅ PASSED" : "❌ FAILED";
