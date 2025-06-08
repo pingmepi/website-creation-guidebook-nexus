@@ -399,7 +399,7 @@ const Checkout = () => {
               <CardContent>
                 <div className="text-sm text-gray-600">
                   UPI, Cards, Net Banking, and Wallet payments available.
-                  Payment will be processed securely through Razorpay.
+                  Payment will be processed securely through PhonePe.
                 </div>
               </CardContent>
             </Card>
