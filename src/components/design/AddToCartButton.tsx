@@ -22,7 +22,7 @@ const AddToCartButton = ({
   onSaveDesign
 }: AddToCartButtonProps) => {
   const { isAuthenticated } = useUser();
-  const { addToCart } = useCart();
+  const { addCustomDesignToCart } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleAddToCart = async () => {
@@ -44,9 +44,18 @@ const AddToCartButton = ({
         await onSaveDesign();
       }
 
-      // For now, add a custom design product to cart
-      // This would need to be enhanced to handle custom designs properly
-      await addToCart("custom-design", 1);
+      // Add custom design to cart
+      const customDesign = {
+        design_name: designName || "Custom Design",
+        design_image: designImage,
+        tshirt_color: tshirtColor,
+        base_price: 29.99,
+        theme_name: answers.find(a => a.question?.includes("theme"))?.answer || "Custom",
+        answers: answers,
+        design_data: {} // Canvas data would be added here in real implementation
+      };
+
+      await addCustomDesignToCart(customDesign);
       
       toast.success("Design added to cart!");
 

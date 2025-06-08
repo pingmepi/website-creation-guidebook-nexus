@@ -25,7 +25,7 @@ interface CustomDesign {
   tshirt_color: string;
   base_price: number;
   theme_name?: string;
-  answers: any[];
+  answers: any[] | null;
   design_data: any;
 }
 
@@ -36,6 +36,7 @@ interface CartContextType {
   addToCart: (productId: string, quantity?: number) => Promise<void>;
   addCustomDesignToCart: (customDesign: Omit<CustomDesign, 'id'>) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
+  removeCustomDesign: (designId: string) => Promise<void>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
   isLoading: boolean;
@@ -123,7 +124,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
       
       console.log("🎨 Custom designs fetched:", data);
-      setCustomDesigns(data || []);
+      
+      // Type cast the data to match our interface
+      const typedData: CustomDesign[] = (data || []).map(item => ({
+        ...item,
+        answers: Array.isArray(item.answers) ? item.answers : 
+                 typeof item.answers === 'string' ? JSON.parse(item.answers) : []
+      }));
+      
+      setCustomDesigns(typedData);
     } catch (error) {
       console.error('Error fetching custom designs:', error);
     }
@@ -270,7 +279,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (data) {
         console.log("✅ Custom design added:", data);
-        setCustomDesigns(designs => [data, ...designs]);
+        
+        // Type cast the returned data to match our interface
+        const typedData: CustomDesign = {
+          ...data,
+          answers: Array.isArray(data.answers) ? data.answers : 
+                   typeof data.answers === 'string' ? JSON.parse(data.answers) : []
+        };
+        
+        setCustomDesigns(designs => [typedData, ...designs]);
       }
 
       toast.success('Custom design added to cart');
@@ -352,6 +369,38 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const removeCustomDesign = async (designId: string) => {
+    if (!user) return;
+
+    try {
+      setIsLoading(true);
+      console.log("🗑️ Removing custom design:", designId);
+      
+      // Optimistic update - remove from local state immediately
+      const originalDesigns = [...customDesigns];
+      setCustomDesigns(designs => designs.filter(design => design.id !== designId));
+
+      const { error } = await supabase
+        .from('custom_designs')
+        .delete()
+        .eq('id', designId);
+
+      if (error) {
+        // Revert on error
+        setCustomDesigns(originalDesigns);
+        throw error;
+      }
+      
+      toast.success('Custom design removed from cart');
+      console.log("✅ Custom design removed successfully");
+    } catch (error) {
+      console.error('Error removing custom design:', error);
+      toast.error('Failed to remove custom design');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const clearCart = async () => {
     if (!user) return;
 
@@ -393,6 +442,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addToCart,
         addCustomDesignToCart,
         removeFromCart,
+        removeCustomDesign,
         updateQuantity,
         clearCart,
         isLoading
