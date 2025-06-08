@@ -15,11 +15,15 @@ serve(async (req) => {
   try {
     const { transactionId } = await req.json();
 
-    // PhonePe API configuration
+    // PhonePe API configuration from environment variables
     const PHONEPE_MERCHANT_ID = Deno.env.get("PHONEPE_MERCHANT_ID") ?? "";
     const PHONEPE_SALT_KEY = Deno.env.get("PHONEPE_SALT_KEY") ?? "";
     const PHONEPE_SALT_INDEX = Deno.env.get("PHONEPE_SALT_INDEX") ?? "1";
     const PHONEPE_HOST_URL = Deno.env.get("PHONEPE_HOST_URL") ?? "https://api-preprod.phonepe.com/apis/pg-sandbox";
+
+    if (!PHONEPE_MERCHANT_ID || !PHONEPE_SALT_KEY) {
+      throw new Error("PhonePe configuration missing. Please set PHONEPE_MERCHANT_ID and PHONEPE_SALT_KEY environment variables.");
+    }
 
     // Create checksum for status check
     const checksumString = `/pg/v1/status/${PHONEPE_MERCHANT_ID}/${transactionId}` + PHONEPE_SALT_KEY;
@@ -30,6 +34,8 @@ serve(async (req) => {
     const checksumHex = Array.from(new Uint8Array(checksum))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('') + "###" + PHONEPE_SALT_INDEX;
+
+    console.log("Verification checksum:", checksumHex);
 
     // Check payment status with PhonePe
     const statusResponse = await fetch(
@@ -45,6 +51,7 @@ serve(async (req) => {
     );
 
     const statusData = await statusResponse.json();
+    console.log("PhonePe status response:", JSON.stringify(statusData, null, 2));
 
     // Update payment status in database
     const supabaseClient = createClient(
@@ -54,7 +61,7 @@ serve(async (req) => {
 
     if (statusData.success && statusData.data?.state === "COMPLETED") {
       // Payment successful
-      await supabaseClient
+      const { error: updateError } = await supabaseClient
         .from("payment_transactions")
         .update({
           status: "completed",
@@ -62,6 +69,10 @@ serve(async (req) => {
           updated_at: new Date().toISOString()
         })
         .eq("gateway_transaction_id", transactionId);
+
+      if (updateError) {
+        console.error("Error updating payment transaction:", updateError);
+      }
 
       // Update order status
       const { data: transaction } = await supabaseClient
@@ -71,13 +82,17 @@ serve(async (req) => {
         .single();
 
       if (transaction) {
-        await supabaseClient
+        const { error: orderUpdateError } = await supabaseClient
           .from("orders")
           .update({
             status: "confirmed",
             updated_at: new Date().toISOString()
           })
           .eq("id", transaction.order_id);
+
+        if (orderUpdateError) {
+          console.error("Error updating order status:", orderUpdateError);
+        }
       }
 
       return new Response(
@@ -95,7 +110,7 @@ serve(async (req) => {
       // Payment failed or pending
       const paymentStatus = statusData.data?.state || "failed";
       
-      await supabaseClient
+      const { error: updateError } = await supabaseClient
         .from("payment_transactions")
         .update({
           status: paymentStatus.toLowerCase(),
@@ -104,6 +119,10 @@ serve(async (req) => {
           updated_at: new Date().toISOString()
         })
         .eq("gateway_transaction_id", transactionId);
+
+      if (updateError) {
+        console.error("Error updating payment transaction:", updateError);
+      }
 
       return new Response(
         JSON.stringify({

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CreditCard, ArrowLeft, Smartphone } from "lucide-react";
+import { ArrowLeft, Smartphone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -47,7 +47,13 @@ const PaymentGateway = ({
 
     } catch (error) {
       console.error("PhonePe payment error:", error);
-      toast.error("Failed to initiate payment. Please try again.");
+      
+      if (error.message?.includes("PhonePe configuration missing")) {
+        toast.error("Payment service is not configured. Please contact support.");
+      } else {
+        toast.error("Failed to initiate payment. Please try again.");
+      }
+      
       setIsProcessing(false);
     }
   };
