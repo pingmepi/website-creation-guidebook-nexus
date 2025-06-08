@@ -1,4 +1,3 @@
-
 import { ErrorLogger } from "@/services/ErrorLogger";
 
 // Test scenarios for checkout functionality
@@ -80,6 +79,12 @@ export const checkoutTestScenarios = {
       const isDisabled = (placeOrderButton as HTMLButtonElement).disabled;
       console.log(`📋 Place order button disabled: ${isDisabled}`);
 
+      // Test button text changes
+      const buttonText = (placeOrderButton as HTMLButtonElement).textContent;
+      if (!buttonText?.includes("Proceed to Payment") && !buttonText?.includes("Placing Order")) {
+        console.warn("⚠️ Unexpected button text:", buttonText);
+      }
+
       console.log("✅ Order placement test setup complete");
       return true;
     } catch (error) {
@@ -88,7 +93,7 @@ export const checkoutTestScenarios = {
     }
   },
 
-  // Test order summary
+  // Test order summary with currency validation
   testOrderSummary: () => {
     console.log("🧪 Testing Order Summary...");
     
@@ -103,6 +108,12 @@ export const checkoutTestScenarios = {
     if (!totalElement) {
       console.error("❌ Order total not found");
       return false;
+    }
+
+    // Check currency format
+    const totalText = totalElement.textContent || '';
+    if (!totalText.includes('₹')) {
+      console.warn("⚠️ Currency symbol not found in total, expected ₹");
     }
 
     console.log(`📋 Found ${summaryItems.length} items in order summary`);

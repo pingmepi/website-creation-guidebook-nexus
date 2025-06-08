@@ -1,5 +1,16 @@
+// Type declarations for Deno runtime
+declare global {
+  namespace Deno {
+    interface Env {
+      get(key: string): string | undefined;
+    }
+    const env: Env;
+  }
+}
 
+// @ts-ignore - Deno URL imports are not recognized by TypeScript
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+// @ts-ignore - Deno URL imports are not recognized by TypeScript
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -13,6 +24,11 @@ interface PaymentRequest {
   currency: string;
   redirectUrl: string;
   callbackUrl: string;
+  userInfo?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+  };
 }
 
 serve(async (req) => {
@@ -91,7 +107,7 @@ serve(async (req) => {
 
     if (responseData.success && responseData.data?.instrumentResponse?.redirectInfo?.url) {
       // Store transaction details in database
-      const { error: dbError } = await supabase
+      const { error: dbError } = await supabaseClient
         .from("payment_transactions")
         .insert({
           order_id: orderId,
@@ -100,7 +116,8 @@ serve(async (req) => {
           payment_gateway: "phonepe",
           gateway_transaction_id: transactionId,
           payment_method: "UPI",
-          status: "pending"
+          status: "pending",
+          user_id: user.id
         });
 
       if (dbError) {

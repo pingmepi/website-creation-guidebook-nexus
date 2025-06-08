@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, CreditCard } from "lucide-react";
@@ -52,7 +51,7 @@ const PlaceOrderButton = ({
         design_name: designName || "Custom Design",
         design_image: designImage,
         tshirt_color: tshirtColor,
-        base_price: 29.99,
+        base_price: 2499, // Updated to INR pricing
         theme_name: answers.find(a => a.question.includes("theme"))?.answer || "Custom",
         answers: answers,
         design_data: {} // Canvas data would be added here in real implementation

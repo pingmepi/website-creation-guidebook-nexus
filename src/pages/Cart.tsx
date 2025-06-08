@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useUser } from "@/contexts/UserContext";
 import { useCart } from "@/contexts/CartContext";
@@ -48,7 +47,7 @@ const Cart = () => {
 
   const calculateSubtotal = () => {
     const cartItemsTotal = cartItems.reduce((total, item) => {
-      const price = parseFloat(item.product?.price?.replace('$', '') || '0');
+      const price = parseFloat(item.product?.price?.replace('₹', '') || '0');
       return total + (price * item.quantity);
     }, 0);
     
@@ -188,7 +187,7 @@ const Cart = () => {
                                   <span className="text-xs text-gray-500">T-shirt color</span>
                                 </div>
                               </div>
-                              <p className="ml-4 font-medium text-gray-900">${design.base_price.toFixed(2)}</p>
+                              <p className="ml-4 font-medium text-gray-900">₹{design.base_price.toFixed(2)}</p>
                             </div>
 
                             <div className="flex items-center justify-between mt-2">
@@ -224,7 +223,7 @@ const Cart = () => {
                   <div className="space-y-4">
                     <div className="flex justify-between">
                       <p className="text-gray-600">Subtotal</p>
-                      <p className="font-medium">${calculateSubtotal()}</p>
+                      <p className="font-medium">₹{calculateSubtotal()}</p>
                     </div>
                     <div className="flex justify-between">
                       <p className="text-gray-600">Shipping</p>
@@ -233,7 +232,7 @@ const Cart = () => {
                     <Separator />
                     <div className="flex justify-between">
                       <p className="font-semibold">Total</p>
-                      <p className="font-semibold">${calculateSubtotal()}</p>
+                      <p className="font-semibold">₹{calculateSubtotal()}</p>
                     </div>
 
                     <Button className="w-full" size="lg" asChild>

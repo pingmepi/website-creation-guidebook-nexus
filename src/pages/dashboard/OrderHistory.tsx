@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -143,7 +142,7 @@ const OrderHistory = () => {
                       <TableCell className="font-medium">{order.order_number}</TableCell>
                       <TableCell>{new Date(order.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>{order.order_items?.length || 0} items</TableCell>
-                      <TableCell>${order.total_amount.toFixed(2)}</TableCell>
+                      <TableCell>₹{order.total_amount.toFixed(2)}</TableCell>
                       <TableCell>
                         <Badge className={getStatusClass(order.status)}>
                           {getStatusText(order.status)}
@@ -217,8 +216,8 @@ const OrderHistory = () => {
                           <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium">${item.total_price.toFixed(2)}</p>
-                          <p className="text-sm text-gray-600">${item.unit_price.toFixed(2)} each</p>
+                          <p className="font-medium">₹{item.total_price.toFixed(2)}</p>
+                          <p className="text-sm text-gray-600">₹{item.unit_price.toFixed(2)} each</p>
                         </div>
                       </div>
                     ))}
@@ -228,7 +227,7 @@ const OrderHistory = () => {
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center font-medium text-lg">
                     <span>Total Amount</span>
-                    <span>${selectedOrder.total_amount.toFixed(2)}</span>
+                    <span>₹{selectedOrder.total_amount.toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>
