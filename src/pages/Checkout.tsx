@@ -80,13 +80,13 @@ const Checkout = () => {
       return;
     }
 
-    if (cartItems.length === 0 && customDesigns.length === 0) {
+    if (cartItems.length === 0 && (!customDesigns || customDesigns.length === 0)) {
       navigate('/cart');
       return;
     }
 
     fetchSavedAddresses();
-  }, [isAuthenticated, cartItems.length, customDesigns.length, navigate]);
+  }, [isAuthenticated, cartItems.length, customDesigns?.length, navigate]);
 
   const fetchSavedAddresses = async () => {
     if (!user) return;
@@ -118,7 +118,7 @@ const Checkout = () => {
       return total + (price * item.quantity);
     }, 0);
 
-    const customDesignsTotal = customDesigns.reduce((total, design) => {
+    const customDesignsTotal = (customDesigns || []).reduce((total, design) => {
       return total + design.base_price;
     }, 0);
 
@@ -264,7 +264,7 @@ const Checkout = () => {
     navigate(`/dashboard/orders`);
   };
 
-  if (!isAuthenticated || (cartItems.length === 0 && customDesigns.length === 0)) {
+  if (!isAuthenticated || (cartItems.length === 0 && (!customDesigns || customDesigns.length === 0))) {
     return null;
   }
 
@@ -432,7 +432,7 @@ const Checkout = () => {
                     </div>
                   ))}
 
-                  {customDesigns.map((design) => (
+                  {(customDesigns || []).map((design) => (
                     <div key={design.id} className="flex items-center space-x-3">
                       <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
                         <img
