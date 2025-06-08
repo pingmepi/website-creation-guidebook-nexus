@@ -23,7 +23,7 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
     // Get authenticated user
@@ -38,11 +38,15 @@ serve(async (req) => {
 
     const { orderId, amount, currency, redirectUrl, callbackUrl }: PaymentRequest = await req.json();
 
-    // PhonePe API configuration
+    // PhonePe API configuration from environment variables
     const PHONEPE_MERCHANT_ID = Deno.env.get("PHONEPE_MERCHANT_ID") ?? "";
     const PHONEPE_SALT_KEY = Deno.env.get("PHONEPE_SALT_KEY") ?? "";
     const PHONEPE_SALT_INDEX = Deno.env.get("PHONEPE_SALT_INDEX") ?? "1";
     const PHONEPE_HOST_URL = Deno.env.get("PHONEPE_HOST_URL") ?? "https://api-preprod.phonepe.com/apis/pg-sandbox";
+
+    if (!PHONEPE_MERCHANT_ID || !PHONEPE_SALT_KEY) {
+      throw new Error("PhonePe configuration missing. Please set PHONEPE_MERCHANT_ID and PHONEPE_SALT_KEY environment variables.");
+    }
 
     // Generate unique transaction ID
     const transactionId = `TXN_${orderId}_${Date.now()}`;
@@ -53,14 +57,16 @@ serve(async (req) => {
       merchantTransactionId: transactionId,
       merchantUserId: user.id,
       amount: amount,
-      redirectUrl: redirectUrl,
+      redirectUrl: `${redirectUrl}?transactionId=${transactionId}&orderId=${orderId}`,
       redirectMode: "POST",
-      callbackUrl: callbackUrl,
+      callbackUrl: `${callbackUrl}?transactionId=${transactionId}&orderId=${orderId}`,
       mobileNumber: "9999999999", // You might want to get this from user profile
       paymentInstrument: {
         type: "PAY_PAGE"
       }
     };
+
+    console.log("Payment payload:", JSON.stringify(paymentPayload, null, 2));
 
     // Encode payload to base64
     const base64Payload = btoa(JSON.stringify(paymentPayload));
@@ -75,6 +81,8 @@ serve(async (req) => {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('') + "###" + PHONEPE_SALT_INDEX;
 
+    console.log("Checksum:", checksumHex);
+
     // Make request to PhonePe
     const phonePeResponse = await fetch(`${PHONEPE_HOST_URL}/pg/v1/pay`, {
       method: "POST",
@@ -88,10 +96,11 @@ serve(async (req) => {
     });
 
     const responseData = await phonePeResponse.json();
+    console.log("PhonePe response:", JSON.stringify(responseData, null, 2));
 
     if (responseData.success && responseData.data?.instrumentResponse?.redirectInfo?.url) {
       // Store transaction details in database
-      const { error: dbError } = await supabase
+      const { error: dbError } = await supabaseClient
         .from("payment_transactions")
         .insert({
           order_id: orderId,
