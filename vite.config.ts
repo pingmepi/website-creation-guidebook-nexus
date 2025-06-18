@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import { securityHeadersPlugin } from "./src/lib/vite-security-plugin";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -15,8 +16,8 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
-      mode === 'development' &&
-      componentTagger(),
+      mode === 'development' && componentTagger(),
+      mode !== 'development' && securityHeadersPlugin(), // Only enable security headers in production
     ].filter(Boolean),
     resolve: {
       alias: {

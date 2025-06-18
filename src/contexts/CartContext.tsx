@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useUser } from './UserContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,11 +18,25 @@ interface CartItem {
   };
 }
 
+interface CustomDesign {
+  id: string;
+  design_name: string;
+  design_image: string;
+  tshirt_color: string;
+  base_price: number;
+  theme_name?: string;
+  answers: any[] | null;
+  design_data: any;
+}
+
 interface CartContextType {
   cartItems: CartItem[];
   cartCount: number;
+  customDesigns: CustomDesign[];
   addToCart: (productId: string, quantity?: number) => Promise<void>;
+  addCustomDesignToCart: (customDesign: Omit<CustomDesign, 'id'>) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
+  removeCustomDesign: (designId: string) => Promise<void>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
   isLoading: boolean;
@@ -42,6 +55,7 @@ export const useCart = () => {
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated } = useUser();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [customDesigns, setCustomDesigns] = useState<CustomDesign[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const mockProducts = [
@@ -92,9 +106,42 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const fetchCustomDesigns = async () => {
+    if (!user) {
+      setCustomDesigns([]);
+      return;
+    }
+
+    try {
+      console.log("🔄 Fetching custom designs for user:", user.id);
+      
+      const { data, error } = await supabase
+        .from('custom_designs')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      console.log("🎨 Custom designs fetched:", data);
+      
+      // Type cast the data to match our interface
+      const typedData: CustomDesign[] = (data || []).map(item => ({
+        ...item,
+        answers: Array.isArray(item.answers) ? item.answers : 
+                 typeof item.answers === 'string' ? JSON.parse(item.answers) : []
+      }));
+      
+      setCustomDesigns(typedData);
+    } catch (error) {
+      console.error('Error fetching custom designs:', error);
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated && user) {
       fetchCartItems();
+      fetchCustomDesigns();
 
       // Set up real-time subscription
       console.log("📡 Setting up cart real-time subscription");
@@ -120,8 +167,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         supabase.removeChannel(channel);
       };
     } else {
-      console.log("🔒 User not authenticated, clearing cart items");
+      console.log("🔒 User not authenticated, clearing cart items and custom designs");
       setCartItems([]);
+      setCustomDesigns([]);
     }
   }, [user, isAuthenticated]);
 
@@ -208,6 +256,49 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const addCustomDesignToCart = async (customDesign: Omit<CustomDesign, 'id'>) => {
+    if (!user) {
+      toast.error('Please log in to add custom designs to cart');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      console.log("🎨 Adding custom design to cart:", customDesign);
+      
+      const { data, error } = await supabase
+        .from('custom_designs')
+        .insert({
+          user_id: user.id,
+          ...customDesign
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      if (data) {
+        console.log("✅ Custom design added:", data);
+        
+        // Type cast the returned data to match our interface
+        const typedData: CustomDesign = {
+          ...data,
+          answers: Array.isArray(data.answers) ? data.answers : 
+                   typeof data.answers === 'string' ? JSON.parse(data.answers) : []
+        };
+        
+        setCustomDesigns(designs => [typedData, ...designs]);
+      }
+
+      toast.success('Custom design added to cart');
+    } catch (error) {
+      console.error('Error adding custom design to cart:', error);
+      toast.error('Failed to add custom design to cart');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const removeFromCart = async (itemId: string) => {
     if (!user) return;
 
@@ -278,6 +369,38 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const removeCustomDesign = async (designId: string) => {
+    if (!user) return;
+
+    try {
+      setIsLoading(true);
+      console.log("🗑️ Removing custom design:", designId);
+      
+      // Optimistic update - remove from local state immediately
+      const originalDesigns = [...customDesigns];
+      setCustomDesigns(designs => designs.filter(design => design.id !== designId));
+
+      const { error } = await supabase
+        .from('custom_designs')
+        .delete()
+        .eq('id', designId);
+
+      if (error) {
+        // Revert on error
+        setCustomDesigns(originalDesigns);
+        throw error;
+      }
+      
+      toast.success('Custom design removed from cart');
+      console.log("✅ Custom design removed successfully");
+    } catch (error) {
+      console.error('Error removing custom design:', error);
+      toast.error('Failed to remove custom design');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const clearCart = async () => {
     if (!user) return;
 
@@ -303,7 +426,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0) + customDesigns.length;
 
   // Add logging for cart count changes
   useEffect(() => {
@@ -315,8 +438,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         cartItems,
         cartCount,
+        customDesigns,
         addToCart,
+        addCustomDesignToCart,
         removeFromCart,
+        removeCustomDesign,
         updateQuantity,
         clearCart,
         isLoading

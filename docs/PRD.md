@@ -56,7 +56,7 @@ So that I can ensure smooth delivery and customer satisfaction
 - Maintain metadata: themes, user responses, editor actions, timestamps
 - Enable design reordering from saved history
 - Collect shipping details including phone, address, and pin code
-- Integrate payments using Razorpay or Stripe
+- Integrate payments using PhonePe (primary) or Razorpay/Stripe (fallback) with INR currency support
 - Create orders with status tracking (pending, printing, shipped, delivered)
 - Admin dashboard to manage and update order statuses
 - Basic support section with contact number
@@ -103,7 +103,7 @@ So that I can ensure smooth delivery and customer satisfaction
 
  Collect shipping details including phone, address, and pin code. This can also be edited from the user profile in user dashboard. 
 
- Integrate payments using Razorpay or Stripe
+ Integrate payments using PhonePe (primary) or Razorpay/Stripe (fallback) with INR currency support
 
  Create orders with status tracking (pending, printing, shipped, delivered)
 
