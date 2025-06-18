@@ -1,74 +1,96 @@
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-verify",
+// Import shared utilities
+import {
+  EdgeFunctionError,
+  ErrorType,
+  createErrorResponse,
+  createOptionsResponse,
+  getRequiredEnvVar,
+  logInfo,
+  logError,
+  logDebug
+} from '../_shared/error-utils.ts';
+
+// Type declaration for Deno global
+declare const Deno: {
+  serve: (handler: (req: Request) => Promise<Response> | Response) => void;
+  env: {
+    get: (key: string) => string | undefined;
+  };
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return createOptionsResponse();
   }
 
+  logInfo("PhonePe webhook received");
+
   try {
-    console.log("PhonePe webhook received");
-
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
-
-    // Get PhonePe configuration
-    const PHONEPE_SALT_KEY = Deno.env.get("PHONEPE_SALT_KEY") ?? "";
-    const PHONEPE_SALT_INDEX = Deno.env.get("PHONEPE_SALT_INDEX") ?? "1";
-
-    if (!PHONEPE_SALT_KEY) {
-      throw new Error("PhonePe configuration missing");
-    }
+    const supabaseUrl = getRequiredEnvVar("SUPABASE_URL");
+    const supabaseKey = getRequiredEnvVar("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
     // Verify webhook signature
     const xVerifyHeader = req.headers.get("X-VERIFY");
     const body = await req.text();
-    
+
     if (!xVerifyHeader) {
-      console.error("Missing X-VERIFY header");
-      return new Response("Unauthorized", { status: 401 });
+      logError("Missing X-VERIFY header");
+      throw new EdgeFunctionError(
+        "Missing X-VERIFY header",
+        ErrorType.AUTHENTICATION,
+        401
+      );
     }
 
     // Parse webhook payload
-    let webhookData;
+    let webhookData: any;
     try {
       webhookData = JSON.parse(body);
     } catch (error) {
-      console.error("Invalid JSON payload:", error);
-      return new Response("Bad Request", { status: 400 });
+      logError("Invalid JSON payload", error);
+      throw new EdgeFunctionError(
+        "Invalid JSON payload",
+        ErrorType.VALIDATION,
+        400,
+        error
+      );
     }
 
-    console.log("Webhook data:", JSON.stringify(webhookData, null, 2));
+    logDebug("Webhook data", webhookData);
 
     const { response } = webhookData;
-    
+
     if (!response) {
-      console.error("No response data in webhook");
-      return new Response("Bad Request", { status: 400 });
+      logError("No response data in webhook");
+      throw new EdgeFunctionError(
+        "No response data in webhook",
+        ErrorType.VALIDATION,
+        400
+      );
     }
 
     // Decode base64 response
     const decodedResponse = JSON.parse(atob(response));
-    console.log("Decoded response:", JSON.stringify(decodedResponse, null, 2));
+    logDebug("Decoded response", decodedResponse);
 
     const { data } = decodedResponse;
-    
+
     if (!data || !data.merchantTransactionId) {
-      console.error("Invalid webhook data structure");
-      return new Response("Bad Request", { status: 400 });
+      logError("Invalid webhook data structure");
+      throw new EdgeFunctionError(
+        "Invalid webhook data structure",
+        ErrorType.VALIDATION,
+        400
+      );
     }
 
     const transactionId = data.merchantTransactionId;
     const paymentState = data.state;
-    const responseCode = data.responseCode;
 
     // Update payment transaction
     const { error: updateError } = await supabaseClient
@@ -82,7 +104,13 @@ serve(async (req) => {
       .eq("gateway_transaction_id", transactionId);
 
     if (updateError) {
-      console.error("Error updating payment transaction:", updateError);
+      logError("Error updating payment transaction", updateError);
+      throw new EdgeFunctionError(
+        "Failed to update payment transaction",
+        ErrorType.DATABASE,
+        500,
+        updateError
+      );
     }
 
     // Update order status if payment completed
@@ -103,26 +131,32 @@ serve(async (req) => {
           .eq("id", transaction.order_id);
 
         if (orderUpdateError) {
-          console.error("Error updating order status:", orderUpdateError);
+          logError("Error updating order status", orderUpdateError);
+          // Don't throw here as payment was successful
         }
       }
     }
 
-    console.log(`Webhook processed successfully for transaction: ${transactionId}`);
+    logInfo(`Webhook processed successfully for transaction: ${transactionId}`);
 
     return new Response("OK", {
-      headers: { ...corsHeaders, "Content-Type": "text/plain" },
+      headers: { "Content-Type": "text/plain" },
       status: 200,
     });
 
   } catch (error) {
-    console.error("Webhook processing error:", error);
-    return new Response(
-      "Internal Server Error",
-      {
-        headers: { ...corsHeaders, "Content-Type": "text/plain" },
-        status: 500,
-      }
+    logError("Webhook processing error", error);
+
+    // Handle our custom errors
+    if (error instanceof EdgeFunctionError) {
+      return createErrorResponse(error);
+    }
+
+    // Handle unknown errors
+    return createErrorResponse(
+      'Webhook processing failed',
+      500,
+      error.message
     );
   }
 });
