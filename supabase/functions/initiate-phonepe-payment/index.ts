@@ -1,12 +1,3 @@
-// Type declarations for Deno runtime
-declare global {
-  namespace Deno {
-    interface Env {
-      get(key: string): string | undefined;
-    }
-    const env: Env;
-  }
-}
 
 // @ts-ignore - Deno URL imports are not recognized by TypeScript
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
@@ -22,6 +13,7 @@ interface PaymentRequest {
   orderId: string;
   amount: number; // in paise
   currency: string;
+  paymentMethod?: string;
   redirectUrl: string;
   callbackUrl: string;
   userInfo?: {
@@ -29,6 +21,32 @@ interface PaymentRequest {
     email?: string;
     phone?: string;
   };
+}
+
+// Retry mechanism for API calls
+async function retryApiCall<T>(
+  operation: () => Promise<T>, 
+  maxRetries = 3, 
+  delay = 1000
+): Promise<T> {
+  let lastError: Error;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      console.log(`Attempt ${attempt} failed:`, error);
+      
+      if (attempt < maxRetries) {
+        console.log(`Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2; // Exponential backoff
+      }
+    }
+  }
+  
+  throw lastError!;
 }
 
 serve(async (req) => {
@@ -52,7 +70,7 @@ serve(async (req) => {
       throw new Error("User not authenticated");
     }
 
-    const { orderId, amount, currency, redirectUrl, callbackUrl }: PaymentRequest = await req.json();
+    const { orderId, amount, currency, paymentMethod = "PAY_PAGE", redirectUrl, callbackUrl }: PaymentRequest = await req.json();
 
     // PhonePe API configuration from environment variables
     const PHONEPE_MERCHANT_ID = Deno.env.get("PHONEPE_MERCHANT_ID") ?? "";
@@ -67,6 +85,13 @@ serve(async (req) => {
     // Generate unique transaction ID
     const transactionId = `TXN_${orderId}_${Date.now()}`;
 
+    // Get user profile for mobile number
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
     // Prepare payment payload
     const paymentPayload = {
       merchantId: PHONEPE_MERCHANT_ID,
@@ -76,9 +101,9 @@ serve(async (req) => {
       redirectUrl: `${redirectUrl}?transactionId=${transactionId}&orderId=${orderId}`,
       redirectMode: "POST",
       callbackUrl: `${callbackUrl}?transactionId=${transactionId}&orderId=${orderId}`,
-      mobileNumber: "9999999999", // You might want to get this from user profile
+      mobileNumber: profile?.phone || "9999999999", // Fallback mobile number
       paymentInstrument: {
-        type: "PAY_PAGE"
+        type: paymentMethod === "UPI" ? "UPI_COLLECT" : "PAY_PAGE"
       }
     };
 
@@ -99,22 +124,29 @@ serve(async (req) => {
 
     console.log("Checksum:", checksumHex);
 
-    // Make request to PhonePe
-    const phonePeResponse = await fetch(`${PHONEPE_HOST_URL}/pg/v1/pay`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-VERIFY": checksumHex
-      },
-      body: JSON.stringify({
-        request: base64Payload
-      })
-    });
+    // Make request to PhonePe with retry logic
+    const phonePeResponse = await retryApiCall(async () => {
+      const response = await fetch(`${PHONEPE_HOST_URL}/pg/v1/pay`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-VERIFY": checksumHex
+        },
+        body: JSON.stringify({
+          request: base64Payload
+        })
+      });
 
-    const responseData = await phonePeResponse.json();
-    console.log("PhonePe response:", JSON.stringify(responseData, null, 2));
+      if (!response.ok) {
+        throw new Error(`PhonePe API error: ${response.status} ${response.statusText}`);
+      }
 
-    if (responseData.success && responseData.data?.instrumentResponse?.redirectInfo?.url) {
+      return response.json();
+    }, 3, 1000);
+
+    console.log("PhonePe response:", JSON.stringify(phonePeResponse, null, 2));
+
+    if (phonePeResponse.success && phonePeResponse.data?.instrumentResponse?.redirectInfo?.url) {
       // Store transaction details in database
       const { error: dbError } = await supabaseClient
         .from("payment_transactions")
@@ -124,19 +156,20 @@ serve(async (req) => {
           currency: currency,
           payment_gateway: "phonepe",
           gateway_transaction_id: transactionId,
-          payment_method: "UPI",
+          payment_method: paymentMethod,
           status: "pending",
           user_id: user.id
         });
 
       if (dbError) {
         console.error("Database error:", dbError);
+        throw new Error("Failed to store transaction details");
       }
 
       return new Response(
         JSON.stringify({
           success: true,
-          paymentUrl: responseData.data.instrumentResponse.redirectInfo.url,
+          paymentUrl: phonePeResponse.data.instrumentResponse.redirectInfo.url,
           transactionId: transactionId
         }),
         {
@@ -145,16 +178,43 @@ serve(async (req) => {
         }
       );
     } else {
-      throw new Error(responseData.message || "Payment initiation failed");
+      const errorCode = phonePeResponse.code || "PAYMENT_INITIATION_FAILED";
+      const errorMessage = phonePeResponse.message || "Payment initiation failed";
+      
+      console.error("PhonePe payment initiation failed:", errorCode, errorMessage);
+      
+      throw new Error(JSON.stringify({
+        code: errorCode,
+        message: errorMessage,
+        details: phonePeResponse
+      }));
     }
 
   } catch (error) {
     console.error("PhonePe payment error:", error);
+    
+    let errorResponse = {
+      success: false,
+      error: "Payment initiation failed"
+    };
+
+    // Try to parse structured error
+    try {
+      const parsedError = JSON.parse(error.message);
+      errorResponse = {
+        success: false,
+        error: parsedError.message || "Payment initiation failed",
+        details: {
+          code: parsedError.code || "UNKNOWN_ERROR"
+        }
+      };
+    } catch {
+      // Use generic error response
+      errorResponse.error = error.message || "Payment initiation failed";
+    }
+
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message || "Payment initiation failed" 
-      }),
+      JSON.stringify(errorResponse),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,

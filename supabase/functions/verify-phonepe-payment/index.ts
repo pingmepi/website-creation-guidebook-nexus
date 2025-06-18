@@ -7,6 +7,32 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Retry mechanism for API calls
+async function retryApiCall<T>(
+  operation: () => Promise<T>, 
+  maxRetries = 3, 
+  delay = 1000
+): Promise<T> {
+  let lastError: Error;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      console.log(`Verification attempt ${attempt} failed:`, error);
+      
+      if (attempt < maxRetries) {
+        console.log(`Retrying verification in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2; // Exponential backoff
+      }
+    }
+  }
+  
+  throw lastError!;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -14,6 +40,10 @@ serve(async (req) => {
 
   try {
     const { transactionId } = await req.json();
+
+    if (!transactionId) {
+      throw new Error("Transaction ID is required");
+    }
 
     // PhonePe API configuration from environment variables
     const PHONEPE_MERCHANT_ID = Deno.env.get("PHONEPE_MERCHANT_ID") ?? "";
@@ -37,20 +67,27 @@ serve(async (req) => {
 
     console.log("Verification checksum:", checksumHex);
 
-    // Check payment status with PhonePe
-    const statusResponse = await fetch(
-      `${PHONEPE_HOST_URL}/pg/v1/status/${PHONEPE_MERCHANT_ID}/${transactionId}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "X-VERIFY": checksumHex,
-          "X-MERCHANT-ID": PHONEPE_MERCHANT_ID
+    // Check payment status with PhonePe using retry logic
+    const statusData = await retryApiCall(async () => {
+      const statusResponse = await fetch(
+        `${PHONEPE_HOST_URL}/pg/v1/status/${PHONEPE_MERCHANT_ID}/${transactionId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-VERIFY": checksumHex,
+            "X-MERCHANT-ID": PHONEPE_MERCHANT_ID
+          }
         }
-      }
-    );
+      );
 
-    const statusData = await statusResponse.json();
+      if (!statusResponse.ok) {
+        throw new Error(`PhonePe status API error: ${statusResponse.status} ${statusResponse.statusText}`);
+      }
+
+      return statusResponse.json();
+    }, 3, 1000);
+
     console.log("PhonePe status response:", JSON.stringify(statusData, null, 2));
 
     // Update payment status in database
@@ -72,6 +109,7 @@ serve(async (req) => {
 
       if (updateError) {
         console.error("Error updating payment transaction:", updateError);
+        throw new Error("Failed to update payment status");
       }
 
       // Update order status
@@ -92,6 +130,7 @@ serve(async (req) => {
 
         if (orderUpdateError) {
           console.error("Error updating order status:", orderUpdateError);
+          // Don't throw here as payment was successful
         }
       }
 
@@ -109,13 +148,15 @@ serve(async (req) => {
     } else {
       // Payment failed or pending
       const paymentStatus = statusData.data?.state || "failed";
+      const responseCode = statusData.data?.responseCode || "UNKNOWN_ERROR";
+      const responseDescription = statusData.data?.responseCodeDescription || "Payment verification failed";
       
       const { error: updateError } = await supabaseClient
         .from("payment_transactions")
         .update({
           status: paymentStatus.toLowerCase(),
           gateway_response: statusData.data,
-          failure_reason: statusData.data?.responseCodeDescription,
+          failure_reason: responseDescription,
           updated_at: new Date().toISOString()
         })
         .eq("gateway_transaction_id", transactionId);
@@ -128,7 +169,8 @@ serve(async (req) => {
         JSON.stringify({
           success: false,
           status: paymentStatus.toLowerCase(),
-          message: statusData.data?.responseCodeDescription || "Payment verification failed"
+          message: responseDescription,
+          errorCode: responseCode
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -142,7 +184,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || "Payment verification failed" 
+        error: error.message || "Payment verification failed",
+        errorCode: "VERIFICATION_ERROR"
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
