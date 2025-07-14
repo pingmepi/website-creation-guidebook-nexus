@@ -14,6 +14,10 @@ import Checkout from "./pages/Checkout";
 import TestPreview from "./pages/TestPreview";
 import DashboardRoutes from "./routes/DashboardRoutes";
 import NotFound from "./pages/NotFound";
+import ShippingPolicy from "./pages/policies/ShippingPolicy";
+import ReturnRefundPolicy from "./pages/policies/ReturnRefundPolicy";
+import PrivacyPolicy from "./pages/policies/PrivacyPolicy";
+import TermsConditions from "./pages/policies/TermsConditions";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +38,10 @@ function App() {
                   <Route path="about" element={<About />} />
                   <Route path="cart" element={<Cart />} />
                   <Route path="checkout" element={<Checkout />} />
+                  <Route path="shipping-policy" element={<ShippingPolicy />} />
+                  <Route path="return-refund-policy" element={<ReturnRefundPolicy />} />
+                  <Route path="privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="terms-conditions" element={<TermsConditions />} />
                   <Route path="dashboard/*" element={<DashboardRoutes />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>

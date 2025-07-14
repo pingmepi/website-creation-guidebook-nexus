@@ -5,7 +5,7 @@ const Footer = () => {
   return (
     <footer className="py-8 bg-gray-800 text-white">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
             <h3 className="font-bold text-lg mb-4">Custom T-Shirts</h3>
             <p className="text-gray-300">
@@ -32,6 +32,16 @@ const Footer = () => {
               <a href="mailto:info@customtshirts.com" className="hover:text-white transition-colors">info@customtshirts.com</a><br />
               <a href="tel:+11234567890" className="hover:text-white transition-colors">(123) 456-7890</a>
             </address>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-4">Legal</h3>
+            <ul className="space-y-2">
+              <li><Link to="/shipping-policy" className="text-gray-300 hover:text-white transition-colors">Shipping Policy</Link></li>
+              <li><Link to="/return-refund-policy" className="text-gray-300 hover:text-white transition-colors">Return & Refund Policy</Link></li>
+              <li><Link to="/privacy-policy" className="text-gray-300 hover:text-white transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/terms-conditions" className="text-gray-300 hover:text-white transition-colors">Terms & Conditions</Link></li>
+            </ul>
           </div>
         </div>
         
