@@ -5,6 +5,7 @@ import { User, ShoppingCart } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { useCart } from "@/contexts/CartContext";
 import LoginButton from "./auth/LoginButton";
+import LogoutButton from "./auth/LogoutButton";
 import { CartSidebar } from "./cart/CartSidebar";
 
 const Header = () => {
@@ -42,6 +43,7 @@ const Header = () => {
                     Dashboard
                   </Link>
                 </Button>
+                <LogoutButton />
               </div>
             ) : (
               <LoginButton />
