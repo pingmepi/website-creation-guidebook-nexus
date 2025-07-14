@@ -93,24 +93,28 @@ const TshirtDesignPreview = ({ color = "#FFFFFF", designImage }: TshirtDesignPre
           </div>
         )}
         
-        {/* Design overlay positioned in the center of the t-shirt */}
+        {/* Design overlay positioned in the center of the t-shirt - Increased size */}
         <div className="absolute inset-0 flex items-center justify-center">
-          {/* Position the design in the center-upper area of the t-shirt */}
-          <div className="relative" style={{ marginTop: '10%' }}>
-            <div className="w-32 h-32 flex items-center justify-center">
+          {/* Position the design in the center-upper area of the t-shirt with larger size */}
+          <div className="relative" style={{ marginTop: '8%' }}>
+            <div className="w-44 h-44 flex items-center justify-center">
               {designImage && !designImageError ? (
                 <img 
                   src={designImage} 
                   alt="T-shirt design" 
-                  className="max-w-full max-h-full object-contain rounded-sm shadow-md"
+                  className="max-w-full max-h-full object-contain"
                   style={{
-                    filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.2))',
-                    transform: 'scale(0.8)' // Slightly smaller to look more realistic
+                    filter: `drop-shadow(0 2px 6px rgba(0,0,0,0.15))`,
+                    borderRadius: '6px',
+                    // Blend borders with t-shirt color using box-shadow
+                    boxShadow: `inset 0 0 0 2px ${color === '#FFFFFF' ? 'rgba(255,255,255,0.8)' : color + '80'}`,
+                    background: `linear-gradient(145deg, ${color}20, transparent)`,
+                    backdropFilter: 'blur(0.5px)'
                   }}
                   onError={handleDesignImageError}
                 />
               ) : (
-                <div className="w-24 h-24 border-2 border-dashed border-gray-400 rounded-md flex items-center justify-center bg-white/30 backdrop-blur-sm">
+                <div className="w-36 h-36 border-2 border-dashed border-gray-400 rounded-md flex items-center justify-center bg-white/20 backdrop-blur-sm">
                   <span className="text-xs text-gray-600 text-center p-1 font-medium">
                     {designImage && designImageError ? "Failed to load" : "Design preview"}
                   </span>

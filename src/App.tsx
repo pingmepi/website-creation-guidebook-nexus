@@ -14,6 +14,7 @@ import Checkout from "./pages/Checkout";
 import TestPreview from "./pages/TestPreview";
 import DashboardRoutes from "./routes/DashboardRoutes";
 import NotFound from "./pages/NotFound";
+
 import ShippingPolicy from "./pages/policies/ShippingPolicy";
 import ReturnRefundPolicy from "./pages/policies/ReturnRefundPolicy";
 import PrivacyPolicy from "./pages/policies/PrivacyPolicy";

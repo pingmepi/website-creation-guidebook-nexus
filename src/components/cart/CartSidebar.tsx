@@ -8,19 +8,30 @@ import { Link } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 
 export const CartSidebar = () => {
-  const { cartItems, cartCount, updateQuantity, removeFromCart } = useCart();
+  const { cartItems, customDesigns, cartCount, updateQuantity, removeFromCart, removeCustomDesign } = useCart();
   const [isOpen, setIsOpen] = useState(false);
 
   const calculateSubtotal = () => {
-    return cartItems.reduce((total, item) => {
+    const cartItemsTotal = cartItems.reduce((total, item) => {
       const price = parseFloat(item.product?.price?.replace('$', '') || '0');
       return total + (price * item.quantity);
-    }, 0).toFixed(2);
+    }, 0);
+    
+    const customDesignsTotal = customDesigns.reduce((total, design) => {
+      return total + design.base_price;
+    }, 0);
+    
+    return (cartItemsTotal + customDesignsTotal).toFixed(2);
   };
 
   const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
     console.log("🔄 Updating cart quantity:", { itemId, newQuantity });
     await updateQuantity(itemId, newQuantity);
+  };
+
+  const handleRemoveCustomDesign = async (designId: string) => {
+    console.log("🗑️ Removing custom design:", designId);
+    await removeCustomDesign(designId);
   };
 
   const handleRemoveItem = async (itemId: string) => {
@@ -52,7 +63,7 @@ export const CartSidebar = () => {
         </SheetHeader>
 
         <div className="mt-6 flex-1 overflow-y-auto">
-          {cartItems.length === 0 ? (
+          {cartItems.length === 0 && customDesigns.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <ShoppingCart className="h-12 w-12 text-gray-400 mb-4" />
               <p className="text-gray-500 text-center">Your cart is empty</p>
@@ -105,6 +116,52 @@ export const CartSidebar = () => {
                           className="text-red-500 hover:text-red-700 p-1"
                           onClick={() => handleRemoveItem(item.id)}
                           data-testid={`remove-item-${item.id}`}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Custom Design Items */}
+                {customDesigns.map((design) => (
+                  <div key={design.id} className="flex items-start space-x-4 py-4" data-testid={`custom-design-${design.id}`}>
+                    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border bg-gray-50">
+                      {design.design_image ? (
+                        <img
+                          src={design.design_image}
+                          alt={design.design_name}
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-gray-400 text-xs">
+                          No Preview
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-medium text-gray-900 truncate">
+                        {design.design_name}
+                      </h3>
+                      <p className="text-sm text-gray-500">Custom Design</p>
+                      <div className="flex items-center mt-1">
+                        <div 
+                          className="w-3 h-3 rounded-full border mr-2" 
+                          style={{ backgroundColor: design.tshirt_color }}
+                        />
+                        <span className="text-xs text-gray-500">T-shirt color</span>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">${design.base_price.toFixed(2)}</p>
+
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-sm text-gray-500">Quantity: 1</span>
+
+                        <button
+                          className="text-red-500 hover:text-red-700 p-1"
+                          onClick={() => handleRemoveCustomDesign(design.id)}
+                          data-testid={`remove-custom-design-${design.id}`}
                         >
                           <Trash className="h-4 w-4" />
                         </button>

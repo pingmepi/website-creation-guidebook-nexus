@@ -116,6 +116,48 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_designs: {
+        Row: {
+          answers: Json | null
+          base_price: number
+          created_at: string
+          design_data: Json
+          design_image: string
+          design_name: string
+          id: string
+          theme_name: string | null
+          tshirt_color: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answers?: Json | null
+          base_price?: number
+          created_at?: string
+          design_data: Json
+          design_image: string
+          design_name: string
+          id?: string
+          theme_name?: string | null
+          tshirt_color?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answers?: Json | null
+          base_price?: number
+          created_at?: string
+          design_data?: Json
+          design_image?: string
+          design_name?: string
+          id?: string
+          theme_name?: string | null
+          tshirt_color?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       design_questions: {
         Row: {
           created_at: string
@@ -241,6 +283,7 @@ export type Database = {
       order_items: {
         Row: {
           created_at: string
+          custom_design_id: string | null
           design_data: Json | null
           id: string
           order_id: string
@@ -251,6 +294,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          custom_design_id?: string | null
           design_data?: Json | null
           id?: string
           order_id: string
@@ -261,6 +305,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          custom_design_id?: string | null
           design_data?: Json | null
           id?: string
           order_id?: string
@@ -270,6 +315,13 @@ export type Database = {
           unit_price?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "order_items_custom_design_id_fkey"
+            columns: ["custom_design_id"]
+            isOneToOne: false
+            referencedRelation: "custom_designs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "order_items_order_id_fkey"
             columns: ["order_id"]
@@ -286,6 +338,7 @@ export type Database = {
           notes: string | null
           order_number: string
           payment_method: string | null
+          payment_transaction_id: string | null
           shipping_address: Json
           shipping_address_id: string | null
           status: string
@@ -299,6 +352,7 @@ export type Database = {
           notes?: string | null
           order_number: string
           payment_method?: string | null
+          payment_transaction_id?: string | null
           shipping_address: Json
           shipping_address_id?: string | null
           status?: string
@@ -312,6 +366,7 @@ export type Database = {
           notes?: string | null
           order_number?: string
           payment_method?: string | null
+          payment_transaction_id?: string | null
           shipping_address?: Json
           shipping_address_id?: string | null
           status?: string
@@ -319,7 +374,74 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_payment_transaction_id_fkey"
+            columns: ["payment_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          failure_reason: string | null
+          gateway_response: Json | null
+          gateway_transaction_id: string
+          id: string
+          order_id: string
+          payment_gateway: string
+          payment_method: string
+          status: string
+          updated_at: string
+          upi_id: string | null
+          upi_transaction_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          failure_reason?: string | null
+          gateway_response?: Json | null
+          gateway_transaction_id: string
+          id?: string
+          order_id: string
+          payment_gateway: string
+          payment_method: string
+          status?: string
+          updated_at?: string
+          upi_id?: string | null
+          upi_transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          failure_reason?: string | null
+          gateway_response?: Json | null
+          gateway_transaction_id?: string
+          id?: string
+          order_id?: string
+          payment_gateway?: string
+          payment_method?: string
+          status?: string
+          updated_at?: string
+          upi_id?: string | null
+          upi_transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {

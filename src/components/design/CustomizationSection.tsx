@@ -10,6 +10,8 @@ import { Answer } from "./QuestionFlow";
 import DesignCanvas from "./DesignCanvas";
 import { CanvasErrorBoundary } from "@/components/error/CanvasErrorBoundary";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
+import AddToCartButton from "./AddToCartButton";
+import PlaceOrderButton from "./PlaceOrderButton";
 
 interface CustomizationSectionProps {
   answers: Answer[];
@@ -149,12 +151,13 @@ const CustomizationSection = ({
                 )}
               </div>
               
-              {/* Save Button - Below Preview */}
-              <div className="mt-6">
+              {/* Action Buttons - Below Preview */}
+              <div className="mt-6 space-y-3">
                 <Button 
                   onClick={onSaveDesign}
                   disabled={isSaving || !designImage || isGenerating}
                   className="w-full flex items-center justify-center gap-2"
+                  variant="outline"
                 >
                   {isSaving ? (
                     <>
@@ -168,6 +171,22 @@ const CustomizationSection = ({
                     </>
                   )}
                 </Button>
+
+                <AddToCartButton 
+                  designImage={designImage}
+                  tshirtColor={tshirtColor}
+                  designName={designName}
+                  answers={answers}
+                  onSaveDesign={onSaveDesign}
+                />
+
+                <PlaceOrderButton 
+                  designImage={designImage}
+                  tshirtColor={tshirtColor}
+                  designName={designName}
+                  answers={answers}
+                  onSaveDesign={onSaveDesign}
+                />
               </div>
             </div>
           </div>
