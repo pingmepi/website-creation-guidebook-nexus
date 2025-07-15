@@ -8,8 +8,27 @@ import { Link } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 
 export const CartSidebar = () => {
-  const { cartItems, customDesigns, cartCount, updateQuantity, removeFromCart, removeCustomDesign } = useCart();
   const [isOpen, setIsOpen] = useState(false);
+  
+  // Safely access cart context with error handling
+  let cartItems = [];
+  let customDesigns = [];
+  let cartCount = 0;
+  let updateQuantity = async (_itemId: string, _quantity: number) => {};
+  let removeFromCart = async (_itemId: string) => {};
+  let removeCustomDesign = async (_designId: string) => {};
+  
+  try {
+    const cartContext = useCart();
+    cartItems = cartContext.cartItems || [];
+    customDesigns = cartContext.customDesigns || [];
+    cartCount = cartContext.cartCount || 0;
+    updateQuantity = cartContext.updateQuantity;
+    removeFromCart = cartContext.removeFromCart;
+    removeCustomDesign = cartContext.removeCustomDesign;
+  } catch (error) {
+    console.warn('Cart context not available yet:', error);
+  }
 
   const calculateSubtotal = () => {
     const cartItemsTotal = cartItems.reduce((total, item) => {
