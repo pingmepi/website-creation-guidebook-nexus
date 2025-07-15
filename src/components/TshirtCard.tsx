@@ -94,7 +94,7 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
   };
 
   return (
-    <Card className="overflow-hidden group" data-testid={`tshirt-card-${id}`}>
+    <Card className="overflow-hidden group bg-white" data-testid={`tshirt-card-${id}`}>
       <div className="relative pb-[125%] overflow-hidden">
         <ImagePopup image={image} alt={name}>
           <img 
