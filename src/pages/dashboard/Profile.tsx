@@ -141,9 +141,10 @@ const Profile = () => {
 
       toast.success("Password updated successfully");
       (e.target as HTMLFormElement).reset();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating password:", error);
-      toast.error(error.message || "Failed to update password");
+      const errorMessage = error instanceof Error ? error.message : "Failed to update password";
+      toast.error(errorMessage);
     } finally {
       setIsUpdating(false);
     }

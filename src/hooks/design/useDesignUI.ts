@@ -4,6 +4,8 @@ import { useUser } from "@/contexts/UserContext";
 import { useDesignStorage } from "./useDesignStorage";
 import { toast } from "@/hooks/use-toast";
 import { ErrorLogger } from "@/services/ErrorLogger";
+import { Theme } from "./useDesignTypes";
+import { Answer } from "@/components/design/QuestionFlow";
 
 export function useDesignUI() {
   const { user, isAuthenticated } = useUser();
@@ -15,8 +17,8 @@ export function useDesignUI() {
     designId: string | null,
     designName: string,
     tshirtColor: string,
-    selectedTheme: any,
-    answers: any[],
+    selectedTheme: Theme | null,
+    answers: Answer[],
     setDesignId: (id: string) => void
   ): Promise<boolean> => {
     if (!isAuthenticated) {

@@ -16,7 +16,7 @@ interface Order {
   total_amount: number;
   status: string;
   created_at: string;
-  shipping_address: any;
+  shipping_address: Record<string, unknown>;
   order_items?: OrderItem[];
 }
 

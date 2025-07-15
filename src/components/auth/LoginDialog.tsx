@@ -64,9 +64,10 @@ const LoginDialog = ({ open, onClose, onSuccess }: LoginDialogProps) => {
         toast.success("Account created successfully");
         setMode("login");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Authentication error:", error);
-      toast.error(error.message || "Authentication failed");
+      const errorMessage = error instanceof Error ? error.message : "Authentication failed";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

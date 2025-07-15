@@ -118,4 +118,10 @@ export const testScenarios = {
 };
 
 // Export for manual testing in browser console
-(window as any).testScenarios = testScenarios;
+declare global {
+  interface Window {
+    testScenarios: typeof testScenarios;
+  }
+}
+
+window.testScenarios = testScenarios;

@@ -1,11 +1,12 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Theme } from "@/hooks/design/types";
 
 export interface Answer {
   question: string;
@@ -13,7 +14,7 @@ export interface Answer {
 }
 
 interface QuestionFlowProps {
-  selectedTheme: any;
+  selectedTheme: Theme;
   onComplete: (answers: Answer[]) => void;
   onBack: () => void;
 }
@@ -29,31 +30,31 @@ const QuestionFlow = ({ selectedTheme, onComplete, onBack }: QuestionFlowProps) 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [currentAnswer, setCurrentAnswer] = useState("");
-  
-  const questions: QuestionType[] = [
-    { 
-      id: 1, 
-      question: "What's the main message you want on your t-shirt?", 
-      type: "text" 
+
+  const questions: QuestionType[] = useMemo(() => [
+    {
+      id: 1,
+      question: "What's the main message you want on your t-shirt?",
+      type: "text"
     },
-    { 
-      id: 2, 
-      question: "What style are you looking for?", 
+    {
+      id: 2,
+      question: "What style are you looking for?",
       type: "radio",
-      options: ["Casual", "Formal", "Sporty", "Vintage", "Minimal"] 
+      options: ["Casual", "Formal", "Sporty", "Vintage", "Minimal"]
     },
-    { 
-      id: 3, 
-      question: "What's the occasion for this t-shirt?", 
+    {
+      id: 3,
+      question: "What's the occasion for this t-shirt?",
       type: "radio",
-      options: ["Everyday wear", "Special event", "Gift", "Team/Group", "Casual wear"] 
+      options: ["Everyday wear", "Special event", "Gift", "Team/Group", "Casual wear"]
     },
-    { 
-      id: 4, 
-      question: "Any additional details you'd like to include in your design?", 
-      type: "textarea" 
+    {
+      id: 4,
+      question: "Any additional details you'd like to include in your design?",
+      type: "textarea"
     }
-  ];
+  ], []);
   
   useEffect(() => {
     // Pre-populate answers if they exist
@@ -66,7 +67,7 @@ const QuestionFlow = ({ selectedTheme, onComplete, onBack }: QuestionFlowProps) 
     } else {
       setCurrentAnswer("");
     }
-  }, [currentQuestionIndex, answers]);
+  }, [currentQuestionIndex, answers, questions]);
   
   const saveAnswer = () => {
     if (!currentAnswer.trim()) return; // Don't save empty answers

@@ -1,30 +1,77 @@
 
+// Type definitions for fabric.js objects and options
+export interface FabricObjectOptions {
+  left?: number;
+  top?: number;
+  width?: number;
+  height?: number;
+  fill?: string;
+  stroke?: string;
+  strokeDashArray?: number[];
+  selectable?: boolean;
+  evented?: boolean;
+  originX?: string;
+  originY?: string;
+  id?: string;
+  type?: string;
+}
+
+export interface FabricCanvasOptions {
+  width?: number;
+  height?: number;
+  backgroundColor?: string;
+}
+
+export interface FabricTextOptions extends FabricObjectOptions {
+  fontFamily?: string;
+  fontSize?: number;
+  fontWeight?: string;
+  fontStyle?: string;
+  underline?: boolean;
+}
+
+export interface FabricCircleOptions extends FabricObjectOptions {
+  radius?: number;
+}
+
+export interface FabricImageOptions extends FabricObjectOptions {
+  crossOrigin?: string;
+}
+
+export interface FabricDataURLOptions {
+  format?: string;
+  quality?: number;
+  multiplier?: number;
+}
+
+export type FabricEventCallback = (event?: unknown) => void;
+
 declare module 'fabric' {
   export const fabric: {
-    Canvas: new (element: HTMLCanvasElement | string, options?: any) => FabricCanvas;
-    Rect: new (options?: any) => FabricObject;
-    Circle: new (options?: any) => FabricObject;
-    Text: new (text: string, options?: any) => FabricObject;
+    Canvas: new (element: HTMLCanvasElement | string, options?: FabricCanvasOptions) => FabricCanvas;
+    Rect: new (options?: FabricObjectOptions) => FabricObject;
+    Circle: new (options?: FabricCircleOptions) => FabricObject;
+    Text: new (text: string, options?: FabricTextOptions) => FabricObject;
     Image: {
-      fromURL: (url: string, callback: (img: any) => void, options?: any) => void;
+      fromURL: (url: string, callback: (img: FabricObject) => void, options?: FabricImageOptions) => void;
     };
-    Object: any;
+    Object: typeof FabricObject;
   };
 
   export interface FabricCanvas {
-    add(...objects: any[]): any;
-    remove(...objects: any[]): any;
+    add(...objects: FabricObject[]): FabricCanvas;
+    remove(...objects: FabricObject[]): FabricCanvas;
     renderAll(): void;
-    getObjects(): any[];
+    getObjects(): FabricObject[];
     clear(): void;
     getContext(): CanvasRenderingContext2D;
-    getActiveObject(): any;
-    setActiveObject(object: any): any;
-    on(event: string, callback: Function): void;
-    off(event: string, callback: Function): void;
+    getActiveObject(): FabricObject | null;
+    setActiveObject(object: FabricObject): FabricCanvas;
+    on(event: string, callback: FabricEventCallback): void;
+    off(event: string, callback: FabricEventCallback): void;
     dispose(): void;
-    toDataURL(options?: any): string;
-    sendToBack(object: any): void;
+    toDataURL(options?: FabricDataURLOptions): string;
+    sendToBack(object: FabricObject): void;
     getWidth(): number;
     getHeight(): number;
     setWidth(width: number): void;
@@ -40,7 +87,7 @@ declare module 'fabric' {
   }
   
   export interface FabricObject {
-    set(options: any): any;
+    set(options: Partial<FabricObjectOptions>): FabricObject;
     scale(value: number): void;
     id?: string;
     type?: string;
@@ -67,20 +114,20 @@ declare module 'fabric' {
 
 declare namespace fabric {
   class Canvas {
-    constructor(element: HTMLCanvasElement | string, options?: any);
-    add(...objects: any[]): any;
-    remove(...objects: any[]): any;
+    constructor(element: HTMLCanvasElement | string, options?: FabricCanvasOptions);
+    add(...objects: FabricObject[]): Canvas;
+    remove(...objects: FabricObject[]): Canvas;
     renderAll(): void;
-    getObjects(): any[];
+    getObjects(): FabricObject[];
     clear(): void;
     getContext(): CanvasRenderingContext2D;
-    getActiveObject(): any;
-    setActiveObject(object: any): any;
-    on(event: string, callback: Function): void;
-    off(event: string, callback: Function): void;
+    getActiveObject(): FabricObject | null;
+    setActiveObject(object: FabricObject): Canvas;
+    on(event: string, callback: FabricEventCallback): void;
+    off(event: string, callback: FabricEventCallback): void;
     dispose(): void;
-    toDataURL(options?: any): string;
-    sendToBack(object: any): void;
+    toDataURL(options?: FabricDataURLOptions): string;
+    sendToBack(object: FabricObject): void;
     getWidth(): number;
     getHeight(): number;
     setWidth(width: number): void;
@@ -96,8 +143,8 @@ declare namespace fabric {
   }
   
   class Object {
-    constructor(options?: any);
-    set(options: any): any;
+    constructor(options?: FabricObjectOptions);
+    set(options: Partial<FabricObjectOptions>): Object;
     scale(value: number): void;
     id?: string;
     type?: string;
@@ -113,18 +160,18 @@ declare namespace fabric {
     originX?: string;
     originY?: string;
   }
-  
+
   class Circle extends Object {
-    constructor(options?: any);
+    constructor(options?: FabricCircleOptions);
     radius?: number;
   }
-  
+
   class Rect extends Object {
-    constructor(options?: any);
+    constructor(options?: FabricObjectOptions);
   }
-  
+
   class Text extends Object {
-    constructor(text: string, options?: any);
+    constructor(text: string, options?: FabricTextOptions);
     text?: string;
     fontFamily?: string;
     fontSize?: number;

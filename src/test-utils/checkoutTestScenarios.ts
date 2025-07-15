@@ -148,4 +148,10 @@ export const checkoutTestScenarios = {
 };
 
 // Export for manual testing in browser console
-(window as any).checkoutTestScenarios = checkoutTestScenarios;
+declare global {
+  interface Window {
+    checkoutTestScenarios: typeof checkoutTestScenarios;
+  }
+}
+
+window.checkoutTestScenarios = checkoutTestScenarios;

@@ -80,7 +80,7 @@ export const integrationTests = {
 
     // Monitor memory usage
     if ('memory' in performance) {
-      const memory = (performance as any).memory;
+      const memory = (performance as Performance & { memory: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
       console.log("💾 Memory usage:", {
         used: Math.round(memory.usedJSHeapSize / 1024 / 1024) + " MB",
         total: Math.round(memory.totalJSHeapSize / 1024 / 1024) + " MB",
@@ -111,4 +111,10 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Export for manual testing in browser console
-(window as any).integrationTests = integrationTests;
+declare global {
+  interface Window {
+    integrationTests: typeof integrationTests;
+  }
+}
+
+window.integrationTests = integrationTests;

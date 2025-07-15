@@ -184,4 +184,10 @@ export const paymentTestScenarios = {
 };
 
 // Export for manual testing in browser console
-(window as any).paymentTestScenarios = paymentTestScenarios;
+declare global {
+  interface Window {
+    paymentTestScenarios: typeof paymentTestScenarios;
+  }
+}
+
+window.paymentTestScenarios = paymentTestScenarios;

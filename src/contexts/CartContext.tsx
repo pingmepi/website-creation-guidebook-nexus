@@ -3,6 +3,7 @@ import { useUser } from './UserContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { tshirtImages } from '../../assets';
+import { Answer } from '@/components/design/QuestionFlow';
 
 interface CartItem {
   id: string;
@@ -28,8 +29,8 @@ interface CustomDesign {
   tshirt_color: string;
   base_price: number;
   theme_name?: string;
-  answers: any[] | null;
-  design_data: any;
+  answers: Answer[] | null;
+  design_data: Record<string, unknown>;
 }
 
 interface CartContextType {
