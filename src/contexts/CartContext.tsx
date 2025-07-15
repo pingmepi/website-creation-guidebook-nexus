@@ -57,7 +57,18 @@ export const useCart = () => {
 };
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isAuthenticated } = useUser();
+  // Add try-catch for useUser hook to handle race conditions
+  let user: any = null;
+  let isAuthenticated = false;
+  
+  try {
+    const userContext = useUser();
+    user = userContext.user;
+    isAuthenticated = userContext.isAuthenticated;
+  } catch (error) {
+    console.warn('CartProvider: UserContext not ready yet, using defaults');
+  }
+  
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [customDesigns, setCustomDesigns] = useState<CustomDesign[]>([]);
   const [isLoading, setIsLoading] = useState(false);
