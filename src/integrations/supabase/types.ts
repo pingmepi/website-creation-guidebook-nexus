@@ -448,10 +448,94 @@ export type Database = {
           },
         ]
       }
+      product_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      product_variants: {
+        Row: {
+          color_hex: string
+          color_name: string
+          created_at: string
+          id: string
+          is_active: boolean
+          low_stock_threshold: number | null
+          price: number
+          product_id: string
+          size: string
+          sku: string
+          stock_quantity: number
+          updated_at: string
+        }
+        Insert: {
+          color_hex: string
+          color_name: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          low_stock_threshold?: number | null
+          price: number
+          product_id: string
+          size: string
+          sku: string
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          color_hex?: string
+          color_name?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          low_stock_threshold?: number | null
+          price?: number
+          product_id?: string
+          size?: string
+          sku?: string
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_product_variants_product_id"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           base_price: number
           category: string | null
+          category_id: string | null
           colors: Json | null
           created_at: string
           description: string | null
@@ -464,6 +548,7 @@ export type Database = {
         Insert: {
           base_price: number
           category?: string | null
+          category_id?: string | null
           colors?: Json | null
           created_at?: string
           description?: string | null
@@ -476,6 +561,7 @@ export type Database = {
         Update: {
           base_price?: number
           category?: string | null
+          category_id?: string | null
           colors?: Json | null
           created_at?: string
           description?: string | null
@@ -485,7 +571,15 @@ export type Database = {
           sizes?: Json | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -549,8 +643,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_migration_checkpoint: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          checkpoint_name: string
+          table_name: string
+          record_count: number
+          timestamp_taken: string
+        }[]
+      }
       generate_order_number: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_variant_sku: {
+        Args: { product_name: string; color_name: string; size_name: string }
+        Returns: string
+      }
+      get_color_name_from_hex: {
+        Args: { hex_color: string }
         Returns: string
       }
       get_theme_questions: {
@@ -561,6 +672,15 @@ export type Database = {
           type: string
           options: Json
           sort_order: number
+        }[]
+      }
+      validate_migration_data: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          check_name: string
+          status: string
+          count_value: number
+          details: string
         }[]
       }
     }
