@@ -105,7 +105,7 @@ export type Database = {
           selected_size: string | null
           updated_at: string
           user_id: string
-          variant_id: string | null
+          variant_id: string
         }
         Insert: {
           created_at?: string
@@ -117,7 +117,7 @@ export type Database = {
           selected_size?: string | null
           updated_at?: string
           user_id: string
-          variant_id?: string | null
+          variant_id: string
         }
         Update: {
           created_at?: string
@@ -129,11 +129,18 @@ export type Database = {
           selected_size?: string | null
           updated_at?: string
           user_id?: string
-          variant_id?: string | null
+          variant_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "cart_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_cart_items_variant"
             columns: ["variant_id"]
             isOneToOne: false
             referencedRelation: "product_variants"
@@ -346,6 +353,13 @@ export type Database = {
           variant_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_order_items_variant"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "order_items_custom_design_id_fkey"
             columns: ["custom_design_id"]
@@ -716,6 +730,16 @@ export type Database = {
           migration_complete: boolean
         }[]
       }
+      get_migration_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          phase: string
+          description: string
+          tables_affected: string
+          records_migrated: number
+          status: string
+        }[]
+      }
       get_sample_variants: {
         Args: { limit_count?: number }
         Returns: {
@@ -753,6 +777,21 @@ export type Database = {
       map_legacy_product_id_to_uuid: {
         Args: { legacy_id: string }
         Returns: string
+      }
+      update_order_items_variants: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      validate_final_migration: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          check_name: string
+          status: string
+          expected_value: number
+          actual_value: number
+          success: boolean
+          details: string
+        }[]
       }
       validate_migration_data: {
         Args: Record<PropertyKey, never>
