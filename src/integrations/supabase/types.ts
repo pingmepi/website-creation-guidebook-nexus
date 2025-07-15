@@ -664,6 +664,18 @@ export type Database = {
         Args: { hex_color: string }
         Returns: string
       }
+      get_sample_variants: {
+        Args: { limit_count?: number }
+        Returns: {
+          product_name: string
+          sku: string
+          color_name: string
+          color_hex: string
+          size: string
+          price: number
+          stock_quantity: number
+        }[]
+      }
       get_theme_questions: {
         Args: { theme_uuid: string }
         Returns: {
@@ -674,12 +686,35 @@ export type Database = {
           sort_order: number
         }[]
       }
+      get_variant_breakdown: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          product_name: string
+          product_id: string
+          color_count: number
+          size_count: number
+          variants_created: number
+          expected_variants: number
+          price: number
+        }[]
+      }
       validate_migration_data: {
         Args: Record<PropertyKey, never>
         Returns: {
           check_name: string
           status: string
           count_value: number
+          details: string
+        }[]
+      }
+      validate_phase2_migration: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          check_name: string
+          status: string
+          expected_value: number
+          actual_value: number
+          success: boolean
           details: string
         }[]
       }
