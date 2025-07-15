@@ -8,6 +8,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useCart } from "@/contexts/CartContext";
 import { ImagePopup } from "@/components/ui/image-popup";
 import { ProductQuickView } from "@/components/ui/product-quick-view";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TshirtCardProps {
   id: number;
@@ -31,9 +32,35 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
     }
     
     try {
-      console.log("🛒 Adding item to cart:", { id, name });
+      console.log("🛒 Adding item to cart:", { id, name, selectedColor });
       setIsAdding(true);
-      await addToCart(id.toString());
+      
+      // Get the product ID first
+      const { data: products, error: productError } = await supabase
+        .from('products')
+        .select('id')
+        .order('created_at')
+        .limit(1)
+        .range(id - 1, id - 1);
+
+      if (productError || !products || products.length === 0) {
+        throw new Error('Product not found');
+      }
+
+      // Find the corresponding variant for the selected color and default size (M)
+      const { data: variant, error } = await supabase
+        .from('product_variants')
+        .select('id')
+        .eq('product_id', products[0].id)
+        .eq('color_hex', selectedColor)
+        .eq('size', 'M')
+        .single();
+
+      if (error || !variant) {
+        throw new Error('Product variant not found');
+      }
+
+      await addToCart(variant.id);
       
       // Show success state briefly
       setJustAdded(true);

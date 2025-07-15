@@ -7,10 +7,13 @@ import { tshirtImages } from '../../assets';
 interface CartItem {
   id: string;
   product_id: string;
+  variant_id: string;
   quantity: number;
   user_id: string;
   created_at: string;
   updated_at: string;
+  selected_color?: string;
+  selected_size?: string;
   product?: {
     name: string;
     price: string;
@@ -33,7 +36,7 @@ interface CartContextType {
   cartItems: CartItem[];
   cartCount: number;
   customDesigns: CustomDesign[];
-  addToCart: (productId: string, quantity?: number) => Promise<void>;
+  addToCart: (variantId: string, quantity?: number) => Promise<void>;
   addCustomDesignToCart: (customDesign: Omit<CustomDesign, 'id'>) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
   removeCustomDesign: (designId: string) => Promise<void>;
@@ -173,7 +176,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user, isAuthenticated]);
 
-  const addToCart = async (productId: string, quantity: number = 1) => {
+  const addToCart = async (variantId: string, quantity: number = 1) => {
     if (!user) {
       toast.error('Please log in to add items to cart');
       return;
@@ -181,10 +184,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       setIsLoading(true);
-      console.log("🛒 Adding to cart:", { productId, quantity, userId: user.id });
+      console.log("🛒 Adding to cart:", { variantId, quantity, userId: user.id });
       
       // Check if item already exists in cart
-      const existingItem = cartItems.find(item => item.product_id === productId);
+      const existingItem = cartItems.find(item => item.variant_id === variantId);
 
       if (existingItem) {
         // Update quantity - optimistic update first
@@ -220,14 +223,25 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           throw error;
         }
       } else {
-        // Add new item - optimistic update first
+        // Get variant details for the cart item
+        const { data: variant, error: variantError } = await supabase
+          .from('product_variants')
+          .select('product_id, color_hex')
+          .eq('id', variantId)
+          .single();
+
+        if (variantError) throw variantError;
+
+        // Add new item
         console.log("➕ Adding new item to cart");
         
         const { data, error } = await supabase
           .from('cart_items')
           .insert({
             user_id: user.id,
-            product_id: productId,
+            variant_id: variantId,
+            product_id: variant.product_id,
+            selected_color: variant.color_hex,
             quantity
           })
           .select()
@@ -237,10 +251,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Add to local state immediately
         if (data) {
-          const product = mockProducts.find(p => p.id === productId);
-          const newItem = { ...data, product };
-          console.log("✅ New item added to cart:", newItem);
-          setCartItems(items => [newItem, ...items]);
+          console.log("✅ New item added to cart:", data);
+          setCartItems(items => [data, ...items]);
         }
       }
 
