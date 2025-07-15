@@ -98,28 +98,48 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          legacy_product_id: string | null
           product_id: string
           quantity: number
+          selected_color: string | null
+          selected_size: string | null
           updated_at: string
           user_id: string
+          variant_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
+          legacy_product_id?: string | null
           product_id: string
           quantity?: number
+          selected_color?: string | null
+          selected_size?: string | null
           updated_at?: string
           user_id: string
+          variant_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
+          legacy_product_id?: string | null
           product_id?: string
           quantity?: number
+          selected_color?: string | null
+          selected_size?: string | null
           updated_at?: string
           user_id?: string
+          variant_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       custom_designs: {
         Row: {
@@ -291,33 +311,39 @@ export type Database = {
           custom_design_id: string | null
           design_data: Json | null
           id: string
+          legacy_product_id: string | null
           order_id: string
           product_id: string
           quantity: number
           total_price: number
           unit_price: number
+          variant_id: string | null
         }
         Insert: {
           created_at?: string
           custom_design_id?: string | null
           design_data?: Json | null
           id?: string
+          legacy_product_id?: string | null
           order_id: string
           product_id: string
           quantity?: number
           total_price: number
           unit_price: number
+          variant_id?: string | null
         }
         Update: {
           created_at?: string
           custom_design_id?: string | null
           design_data?: Json | null
           id?: string
+          legacy_product_id?: string | null
           order_id?: string
           product_id?: string
           quantity?: number
           total_price?: number
           unit_price?: number
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -332,6 +358,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -664,6 +697,25 @@ export type Database = {
         Args: { hex_color: string }
         Returns: string
       }
+      get_default_variant_for_product: {
+        Args: {
+          product_uuid: string
+          preferred_color?: string
+          preferred_size?: string
+        }
+        Returns: string
+      }
+      get_migration_status: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          table_name: string
+          total_records: number
+          with_variants: number
+          custom_designs: number
+          unmapped: number
+          migration_complete: boolean
+        }[]
+      }
       get_sample_variants: {
         Args: { limit_count?: number }
         Returns: {
@@ -698,6 +750,10 @@ export type Database = {
           price: number
         }[]
       }
+      map_legacy_product_id_to_uuid: {
+        Args: { legacy_id: string }
+        Returns: string
+      }
       validate_migration_data: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -714,6 +770,17 @@ export type Database = {
           status: string
           expected_value: number
           actual_value: number
+          success: boolean
+          details: string
+        }[]
+      }
+      validate_phase3_migration: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          check_name: string
+          status: string
+          total_records: number
+          migrated_records: number
           success: boolean
           details: string
         }[]
