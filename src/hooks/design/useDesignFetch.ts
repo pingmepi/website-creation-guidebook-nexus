@@ -3,7 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Theme } from "./useDesignTypes";
+import { Theme, DesignStep, DesignStage } from "./useDesignTypes";
 import { Answer } from "@/components/design/QuestionFlow";
 
 export function useDesignFetch() {
@@ -17,8 +17,8 @@ export function useDesignFetch() {
     setDesignImage: (image?: string) => void,
     setAnswers: (answers: Answer[]) => void,
     setSelectedTheme: (theme: Theme | null) => void,
-    setCurrentStep: (step: any) => void,
-    setCurrentStage: (stage: any) => void
+    setCurrentStep: (step: DesignStep) => void,
+    setCurrentStage: (stage: DesignStage) => void
   ) => {
     try {
       setIsLoading(true);

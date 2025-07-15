@@ -4,12 +4,13 @@ import { ShoppingCart } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
+import { Answer } from "./QuestionFlow";
 
 interface AddToCartButtonProps {
   designImage?: string;
   tshirtColor: string;
   designName: string;
-  answers: any[];
+  answers: Answer[];
   onSaveDesign?: () => void;
 }
 

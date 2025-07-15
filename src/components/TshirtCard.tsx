@@ -6,6 +6,9 @@ import { Eye, ShoppingCart, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
 import { useCart } from "@/contexts/CartContext";
+import { ImagePopup } from "@/components/ui/image-popup";
+import { ProductQuickView } from "@/components/ui/product-quick-view";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TshirtCardProps {
   id: number;
@@ -29,9 +32,35 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
     }
     
     try {
-      console.log("🛒 Adding item to cart:", { id, name });
+      console.log("🛒 Adding item to cart:", { id, name, selectedColor });
       setIsAdding(true);
-      await addToCart(id.toString());
+      
+      // Get the product ID first
+      const { data: products, error: productError } = await supabase
+        .from('products')
+        .select('id')
+        .order('created_at')
+        .limit(1)
+        .range(id - 1, id - 1);
+
+      if (productError || !products || products.length === 0) {
+        throw new Error('Product not found');
+      }
+
+      // Find the corresponding variant for the selected color and default size (M)
+      const { data: variant, error } = await supabase
+        .from('product_variants')
+        .select('id')
+        .eq('product_id', products[0].id)
+        .eq('color_hex', selectedColor)
+        .eq('size', 'M')
+        .single();
+
+      if (error || !variant) {
+        throw new Error('Product variant not found');
+      }
+
+      await addToCart(variant.id);
       
       // Show success state briefly
       setJustAdded(true);
@@ -67,17 +96,24 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
   return (
     <Card className="overflow-hidden group" data-testid={`tshirt-card-${id}`}>
       <div className="relative pb-[125%] overflow-hidden">
-        <img 
-          src={image} 
-          alt={name} 
-          className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105" 
-        />
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
+        <ImagePopup image={image} alt={name}>
+          <img 
+            src={image} 
+            alt={name} 
+            className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105 cursor-pointer" 
+          />
+        </ImagePopup>
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex gap-2 justify-center">
-          <Button variant="secondary" size="sm" className="opacity-90 flex items-center gap-1">
-            <Eye size={16} />
-            <span>Quick view</span>
-          </Button>
+          <ProductQuickView 
+            product={{ id, name, price, image, colorOptions }}
+            onAddToCart={handleAddToCart}
+          >
+            <Button variant="secondary" size="sm" className="opacity-90 flex items-center gap-1">
+              <Eye size={16} />
+              <span>Quick view</span>
+            </Button>
+          </ProductQuickView>
           <Button 
             size="sm" 
             className={`opacity-90 flex items-center gap-1 transition-colors ${

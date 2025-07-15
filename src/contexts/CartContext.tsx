@@ -3,14 +3,18 @@ import { useUser } from './UserContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { tshirtImages } from '../../assets';
+import { Answer } from '@/components/design/QuestionFlow';
 
 interface CartItem {
   id: string;
   product_id: string;
+  variant_id: string;
   quantity: number;
   user_id: string;
   created_at: string;
   updated_at: string;
+  selected_color?: string;
+  selected_size?: string;
   product?: {
     name: string;
     price: string;
@@ -25,15 +29,15 @@ interface CustomDesign {
   tshirt_color: string;
   base_price: number;
   theme_name?: string;
-  answers: any[] | null;
-  design_data: any;
+  answers: Answer[] | null;
+  design_data: Record<string, unknown>;
 }
 
 interface CartContextType {
   cartItems: CartItem[];
   cartCount: number;
   customDesigns: CustomDesign[];
-  addToCart: (productId: string, quantity?: number) => Promise<void>;
+  addToCart: (variantId: string, quantity?: number) => Promise<void>;
   addCustomDesignToCart: (customDesign: Omit<CustomDesign, 'id'>) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
   removeCustomDesign: (designId: string) => Promise<void>;
@@ -128,6 +132,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Type cast the data to match our interface
       const typedData: CustomDesign[] = (data || []).map(item => ({
         ...item,
+        design_data: (item.design_data as Record<string, unknown>) || {},
         answers: Array.isArray(item.answers) ? item.answers : 
                  typeof item.answers === 'string' ? JSON.parse(item.answers) : []
       }));
@@ -173,7 +178,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user, isAuthenticated]);
 
-  const addToCart = async (productId: string, quantity: number = 1) => {
+  const addToCart = async (variantId: string, quantity: number = 1) => {
     if (!user) {
       toast.error('Please log in to add items to cart');
       return;
@@ -181,10 +186,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       setIsLoading(true);
-      console.log("🛒 Adding to cart:", { productId, quantity, userId: user.id });
+      console.log("🛒 Adding to cart:", { variantId, quantity, userId: user.id });
       
       // Check if item already exists in cart
-      const existingItem = cartItems.find(item => item.product_id === productId);
+      const existingItem = cartItems.find(item => item.variant_id === variantId);
 
       if (existingItem) {
         // Update quantity - optimistic update first
@@ -220,14 +225,25 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           throw error;
         }
       } else {
-        // Add new item - optimistic update first
+        // Get variant details for the cart item
+        const { data: variant, error: variantError } = await supabase
+          .from('product_variants')
+          .select('product_id, color_hex')
+          .eq('id', variantId)
+          .single();
+
+        if (variantError) throw variantError;
+
+        // Add new item
         console.log("➕ Adding new item to cart");
         
         const { data, error } = await supabase
           .from('cart_items')
           .insert({
             user_id: user.id,
-            product_id: productId,
+            variant_id: variantId,
+            product_id: variant.product_id,
+            selected_color: variant.color_hex,
             quantity
           })
           .select()
@@ -237,10 +253,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Add to local state immediately
         if (data) {
-          const product = mockProducts.find(p => p.id === productId);
-          const newItem = { ...data, product };
-          console.log("✅ New item added to cart:", newItem);
-          setCartItems(items => [newItem, ...items]);
+          console.log("✅ New item added to cart:", data);
+          setCartItems(items => [data, ...items]);
         }
       }
 
@@ -270,7 +284,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('custom_designs')
         .insert({
           user_id: user.id,
-          ...customDesign
+          design_image: customDesign.design_image,
+          answers: customDesign.answers as any,
+          base_price: customDesign.base_price,
+          design_data: customDesign.design_data as any,
+          design_name: customDesign.design_name,
+          theme_name: customDesign.theme_name,
+          tshirt_color: customDesign.tshirt_color
         })
         .select()
         .single();
@@ -283,6 +303,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Type cast the returned data to match our interface
         const typedData: CustomDesign = {
           ...data,
+          design_data: (data.design_data as Record<string, unknown>) || {},
           answers: Array.isArray(data.answers) ? data.answers : 
                    typeof data.answers === 'string' ? JSON.parse(data.answers) : []
         };

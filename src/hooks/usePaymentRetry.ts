@@ -13,9 +13,9 @@ export const usePaymentRetry = ({ maxRetries = 3, retryDelay = 2000 }: UsePaymen
 
   const executeWithRetry = useCallback(async <T>(
     operation: () => Promise<T>,
-    shouldRetry: (error: any) => boolean = () => true
+    shouldRetry: (error: unknown) => boolean = () => true
   ): Promise<T> => {
-    let lastError: any;
+    let lastError: unknown;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {

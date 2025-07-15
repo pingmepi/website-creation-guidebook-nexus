@@ -176,4 +176,10 @@ export const cartTestScenarios = {
 };
 
 // Export for manual testing in browser console
-(window as any).cartTestScenarios = cartTestScenarios;
+declare global {
+  interface Window {
+    cartTestScenarios: typeof cartTestScenarios;
+  }
+}
+
+window.cartTestScenarios = cartTestScenarios;

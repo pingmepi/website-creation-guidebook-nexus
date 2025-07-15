@@ -7,14 +7,14 @@ export interface ErrorLog {
   error: Error;
   context: string;
   userId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export class ErrorLogger {
   private static logs: ErrorLog[] = [];
   private static maxLogs = 100;
 
-  static log(error: Error, context: string, metadata?: Record<string, any>): void {
+  static log(error: Error, context: string, metadata?: Record<string, unknown>): void {
     const errorLog: ErrorLog = {
       id: crypto.randomUUID(),
       timestamp: new Date(),

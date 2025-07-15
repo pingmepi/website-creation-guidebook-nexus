@@ -6,12 +6,13 @@ import { useCart } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Answer } from "./QuestionFlow";
 
 interface PlaceOrderButtonProps {
   designImage?: string;
   tshirtColor: string;
   designName: string;
-  answers: any[];
+  answers: Answer[];
   onSaveDesign?: () => void;
 }
 

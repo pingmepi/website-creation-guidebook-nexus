@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { fabric } from "fabric";
 
 interface CanvasEventHandlersProps {
@@ -21,23 +21,23 @@ export const useCanvasEventHandlers = ({
   }, [onDesignChange]);
 
   // Function to handle canvas changes
-  const handleCanvasChange = () => {
+  const handleCanvasChange = useCallback(() => {
     if (!updateInProgressRef.current && canvas) {
       updateInProgressRef.current = true;
-      
+
       setTimeout(() => {
         try {
           if (onDesignChangeRef.current && canvas) {
             isGeneratingDataURLRef.current = true;
-            
+
             const dataURL = canvas.toDataURL({
               format: "png",
               quality: 1,
               multiplier: 2,
             });
-            
+
             onDesignChangeRef.current(dataURL);
-            
+
             setTimeout(() => {
               isGeneratingDataURLRef.current = false;
             }, 100);
@@ -50,7 +50,7 @@ export const useCanvasEventHandlers = ({
         }
       }, 100);
     }
-  };
+  }, [canvas]);
 
   useEffect(() => {
     if (!canvas) return;
@@ -68,7 +68,7 @@ export const useCanvasEventHandlers = ({
         console.error("Error removing event listeners:", error);
       }
     };
-  }, [canvas]);
+  }, [canvas, handleCanvasChange]);
 
   return {
     handleCanvasChange,

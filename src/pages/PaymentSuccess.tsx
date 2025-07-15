@@ -9,12 +9,25 @@ import { toast } from "sonner";
 import { usePaymentRetry } from "@/hooks/usePaymentRetry";
 import { getErrorMessage } from "@/utils/phonePeErrorCodes";
 
+interface OrderDetails {
+  id: string;
+  user_id: string;
+  total_amount: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  order_number: string;
+  shipping_address?: Record<string, unknown>;
+  payment_method?: string;
+  payment_status?: string;
+}
+
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isVerifying, setIsVerifying] = useState(true);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success' | 'failed'>('pending');
-  const [orderDetails, setOrderDetails] = useState<any>(null);
+  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const { executeWithRetry, isRetrying } = usePaymentRetry({
@@ -59,7 +72,10 @@ const PaymentSuccess = () => {
               .eq('id', orderId)
               .single();
             
-            setOrderDetails(order);
+            setOrderDetails({
+              ...order,
+              shipping_address: (order.shipping_address as Record<string, unknown>) || {}
+            });
           }
         } else {
           setPaymentStatus('failed');

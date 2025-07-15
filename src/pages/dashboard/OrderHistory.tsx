@@ -16,7 +16,7 @@ interface Order {
   total_amount: number;
   status: string;
   created_at: string;
-  shipping_address: any;
+  shipping_address: Record<string, unknown>;
   order_items?: OrderItem[];
 }
 
@@ -55,7 +55,10 @@ const OrderHistory = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setOrders(data || []);
+      setOrders((data || []).map(order => ({
+        ...order,
+        shipping_address: (order.shipping_address as Record<string, unknown>) || {}
+      })));
     } catch (error) {
       console.error("Error fetching orders:", error);
       toast.error("Failed to load orders");
@@ -197,12 +200,12 @@ const OrderHistory = () => {
                 <div>
                   <h4 className="font-medium mb-2">Shipping Address</h4>
                   <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                    <p>{selectedOrder.shipping_address.name}</p>
-                    <p>{selectedOrder.shipping_address.street_address}</p>
+                    <p>{String(selectedOrder.shipping_address.name || '')}</p>
+                    <p>{String(selectedOrder.shipping_address.street_address || '')}</p>
                     <p>
-                      {selectedOrder.shipping_address.city}, {selectedOrder.shipping_address.state} {selectedOrder.shipping_address.postal_code}
+                      {String(selectedOrder.shipping_address.city || '')}, {String(selectedOrder.shipping_address.state || '')} {String(selectedOrder.shipping_address.postal_code || '')}
                     </p>
-                    <p>{selectedOrder.shipping_address.country}</p>
+                    <p>{String(selectedOrder.shipping_address.country || '')}</p>
                   </div>
                 </div>
 
