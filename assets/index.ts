@@ -2,12 +2,16 @@
 /// <reference types="../src/vite-env.d.ts" />
 
 // T-shirt mockups
-import mockup1 from './images/tshirt/mockup-1.jpg';
+import mockup1 from './images/tshirt/mockup-1.png';
 import mockup2 from './images/tshirt/mockup-2.png';
 import mockup3 from './images/tshirt/mockup-3.png';
 import mockup4 from './images/tshirt/mockup-4.png';
 import mockup5 from './images/tshirt/mockup-5.png';
 import mockup6 from './images/tshirt/mockup-6.jpeg';
+import mockup7 from './images/tshirt/mockup-7.jpeg';
+import mockup8 from './images/tshirt/mockup-8.png';
+import mockup9 from './images/tshirt/mockup-9.jpeg';
+
 
 // Actual t-shirt color images
 import tshirtBlack from './images/tshirt/black tshirt.png';
@@ -31,7 +35,10 @@ export const tshirtImages = {
   mockup3,
   mockup4,
   mockup5,
-  mockup6
+  mockup6,
+  mockup7,
+  mockup8,
+  mockup9
 };
 
 export const tshirtColors = {
