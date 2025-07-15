@@ -32,7 +32,7 @@ export const CartSidebar = () => {
 
   const calculateSubtotal = () => {
     const cartItemsTotal = cartItems.reduce((total, item) => {
-      const price = parseFloat(item.product?.price?.replace('$', '') || '0');
+      const price = parseFloat(item.product?.price?.replace('₹', '') || '0');
       return total + (price * item.quantity);
     }, 0);
     
@@ -172,7 +172,7 @@ export const CartSidebar = () => {
                         />
                         <span className="text-xs text-gray-500">T-shirt color</span>
                       </div>
-                      <p className="text-sm text-gray-500 mt-1">${design.base_price.toFixed(2)}</p>
+                      <p className="text-sm text-gray-500 mt-1">₹{design.base_price.toFixed(2)}</p>
 
                       <div className="flex items-center justify-between mt-2">
                         <span className="text-sm text-gray-500">Quantity: 1</span>
@@ -195,7 +195,7 @@ export const CartSidebar = () => {
               <div className="space-y-4">
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Subtotal</span>
-                  <span data-testid="cart-subtotal">${calculateSubtotal()}</span>
+                  <span data-testid="cart-subtotal">₹{calculateSubtotal()}</span>
                 </div>
 
                 <div className="space-y-2">
