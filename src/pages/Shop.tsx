@@ -11,9 +11,9 @@ const Shop = () => {
     { id: 5, name: "Modern Minimalist", price: "₹2,320", image: tshirtImages.mockup5 },
     { id: 6, name: "Artist Series", price: "₹2,900", image: tshirtImages.mockup6 },
     // Duplicate some for more content
-    { id: 7, name: "Classic Blue Tee", price: "₹2,070", image: tshirtImages.mockup1 },
-    { id: 8, name: "Urban Gray Design", price: "₹2,490", image: tshirtImages.mockup2 },
-    { id: 9, name: "Winter Collection", price: "₹2,240", image: tshirtImages.mockup3 }
+    { id: 7, name: "Classic Blue Tee", price: "₹2,070", image: tshirtImages.mockup7 },
+    { id: 8, name: "Urban Gray Design", price: "₹2,490", image: tshirtImages.mockup8 },
+    { id: 9, name: "Winter Collection", price: "₹2,240", image: tshirtImages.mockup9 }
   ];
 
   return (
