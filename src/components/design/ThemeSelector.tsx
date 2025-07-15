@@ -13,19 +13,18 @@ interface Theme {
   description: string;
   color: string;
   category: string[];
+  image: string;
 }
 
 const themes: Theme[] = [
-  { id: 1, name: "Travel", description: "Capture your wanderlust", color: "#00BCD4", category: ["Artistic"] },
-  { id: 2, name: "Music", description: "Express your rhythm", color: "#9C27B0", category: ["Abstract", "Artistic"] },
-  { id: 3, name: "Sports", description: "Show your active side", color: "#FF5722", category: ["Minimal"] },
-  { id: 4, name: "Nature", description: "Connect with the outdoors", color: "#8BC34A", category: ["Nature"] },
-  { id: 5, name: "Abstract", description: "Bold geometric patterns", color: "#FF1493", category: ["Abstract"] },
-  { id: 6, name: "Vintage", description: "Classic retro style", color: "#A67C52", category: ["Artistic"] },
-  { id: 7, name: "Minimal", description: "Clean and simple", color: "#212121", category: ["Minimal"] },
-  { id: 8, name: "Bold", description: "Stand out with strong design", color: "#FF0000", category: ["Typography"] },
-  { id: 9, name: "Funny", description: "Lighthearted and humorous", color: "#FFC107", category: ["Typography"] },
-  { id: 10, name: "Artistic", description: "Expressive and creative", color: "#00E5B2", category: ["Artistic"] }
+  { id: 1, name: "Travel", description: "Capture your wanderlust", color: "#00BCD4", category: ["Artistic"], image: "/lovable-uploads/1fb8d5ab-666d-49a1-b349-c0a086a816fa.png" },
+  { id: 2, name: "Music", description: "Express your rhythm", color: "#9C27B0", category: ["Abstract", "Artistic"], image: "/lovable-uploads/754dd742-8aea-49d6-ac83-97af6c757084.png" },
+  { id: 3, name: "Vintage", description: "Classic retro style", color: "#A67C52", category: ["Artistic"], image: "/lovable-uploads/6676f311-43f9-47ee-86aa-e7bd93150976.png" },
+  { id: 4, name: "Nature", description: "Connect with the outdoors", color: "#8BC34A", category: ["Nature"], image: "/lovable-uploads/3de9e312-dbc0-48a8-ad72-5f348b474fb9.png" },
+  { id: 5, name: "Abstract", description: "Bold geometric patterns", color: "#FF1493", category: ["Abstract"], image: "/lovable-uploads/3390f772-94a3-49ac-9380-6d8e091a4c65.png" },
+  { id: 6, name: "Artistic", description: "Expressive and creative", color: "#00E5B2", category: ["Artistic"], image: "/lovable-uploads/0a1a3611-6080-4670-a291-9e87b4247dec.png" },
+  { id: 7, name: "Cyberpunk", description: "Futuristic neon aesthetics", color: "#E91E63", category: ["Abstract"], image: "/lovable-uploads/8398eed3-bd38-4e5f-9278-00f9f2ca7c7a.png" },
+  { id: 8, name: "Funny", description: "Lighthearted and humorous", color: "#FFC107", category: ["Typography"], image: "/lovable-uploads/a864a361-eb88-4887-ae3b-93c9731c347a.png" }
 ];
 
 interface ThemeSelectorProps {
@@ -98,10 +97,13 @@ const ThemeSelector = ({ onThemeSelect }: ThemeSelectorProps) => {
             }`}
             onClick={() => toggleThemeSelection(theme.id)}
           >
-            <div 
-              className="h-36 flex items-center justify-center" 
-              style={{ backgroundColor: theme.color }}
-            />
+            <div className="h-36 relative overflow-hidden">
+              <img 
+                src={theme.image} 
+                alt={theme.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
             <CardContent className="p-4">
               <h3 className="font-medium mb-1">{theme.name}</h3>
               <p className="text-gray-600 text-sm">{theme.description}</p>
