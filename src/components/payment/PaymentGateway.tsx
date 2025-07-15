@@ -62,7 +62,7 @@ const PaymentGateway = ({
           }
         },
         (error) => {
-          const errorCode = error?.details?.code || "UNKNOWN_ERROR";
+          const errorCode = (error as any)?.details?.code || (error as any)?.code || "UNKNOWN_ERROR";
           setLastError(getErrorMessage(errorCode));
           return isRetryableError(errorCode);
         }
@@ -71,7 +71,7 @@ const PaymentGateway = ({
     } catch (error) {
       console.error("PhonePe payment error:", error);
       
-      const errorCode = error?.details?.code || "UNKNOWN_ERROR";
+      const errorCode = (error as any)?.details?.code || "UNKNOWN_ERROR";
       const userFriendlyMessage = getErrorMessage(errorCode);
       
       setLastError(userFriendlyMessage);

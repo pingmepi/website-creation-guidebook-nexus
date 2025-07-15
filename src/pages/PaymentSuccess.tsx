@@ -16,6 +16,7 @@ interface OrderDetails {
   status: string;
   created_at: string;
   updated_at: string;
+  order_number: string;
   shipping_address?: Record<string, unknown>;
   payment_method?: string;
   payment_status?: string;
@@ -71,7 +72,10 @@ const PaymentSuccess = () => {
               .eq('id', orderId)
               .single();
             
-            setOrderDetails(order);
+            setOrderDetails({
+              ...order,
+              shipping_address: (order.shipping_address as Record<string, unknown>) || {}
+            });
           }
         } else {
           setPaymentStatus('failed');

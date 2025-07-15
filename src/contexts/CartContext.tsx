@@ -132,6 +132,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Type cast the data to match our interface
       const typedData: CustomDesign[] = (data || []).map(item => ({
         ...item,
+        design_data: (item.design_data as Record<string, unknown>) || {},
         answers: Array.isArray(item.answers) ? item.answers : 
                  typeof item.answers === 'string' ? JSON.parse(item.answers) : []
       }));
@@ -283,7 +284,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('custom_designs')
         .insert({
           user_id: user.id,
-          ...customDesign
+          design_image: customDesign.design_image,
+          answers: customDesign.answers as any,
+          base_price: customDesign.base_price,
+          design_data: customDesign.design_data as any,
+          design_name: customDesign.design_name,
+          theme_name: customDesign.theme_name,
+          tshirt_color: customDesign.tshirt_color
         })
         .select()
         .single();
@@ -296,6 +303,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Type cast the returned data to match our interface
         const typedData: CustomDesign = {
           ...data,
+          design_data: (data.design_data as Record<string, unknown>) || {},
           answers: Array.isArray(data.answers) ? data.answers : 
                    typeof data.answers === 'string' ? JSON.parse(data.answers) : []
         };
