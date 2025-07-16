@@ -3,7 +3,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 // Test utilities for Edge Functions
 export function createMockRequest(
   method: string = 'POST',
-  body?: any,
+  body?: unknown,
   headers?: Record<string, string>
 ): Request {
   const defaultHeaders = {

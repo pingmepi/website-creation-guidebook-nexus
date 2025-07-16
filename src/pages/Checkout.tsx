@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
 import { useCart } from "@/contexts/CartContext";
@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { tshirtImages } from "../../assets";
 import PaymentGateway from "@/components/payment/PaymentGateway";
 
@@ -86,9 +86,9 @@ const Checkout = () => {
     }
 
     fetchSavedAddresses();
-  }, [isAuthenticated, cartItems.length, customDesigns?.length, navigate]);
+  }, [isAuthenticated, cartItems.length, customDesigns?.length, customDesigns, navigate, fetchSavedAddresses]);
 
-  const fetchSavedAddresses = async () => {
+  const fetchSavedAddresses = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -110,7 +110,7 @@ const Checkout = () => {
     } catch (error) {
       console.error("Error fetching addresses:", error);
     }
-  };
+  }, [user]);
 
   const calculateSubtotal = () => {
     const regularItemsTotal = itemsWithProducts.reduce((total, item) => {

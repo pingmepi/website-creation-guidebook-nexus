@@ -1,10 +1,10 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Theme, TSHIRT_COLORS } from "./types";
 import { Answer } from "@/components/design/QuestionFlow";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { useUser } from "@/contexts/UserContext";
 
 export function useDesignData(setDesignStage: () => void) {
@@ -40,10 +40,10 @@ export function useDesignData(setDesignStage: () => void) {
         })}`);
       }
     }
-  }, [location.search]);
+  }, [location.search, designName, fetchDesignData]);
 
   // Fetch existing design data if editing
-  const fetchDesignData = async (id: string) => {
+  const fetchDesignData = useCallback(async (id: string) => {
     try {
       setIsLoading(true);
 
@@ -120,7 +120,7 @@ export function useDesignData(setDesignStage: () => void) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setDesignStage, navigate]);
 
   const handleDesignChange = (designDataUrl: string) => {
     console.log("Design canvas updated");

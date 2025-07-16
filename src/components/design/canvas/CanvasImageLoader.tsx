@@ -38,25 +38,25 @@ export const useCanvasImageLoader = ({
     try {
       // Remove placeholder text if it exists
       const objects = canvas.getObjects();
-      const placeholderText = objects.find((obj: any) =>
+      const placeholderText = objects.find((obj: fabric.Object) =>
         obj.type === 'text' &&
-        (obj.id === "placeholderText" || (obj as any).text === 'upload your design')
+        (obj.id === "placeholderText" || obj.text === 'upload your design')
       );
       if (placeholderText) {
         canvas.remove(placeholderText);
       }
 
       // Clear existing images
-      const existingImages = objects.filter((obj: any) => obj.type === 'image');
+      const existingImages = objects.filter((obj: fabric.Object) => obj.type === 'image');
       if (existingImages.length > 0) {
         console.log(`Removing ${existingImages.length} existing images`);
-        existingImages.forEach((img: any) => canvas.remove(img));
+        existingImages.forEach((img: fabric.Object) => canvas.remove(img));
       }
 
       // Load the image
       fabric.Image.fromURL(
         initialImage,
-        (img: any) => {
+        (img: fabric.Object) => {
           try {
             if (!img || !img.width || !img.height) {
               console.error("Loaded image is invalid");

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { fabric } from "fabric";
 
 interface FabricCanvasProps {
@@ -40,7 +40,7 @@ const FabricCanvas = ({
   }, [onDesignChange]);
   
   // Improved function to ensure a single safety area exists
-  const ensureSingleSafetyArea = (fabricCanvas: fabric.Canvas) => {
+  const ensureSingleSafetyArea = useCallback((fabricCanvas: fabric.Canvas) => {
     if (updateInProgressRef.current || safetyAreaManagedRef.current) {
       return false;
     }
@@ -96,7 +96,7 @@ const FabricCanvas = ({
     } finally {
       updateInProgressRef.current = false;
     }
-  };
+  }, [width, height]);
   
   // Initialize canvas
   useEffect(() => {
@@ -191,18 +191,18 @@ const FabricCanvas = ({
       }
     };
     
-    const handleObjectAdded = (e: any) => {
+    const handleObjectAdded = (e: { target?: fabric.Object }) => {
       // Don't trigger update for safety area to avoid loops
       if (e.target && e.target.id === "safetyArea") {
         return;
       }
-      
+
       if (!updateInProgressRef.current) {
         safeUpdateDesign();
       }
     };
-    
-    const handleObjectRemoved = (e: any) => {
+
+    const handleObjectRemoved = (e: { target?: fabric.Object }) => {
       // If safety area was removed, recreate it
       if (e.target && e.target.id === "safetyArea") {
         safetyAreaManagedRef.current = false;
@@ -289,7 +289,7 @@ const FabricCanvas = ({
         }
       }
     };
-  }, [width, height, backgroundColor]);
+  }, [width, height, backgroundColor, ensureSingleSafetyArea, initialImage, onCanvasReady]);
 
   // Handle drawing mode changes
   useEffect(() => {
@@ -396,7 +396,7 @@ const FabricCanvas = ({
         safetyAreaManagedRef.current = false;
       }
     }
-  }, [initialImage, canvasInitialized]);
+  }, [initialImage, canvasInitialized, ensureSingleSafetyArea]);
 
   return <canvas ref={canvasRef} />;
 };

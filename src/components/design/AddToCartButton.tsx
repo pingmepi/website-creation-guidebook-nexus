@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { useCart } from "@/contexts/CartContext";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { Answer } from "./QuestionFlow";
 
 interface AddToCartButtonProps {

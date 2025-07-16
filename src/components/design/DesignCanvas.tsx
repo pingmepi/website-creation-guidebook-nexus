@@ -26,7 +26,7 @@ interface DesignCanvasProps {
 const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
-  const [canvas, setCanvas] = useState<any>(null);
+  const [canvas, setCanvas] = useState<fabric.Canvas | null>(null);
   const [currentColor, setCurrentColor] = useState<string>("#000000");
   const [text, setText] = useState<string>("");
   const [fontSize, setFontSize] = useState<number>(20);
@@ -50,10 +50,10 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
   }, [onDesignChange]);
 
   // Reference to the safety area object
-  const safetyAreaRef = useRef<any>(null);
+  const safetyAreaRef = useRef<fabric.Object | null>(null);
 
   // Improved function to ensure a single safety area exists
-  const ensureSingleSafetyArea = (targetCanvas: any) => {
+  const ensureSingleSafetyArea = (targetCanvas: fabric.Canvas) => {
     if (!targetCanvas || !targetCanvas.getContext) {
       console.error("Cannot manage safety area: Invalid canvas");
       return false;
@@ -71,7 +71,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     try {
       // First, remove ALL existing safety areas
       const objects = targetCanvas.getObjects();
-      const safetyAreas = objects.filter((obj: any) => obj.id === "safetyArea");
+      const safetyAreas = objects.filter((obj: fabric.Object) => obj.id === "safetyArea");
 
       if (safetyAreas.length > 1) {
         console.log(`Removing ${safetyAreas.length - 1} duplicate safety areas`);
@@ -139,7 +139,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
       timeoutId = window.setTimeout(() => {
         if (!updateInProgressRef.current) {
           const objects = canvas.getObjects();
-          const safetyAreas = objects.filter((obj: any) => obj.id === "safetyArea");
+          const safetyAreas = objects.filter((obj: fabric.Object) => obj.id === "safetyArea");
 
           if (safetyAreas.length !== 1) {
             console.log(`Found ${safetyAreas.length} safety areas, fixing...`);
@@ -184,6 +184,9 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
   useEffect(() => {
     if (canvasInitializedRef.current || !canvasRef.current) return;
 
+    // Capture the current canvas element reference at the start of the effect
+    const currentCanvasElement = canvasRef.current;
+
     console.log("Initializing canvas");
     canvasInitializedRef.current = true;
 
@@ -193,7 +196,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
       const canvasSize = Math.min(containerWidth, 300);
 
       // Create canvas with error handling
-      let fabricCanvas: any = null;
+      let fabricCanvas: fabric.Canvas | null = null;
       try {
         // Make sure the canvas element is ready before initializing fabric
         if (!canvasRef.current) {
@@ -288,7 +291,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
       };
 
       // Improved object addition handler with safety area protection
-      const handleObjectAdded = (e: any) => {
+      const handleObjectAdded = (e: { target?: fabric.Object }) => {
         if (updateInProgressRef.current) return;
         
         // Don't do anything special for safety areas to avoid loops
@@ -306,7 +309,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
       };
 
       // Improved object removal handler
-      const handleObjectRemoved = (e: any) => {
+      const handleObjectRemoved = (e: { target?: fabric.Object }) => {
         if (updateInProgressRef.current) return;
         
         // If the safety area was removed, make a new one
@@ -333,13 +336,14 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
 
       // Cleanup function to properly dispose of the canvas
       return () => {
+
         try {
           if (fabricCanvas) {
             // Remove all event listeners first
             fabricCanvas.off('object:modified', handleObjectModified);
             fabricCanvas.off('object:added', handleObjectAdded);
             fabricCanvas.off('object:removed', handleObjectRemoved);
-            
+
             // Clear all objects first to prevent memory leaks
             fabricCanvas.clear();
 
@@ -347,10 +351,10 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
             fabricCanvas.dispose();
 
             // Clear the canvas element
-            if (canvasRef.current) {
-              const ctx = canvasRef.current.getContext('2d');
+            if (currentCanvasElement) {
+              const ctx = currentCanvasElement.getContext('2d');
               if (ctx) {
-                ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+                ctx.clearRect(0, 0, currentCanvasElement.width, currentCanvasElement.height);
               }
             }
           }
@@ -399,22 +403,22 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     try {
       // Remove placeholder text if it exists
       const objects = canvas.getObjects();
-      const placeholderText = objects.find((obj: any) =>
+      const placeholderText = objects.find((obj: fabric.Object) =>
         obj.type === 'text' &&
-        (obj.id === "placeholderText" || (obj as any).text === 'upload your design')
+        (obj.id === "placeholderText" || obj.text === 'upload your design')
       );
       if (placeholderText) {
         canvas.remove(placeholderText);
       }
 
       // Clear existing images
-      const existingImages = objects.filter((obj: any) => obj.type === 'image');
-      existingImages.forEach((img: any) => canvas.remove(img));
+      const existingImages = objects.filter((obj: fabric.Object) => obj.type === 'image');
+      existingImages.forEach((img: fabric.Object) => canvas.remove(img));
 
       // Load the image with proper error handling
       fabric.Image.fromURL(
         initialImage,
-        (img: any) => {
+        (img: fabric.Object) => {
           try {
             // Scale image to fit within the canvas
             const canvasWidth = canvas.width || 300;
@@ -492,7 +496,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
         updateInProgressRef.current = true;
 
         if (activeObject.type === 'i-text' || activeObject.type === 'text') {
-          (activeObject as any).set('fill', color);
+          activeObject.set({ fill: color });
         } else if (activeObject.type !== 'image') {
           // Don't change color of images
           activeObject.set('fill', color);
@@ -797,26 +801,26 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
 
           // Remove placeholder text if it exists
           const objects = canvas.getObjects();
-          const placeholderText = objects.find((obj: any) =>
+          const placeholderText = objects.find((obj: fabric.Object) =>
             obj.type === 'text' &&
-            (obj.id === "placeholderText" || (obj as any).text === 'upload your design')
+            (obj.id === "placeholderText" || obj.text === 'upload your design')
           );
           if (placeholderText) {
             canvas.remove(placeholderText);
           }
 
           // Remove existing images
-          const existingImages = objects.filter((obj: any) => obj.type === 'image');
+          const existingImages = objects.filter((obj: fabric.Object) => obj.type === 'image');
           if (existingImages.length > 0) {
             console.log(`Removing ${existingImages.length} existing images`);
-            existingImages.forEach((img: any) => canvas.remove(img));
+            existingImages.forEach((img: fabric.Object) => canvas.remove(img));
           }
 
           // Now add the new image
           try {
             fabric.Image.fromURL(
               imgData,
-              (img: any) => {
+              (img: fabric.Object) => {
               try {
                 // Check if canvas is still valid
                 if (!canvas || !canvas.getContext) {

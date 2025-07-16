@@ -4,7 +4,7 @@ import { ShoppingCart, CreditCard } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { useCart } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Answer } from "./QuestionFlow";
 

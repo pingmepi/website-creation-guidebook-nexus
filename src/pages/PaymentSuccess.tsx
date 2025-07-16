@@ -1,11 +1,11 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Loader2, XCircle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { usePaymentRetry } from "@/hooks/usePaymentRetry";
 import { getErrorMessage } from "@/utils/phonePeErrorCodes";
 
@@ -46,9 +46,9 @@ const PaymentSuccess = () => {
       setErrorMessage("Invalid payment session. No transaction ID found.");
       setIsVerifying(false);
     }
-  }, [transactionId]);
+  }, [transactionId, verifyPayment]);
 
-  const verifyPayment = async () => {
+  const verifyPayment = useCallback(async () => {
     try {
       setIsVerifying(true);
       setErrorMessage("");
@@ -94,7 +94,7 @@ const PaymentSuccess = () => {
     } finally {
       setIsVerifying(false);
     }
-  };
+  }, [transactionId, orderId, executeWithRetry]);
 
   const handleContinue = () => {
     if (paymentStatus === 'success') {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, Eye } from "lucide-react";
@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 interface Order {
   id: string;
@@ -38,9 +38,9 @@ const OrderHistory = () => {
     if (user) {
       fetchOrders();
     }
-  }, [user]);
+  }, [user, fetchOrders]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -65,7 +65,7 @@ const OrderHistory = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
   const getStatusClass = (status: string) => {
     switch (status) {
