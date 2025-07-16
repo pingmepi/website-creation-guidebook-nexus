@@ -1,5 +1,11 @@
 
 import { Answer } from "@/components/design/QuestionFlow";
+// Import t-shirt images directly
+import tshirtBlack from "../../assets/images/tshirt/black tshirt.png";
+import tshirtWhite from "../../assets/images/tshirt/white tshirt.png";
+import tshirtRed from "../../assets/images/tshirt/red tshirt.jpg";
+import tshirtGrey from "../../assets/images/tshirt/grey tshirt.png";
+import tshirtBlue from "../../assets/images/tshirt/blue tshirt.png";
 
 // Define t-shirt color options with corresponding images
 export const TSHIRT_COLORS = {
@@ -10,13 +16,13 @@ export const TSHIRT_COLORS = {
   BLUE: "#1EAEDB"
 };
 
-// Map colors to their corresponding t-shirt images
+// Map colors to their corresponding t-shirt images using proper imports
 export const TSHIRT_COLOR_IMAGES = {
-  "#000000": "/assets/images/tshirt/black tshirt.png", // Black
-  "#FFFFFF": "/assets/images/tshirt/white tshirt.png", // White
-  "#DC2626": "/assets/images/tshirt/red tshirt.jpg",   // Red
-  "#8A898C": "/assets/images/tshirt/grey tshirt.png", // Grey
-  "#1EAEDB": "/assets/images/tshirt/blue tshirt.png"  // Blue
+  "#000000": tshirtBlack,  // Black
+  "#FFFFFF": tshirtWhite,  // White
+  "#DC2626": tshirtRed,    // Red
+  "#8A898C": tshirtGrey,   // Grey
+  "#1EAEDB": tshirtBlue    // Blue
 };
 
 export type DesignStep = "preferences" | "design" | "options";
