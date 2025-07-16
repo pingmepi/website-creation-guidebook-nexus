@@ -1,5 +1,7 @@
 
 import { Answer } from "@/components/design/QuestionFlow";
+// Import t-shirt images from the assets index file
+import { tshirtColors } from "../../../assets/index";
 
 // Define t-shirt color options with corresponding images
 export const TSHIRT_COLORS = {
@@ -10,13 +12,13 @@ export const TSHIRT_COLORS = {
   BLUE: "#1EAEDB"
 };
 
-// Map colors to their corresponding t-shirt images
+// Map colors to their corresponding t-shirt images using proper imports
 export const TSHIRT_COLOR_IMAGES = {
-  "#000000": "/assets/images/tshirt/black tshirt.png", // Black
-  "#FFFFFF": "/assets/images/tshirt/white tshirt.png", // White
-  "#DC2626": "/assets/images/tshirt/red tshirt.jpg",   // Red
-  "#8A898C": "/assets/images/tshirt/grey tshirt.png", // Grey
-  "#1EAEDB": "/assets/images/tshirt/blue tshirt.png"  // Blue
+  "#000000": tshirtColors.black,  // Black
+  "#FFFFFF": tshirtColors.white,  // White
+  "#DC2626": tshirtColors.red,    // Red
+  "#8A898C": tshirtColors.grey,   // Grey
+  "#1EAEDB": tshirtColors.blue    // Blue
 };
 
 export type DesignStep = "preferences" | "design" | "options";
