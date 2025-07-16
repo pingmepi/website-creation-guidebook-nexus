@@ -11,6 +11,7 @@ import { Answer } from "./QuestionFlow";
 interface PlaceOrderButtonProps {
   designImage?: string;
   tshirtColor: string;
+  selectedSize?: string;
   designName: string;
   answers: Answer[];
   onSaveDesign?: () => void;
@@ -19,6 +20,7 @@ interface PlaceOrderButtonProps {
 const PlaceOrderButton = ({
   designImage,
   tshirtColor,
+  selectedSize = "M",
   designName,
   answers,
   onSaveDesign
@@ -52,6 +54,7 @@ const PlaceOrderButton = ({
         design_name: designName || "Custom Design",
         design_image: designImage,
         tshirt_color: tshirtColor,
+        selected_size: selectedSize,
         base_price: 2499, // Updated to INR pricing
         theme_name: answers.find(a => a.question.includes("theme"))?.answer || "Custom",
         answers: answers,

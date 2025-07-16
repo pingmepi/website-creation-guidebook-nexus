@@ -407,8 +407,11 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
         canvas.remove(placeholderText);
       }
 
-      // Clear existing images
-      const existingImages = objects.filter((obj: any) => obj.type === 'image');
+      // Only clear existing images if this is an AI-generated design (not user uploaded)
+      // Keep user-uploaded images to preserve design layers
+      const existingImages = objects.filter((obj: any) => 
+        obj.type === 'image' && obj.id === 'aiGeneratedImage'
+      );
       existingImages.forEach((img: any) => canvas.remove(img));
 
       // Load the image with proper error handling
@@ -805,12 +808,8 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
             canvas.remove(placeholderText);
           }
 
-          // Remove existing images
-          const existingImages = objects.filter((obj: any) => obj.type === 'image');
-          if (existingImages.length > 0) {
-            console.log(`Removing ${existingImages.length} existing images`);
-            existingImages.forEach((img: any) => canvas.remove(img));
-          }
+          // Don't remove any existing images - user uploads should be additive
+          // This allows users to layer images on top of the AI-generated design
 
           // Now add the new image
           try {

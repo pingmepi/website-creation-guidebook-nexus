@@ -15,6 +15,7 @@ export function useDesignData(setDesignStage: () => void) {
   const [designName, setDesignName] = useState<string>("");
   const [tshirtColor, setTshirtColor] = useState(TSHIRT_COLORS.WHITE);
   const [designImage, setDesignImage] = useState<string | undefined>(undefined);
+  const [selectedSize, setSelectedSize] = useState<string>("M");
   const [isLoading, setIsLoading] = useState(false);
 
   const location = useLocation();
@@ -167,6 +168,7 @@ export function useDesignData(setDesignStage: () => void) {
     designId,
     designName,
     tshirtColor,
+    selectedSize,
     designImage,
     isLoading,
     setSelectedTheme,
@@ -174,6 +176,7 @@ export function useDesignData(setDesignStage: () => void) {
     setDesignId,
     setDesignName,
     setTshirtColor,
+    setSelectedSize,
     setDesignImage,
     setIsLoading,
     fetchDesignData,
