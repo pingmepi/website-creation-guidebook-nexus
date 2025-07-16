@@ -1,4 +1,4 @@
-import { OpenAI } from 'npm:openai@4.29.1';
+import { OpenAI } from 'openai';
 import { 
   EdgeFunctionError, 
   ErrorType, 
