@@ -38,7 +38,7 @@ const OrderHistory = () => {
     if (user) {
       fetchOrders();
     }
-  }, [user, fetchOrders]);
+  }, [user]);
 
   const fetchOrders = useCallback(async () => {
     if (!user) return;

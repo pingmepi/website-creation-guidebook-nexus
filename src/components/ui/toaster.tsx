@@ -1,33 +1,17 @@
-import { useToast } from "@/hooks/use-toast"
-import {
-  Toast,
-  ToastClose,
-  ToastDescription,
-  ToastProvider,
-  ToastTitle,
-  ToastViewport,
-} from "@/components/ui/toast"
+import { useToast } from "@/hooks/use-toast";
 
 export function Toaster() {
-  const { toasts } = useToast()
+  const { toasts } = useToast();
 
+  // Simple implementation - in a real app you'd render actual toast UI
   return (
-    <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }) {
-        return (
-          <Toast key={id} {...props}>
-            <div className="grid gap-1">
-              {title && <ToastTitle>{title}</ToastTitle>}
-              {description && (
-                <ToastDescription>{description}</ToastDescription>
-              )}
-            </div>
-            {action}
-            <ToastClose />
-          </Toast>
-        )
-      })}
-      <ToastViewport />
-    </ToastProvider>
-  )
+    <div id="toast-container" className="fixed top-4 right-4 z-50">
+      {toasts.map((toast: any, index: number) => (
+        <div key={index} className="mb-2 p-3 bg-white border rounded shadow">
+          {toast.title && <div className="font-semibold">{toast.title}</div>}
+          {toast.description && <div className="text-sm text-gray-600">{toast.description}</div>}
+        </div>
+      ))}
+    </div>
+  );
 }

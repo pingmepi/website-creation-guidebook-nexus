@@ -86,7 +86,7 @@ const Checkout = () => {
     }
 
     fetchSavedAddresses();
-  }, [isAuthenticated, cartItems.length, customDesigns?.length, customDesigns, navigate, fetchSavedAddresses]);
+  }, [isAuthenticated, cartItems.length, customDesigns?.length, customDesigns, navigate]);
 
   const fetchSavedAddresses = useCallback(async () => {
     if (!user) return;

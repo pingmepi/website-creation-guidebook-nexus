@@ -296,9 +296,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .insert({
           user_id: user.id,
           design_image: customDesign.design_image,
-          answers: customDesign.answers as Record<string, unknown>,
+          answers: JSON.stringify(customDesign.answers) as any,
           base_price: customDesign.base_price,
-          design_data: customDesign.design_data as Record<string, unknown>,
+          design_data: JSON.stringify(customDesign.design_data) as any,
           design_name: customDesign.design_name,
           theme_name: customDesign.theme_name,
           tshirt_color: customDesign.tshirt_color

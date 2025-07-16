@@ -46,7 +46,7 @@ const PaymentSuccess = () => {
       setErrorMessage("Invalid payment session. No transaction ID found.");
       setIsVerifying(false);
     }
-  }, [transactionId, verifyPayment]);
+  }, [transactionId]);
 
   const verifyPayment = useCallback(async () => {
     try {
