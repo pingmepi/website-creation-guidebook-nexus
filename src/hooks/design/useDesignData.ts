@@ -1,6 +1,6 @@
-
 import { useState, useEffect, useCallback } from "react";
-import { Theme, TSHIRT_COLORS } from "./types";
+import { Theme } from "./types";
+import { TSHIRT_COLORS } from "./constants";
 import { Answer } from "@/components/design/QuestionFlow";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,28 +20,6 @@ export function useDesignData(setDesignStage: () => void) {
 
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Extract design ID from URL query parameters
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const id = params.get('id');
-
-    if (id) {
-      setDesignId(id);
-      fetchDesignData(id);
-    } else {
-      // Generate a design name using the current date and time
-      if (!designName) {
-        const date = new Date();
-        setDesignName(`Design ${date.toLocaleString("en-US", {
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "numeric"
-        })}`);
-      }
-    }
-  }, [location.search, designName, fetchDesignData]);
 
   // Fetch existing design data if editing
   const fetchDesignData = useCallback(async (id: string) => {
@@ -122,6 +100,28 @@ export function useDesignData(setDesignStage: () => void) {
       setIsLoading(false);
     }
   }, [setDesignStage, navigate]);
+
+  // Extract design ID from URL query parameters
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+
+    if (id) {
+      setDesignId(id);
+      fetchDesignData(id);
+    } else {
+      // Generate a design name using the current date and time
+      if (!designName) {
+        const date = new Date();
+        setDesignName(`Design ${date.toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "numeric"
+        })}`);
+      }
+    }
+  }, [location.search, designName, fetchDesignData]);
 
   const handleDesignChange = (designDataUrl: string) => {
     console.log("Design canvas updated");

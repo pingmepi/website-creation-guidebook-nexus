@@ -7,7 +7,7 @@ import TshirtDesignPreview from "./TshirtDesignPreview";
 import { Separator } from "@/components/ui/separator";
 import { Save, Loader2 } from "lucide-react";
 import { Answer } from "./QuestionFlow";
-import DesignCanvas from "./DesignCanvas";
+import CanvasManager from "./canvas/CanvasManager";
 import { CanvasErrorBoundary } from "@/components/error/CanvasErrorBoundary";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import AddToCartButton from "./AddToCartButton";
@@ -44,18 +44,13 @@ const CustomizationSection = ({
   onDesignChange,
   onSaveDesign
 }: CustomizationSectionProps) => {
-  // Enhanced color options with proper names
-  const enhancedTshirtColors = {
-    ...tshirtColors,
-    RED: "#DC2626" // Add red to existing colors
-  };
-  
-  const tshirtColorOptions = Object.entries(enhancedTshirtColors).map(([name, value]) => ({
-    name: name.charAt(0) + name.slice(1).toLowerCase(), // Capitalize first letter
+  // Use centralized color definitions
+  const tshirtColorOptions = Object.entries(tshirtColors).map(([name, value]) => ({
+    name: name.charAt(0) + name.slice(1).toLowerCase(),
     value
   }));
 
-  // Available t-shirt sizes
+  // Import sizes from constants
   const tshirtSizes = [
     { name: "XS", value: "XS" },
     { name: "S", value: "S" },
@@ -159,7 +154,7 @@ const CustomizationSection = ({
               {/* Design Canvas Tools with Error Boundary */}
               <div className="mb-4">
                 <CanvasErrorBoundary>
-                  <DesignCanvas 
+                  <CanvasManager 
                     tshirtColor={tshirtColor} 
                     onDesignChange={handleCanvasDesignChange}
                     initialImage={designImage}

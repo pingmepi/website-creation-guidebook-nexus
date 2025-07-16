@@ -1,9 +1,9 @@
 
 import { useState } from "react";
 import { Answer } from "@/components/design/QuestionFlow";
-import { Theme, DesignStage, DesignStep } from "./useDesignTypes";
+import { Theme, DesignStage, DesignStep } from "./types";
 import { useUser } from "@/contexts/UserContext";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { useDesignStorage } from "./useDesignStorage";
 import { useDesignGeneration } from "./useDesignGeneration";
 
