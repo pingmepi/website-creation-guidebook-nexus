@@ -117,11 +117,23 @@ Deno.serve(async (req) => {
           const supabaseKey = getRequiredEnvVar('SUPABASE_SERVICE_ROLE_KEY');
 
           const supabase = createClient(supabaseUrl, supabaseKey);
+          
+          // Convert theme.id to proper UUID format if it's a number
+          let themeId = null;
+          if (theme.id) {
+            if (typeof theme.id === 'number') {
+              // Map numeric theme IDs to UUIDs - this would need proper mapping
+              themeId = null; // Skip theme_id for now if it's numeric
+            } else if (typeof theme.id === 'string' && theme.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+              themeId = theme.id;
+            }
+          }
+          
           const { error } = await supabase.from('ai_generated_designs').insert({
             user_id: userId,
             design_image: `data:image/png;base64,${imageBase64}`,
             prompt: prompt,
-            theme_id: theme.id || null,
+            theme_id: themeId,
             is_favorite: false
           });
 
@@ -193,18 +205,21 @@ function generatePrompt(theme: any, answers: any[]): string {
     }).join('\n\n');
 
     // Create a prompt that follows OpenAI guidelines
-    const prompt = `Create a visually compelling t-shirt design illustration based on the theme: ${sanitizedThemeName}.
-Theme description: ${sanitizedDescription}
+    const prompt = `Create a flat, high-resolution illustration for apparel print influnced by  
+    Themes: ${sanitizedThemeName} and 
+    Theme description: ${sanitizedDescription}
 
 The design should incorporate these preferences:
 ${formattedQA}
 
-Keep the design coherent, purposeful, and suitable for a t-shirt print.
-Emphasize creativity with a balanced, professional layout.
-Use colors creatively while maintaining visual clarity.
-Make the design suitable for placement on a t-shirt front.
-Do not include any text in the design unless specifically requested.
-Keep the design family-friendly and universally appropriate.`;
+Requirements:
+- Show ONLY the design artwork.
+- DO NOT include any t-shirt, clothing, model, or mockup.
+- Isolate the design on a plain white background.
+- Avoid 3D, shadows, or folds.
+- Use a clean, vector-style design suitable for printing.
+- No text unless explicitly requested.
+`;
 
     return prompt;
   } catch (error) {

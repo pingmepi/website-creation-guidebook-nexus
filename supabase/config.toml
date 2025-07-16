@@ -1,6 +1,18 @@
 
 project_id = "mqqgfcghppkivptpjwxi"
 
+[functions.generate-ai-design]
+verify_jwt = true
+
+[functions.initiate-phonepe-payment]
+verify_jwt = true
+
+[functions.verify-phonepe-payment]
+verify_jwt = true
+
+[functions.webhook-phonepe-payment]
+verify_jwt = false
+
 [api]
 enabled = true
 port = 54321
@@ -25,22 +37,4 @@ site_url = "http://localhost:3000"
 [analytics]
 enabled = false
 
-[[functions]]
-name = "generate-ai-design"
-verify_jwt = true
-cors = {origin = ["http://localhost:8080", "http://localhost:3000", "*"], headers = ["authorization", "x-client-info", "apikey", "content-type"], methods = ["POST", "OPTIONS"]}
 
-[[functions]]
-name = "initiate-phonepe-payment"
-verify_jwt = true
-cors = {origin = ["http://localhost:8080", "http://localhost:3000", "*"], headers = ["authorization", "x-client-info", "apikey", "content-type"], methods = ["POST", "OPTIONS"]}
-
-[[functions]]
-name = "verify-phonepe-payment"
-verify_jwt = true
-cors = {origin = ["http://localhost:8080", "http://localhost:3000", "*"], headers = ["authorization", "x-client-info", "apikey", "content-type"], methods = ["POST", "OPTIONS"]}
-
-[[functions]]
-name = "webhook-phonepe-payment"
-verify_jwt = false
-cors = {origin = ["*"], headers = ["authorization", "x-client-info", "apikey", "content-type", "x-verify"], methods = ["POST", "OPTIONS"]}
