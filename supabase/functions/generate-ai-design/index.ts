@@ -205,18 +205,21 @@ function generatePrompt(theme: any, answers: any[]): string {
     }).join('\n\n');
 
     // Create a prompt that follows OpenAI guidelines
-    const prompt = `Create a visually compelling t-shirt design illustration based on the theme: ${sanitizedThemeName}.
-Theme description: ${sanitizedDescription}
+    const prompt = `Create a flat, high-resolution illustration for apparel print influnced by  
+    Themes: ${sanitizedThemeName} and 
+    Theme description: ${sanitizedDescription}
 
 The design should incorporate these preferences:
 ${formattedQA}
 
-Keep the design coherent, purposeful, and suitable for a t-shirt print.
-Emphasize creativity with a balanced, professional layout.
-Use colors creatively while maintaining visual clarity.
-Make the design suitable for placement on a t-shirt front.
-Do not include any text in the design unless specifically requested.
-Keep the design family-friendly and universally appropriate.`;
+Requirements:
+- Show ONLY the design artwork.
+- DO NOT include any t-shirt, clothing, model, or mockup.
+- Isolate the design on a plain white background.
+- Avoid 3D, shadows, or folds.
+- Use a clean, vector-style design suitable for printing.
+- No text unless explicitly requested.
+`;
 
     return prompt;
   } catch (error) {
