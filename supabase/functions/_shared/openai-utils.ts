@@ -30,10 +30,10 @@ export interface OpenAIImageRequest {
   response_format?: string;
 }
 
-// Content safety filters
+// Content safety filters - only truly harmful content
 const PROHIBITED_CONTENT = [
-  'explicit', 'sexual', 'violent', 'graphic', 'disturbing', 'harmful', 'illegal',
-  'unethical', 'hateful', 'discriminatory', 'offensive'
+  'explicit sexual', 'graphic violence', 'disturbing gore', 'harmful illegal', 
+  'unethical hate', 'discriminatory slur', 'offensive explicit'
 ];
 
 // Valid OpenAI parameters

@@ -117,11 +117,23 @@ Deno.serve(async (req) => {
           const supabaseKey = getRequiredEnvVar('SUPABASE_SERVICE_ROLE_KEY');
 
           const supabase = createClient(supabaseUrl, supabaseKey);
+          
+          // Convert theme.id to proper UUID format if it's a number
+          let themeId = null;
+          if (theme.id) {
+            if (typeof theme.id === 'number') {
+              // Map numeric theme IDs to UUIDs - this would need proper mapping
+              themeId = null; // Skip theme_id for now if it's numeric
+            } else if (typeof theme.id === 'string' && theme.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+              themeId = theme.id;
+            }
+          }
+          
           const { error } = await supabase.from('ai_generated_designs').insert({
             user_id: userId,
             design_image: `data:image/png;base64,${imageBase64}`,
             prompt: prompt,
-            theme_id: theme.id || null,
+            theme_id: themeId,
             is_favorite: false
           });
 

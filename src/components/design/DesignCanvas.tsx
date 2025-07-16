@@ -35,6 +35,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
   const [isUnderline, setIsUnderline] = useState<boolean>(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [isLoadingImage, setIsLoadingImage] = useState<boolean>(false);
+  const [isProcessingInitialImage, setIsProcessingInitialImage] = useState<boolean>(false);
 
   // Refs to track state
   const canvasInitializedRef = useRef(false);
@@ -393,6 +394,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     lastProcessedImageRef.current = initialImage;
     updateInProgressRef.current = true;
     setIsLoadingImage(true);
+    setIsProcessingInitialImage(true);
 
     try {
       // Remove placeholder text if it exists
@@ -458,11 +460,13 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
                 }, 100);
               }
               setIsLoadingImage(false);
+              setIsProcessingInitialImage(false);
               updateInProgressRef.current = false;
             }, 200);
           } catch (imgError) {
             console.error("Error processing image:", imgError);
             setIsLoadingImage(false);
+            setIsProcessingInitialImage(false);
             updateInProgressRef.current = false;
           }
         },
@@ -470,6 +474,7 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
     } catch (error) {
       console.error("Error in image processing:", error);
       setIsLoadingImage(false);
+      setIsProcessingInitialImage(false);
       updateInProgressRef.current = false;
     }
   }, [initialImage, canvas]);
@@ -1025,6 +1030,12 @@ const DesignCanvas = ({ tshirtColor, initialImage, onDesignChange }: DesignCanva
           className="canvas-container relative border border-gray-300 shadow-md mb-4"
         >
           <canvas ref={canvasRef} />
+          {isProcessingInitialImage && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 rounded-lg">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <p className="mt-2 text-blue-800 text-sm font-medium">Processing design...</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
