@@ -1,6 +1,9 @@
 
 project_id = "mqqgfcghppkivptpjwxi"
 
+[functions]
+ignore = ["_shared"]
+
 [api]
 enabled = true
 port = 54321
