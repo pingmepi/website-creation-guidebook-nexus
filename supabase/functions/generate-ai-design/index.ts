@@ -15,7 +15,7 @@ import {
   logInfo,
   logError,
   logDebug
-} from '../_shared/error-utils';
+} from '../_shared/error-utils.ts';
 
 import {
   createOpenAIClient,
@@ -24,7 +24,7 @@ import {
   extractImageData,
   sanitizePromptText,
   OpenAIImageRequest
-} from '../_shared/openai-utils';
+} from '../_shared/openai-utils.ts';
 
 // Type declaration for Deno global
 declare const Deno: {
