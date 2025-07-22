@@ -52,26 +52,6 @@ export const ProductQuickView = ({ children, product, onAddToCart }: ProductQuic
               <p className="text-2xl font-bold text-primary mt-2">{product.price}</p>
             </div>
             
-            {product.colorOptions && (
-              <div>
-                <h4 className="font-medium mb-2">Colors</h4>
-                <div className="flex gap-2">
-                  {product.colorOptions.map((color) => (
-                    <button
-                      key={color}
-                      className={`w-8 h-8 rounded-full border-2 ${
-                        selectedColor === color ? 'ring-2 ring-primary ring-offset-2' : 'border-gray-300'
-                      }`}
-                      style={{ backgroundColor: color }}
-                      onClick={() => setSelectedColor(color)}
-                      aria-label={`Select ${getColorName(color)} color`}
-                      title={getColorName(color)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-            
             <Button 
               onClick={onAddToCart}
               className="w-full flex items-center gap-2"
