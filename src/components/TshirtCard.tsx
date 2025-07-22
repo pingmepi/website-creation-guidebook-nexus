@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Eye, ShoppingCart, Check } from "lucide-react";
-import { Link } from "react-router-dom";
+
 import { useUser } from "@/contexts/UserContext";
 import { useCart } from "@/contexts/CartContext";
 import { ImagePopup } from "@/components/ui/image-popup";
@@ -129,22 +129,13 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
         </div>
       </div>
       <CardContent className="pt-4">
-        <Link to={`/product/${id}`}>
-          <h3 className="font-medium hover:text-blue-600 transition-colors">{name}</h3>
-        </Link>
+        <ProductQuickView 
+          product={{ id, name, price, image, colorOptions }}
+          onAddToCart={handleAddToCart}
+        >
+          <h3 className="font-medium hover:text-blue-600 transition-colors cursor-pointer">{name}</h3>
+        </ProductQuickView>
         <p className="text-lg font-medium mt-1">{price}</p>
-        <div className="flex gap-2 mt-3">
-          {colorOptions.map((color) => (
-            <button
-              key={color}
-              className={`w-5 h-5 rounded-full border ${selectedColor === color ? 'ring-2 ring-blue-500 ring-offset-2' : 'border-gray-300'}`}
-              style={{ backgroundColor: color }}
-              onClick={() => setSelectedColor(color)}
-              aria-label={`Select ${getColorName(color)} color`}
-              title={getColorName(color)}
-            />
-          ))}
-        </div>
       </CardContent>
     </Card>
   );

@@ -24,7 +24,7 @@ export interface ErrorResponse {
 // Standard success response interface
 export interface SuccessResponse {
   success: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // Error types for better categorization
@@ -44,14 +44,14 @@ export enum ErrorType {
 export class EdgeFunctionError extends Error {
   public readonly type: ErrorType;
   public readonly statusCode: number;
-  public readonly details?: any;
+  public readonly details?: unknown;
   public readonly retryable: boolean;
 
   constructor(
     message: string,
     type: ErrorType = ErrorType.INTERNAL,
     statusCode: number = 500,
-    details?: any,
+    details?: unknown,
     retryable: boolean = false
   ) {
     super(message);
@@ -83,10 +83,10 @@ export const defaultRetryConfig: RetryConfig = {
 export async function retryOperation<T>(
   operation: () => Promise<T>,
   config: Partial<RetryConfig> = {},
-  shouldRetry?: (error: any) => boolean
+  shouldRetry?: (error: Error) => boolean
 ): Promise<T> {
   const finalConfig = { ...defaultRetryConfig, ...config };
-  let lastError: any;
+  let lastError: Error;
   let delay = finalConfig.initialDelay;
 
   for (let attempt = 1; attempt <= finalConfig.maxRetries; attempt++) {
@@ -119,7 +119,7 @@ export async function retryOperation<T>(
 }
 
 // Helper function to determine if an error should be retried
-export function shouldRetryError(error: any): boolean {
+export function shouldRetryError(error: Error & { status?: number }): boolean {
   // Retry on network errors, rate limits, and server errors
   if (error instanceof EdgeFunctionError) {
     return error.retryable;
@@ -142,7 +142,7 @@ export function shouldRetryError(error: any): boolean {
 export function createErrorResponse(
   error: string | EdgeFunctionError,
   statusCode?: number,
-  details?: any
+  details?: unknown
 ): Response {
   let errorData: ErrorResponse;
   let status: number;
@@ -171,7 +171,7 @@ export function createErrorResponse(
   );
 }
 
-export function createSuccessResponse(data: any, statusCode: number = 200): Response {
+export function createSuccessResponse(data: unknown, statusCode: number = 200): Response {
   return new Response(
     JSON.stringify(data),
     {
@@ -189,7 +189,7 @@ export function createOptionsResponse(): Response {
 }
 
 // Input validation utilities
-export function validateRequired(value: any, fieldName: string): void {
+export function validateRequired(value: unknown, fieldName: string): void {
   if (value === undefined || value === null || value === '') {
     throw new EdgeFunctionError(
       `${fieldName} is required`,
@@ -199,7 +199,7 @@ export function validateRequired(value: any, fieldName: string): void {
   }
 }
 
-export function validateArray(value: any, fieldName: string, minLength: number = 1): void {
+export function validateArray(value: unknown, fieldName: string, minLength: number = 1): void {
   if (!Array.isArray(value)) {
     throw new EdgeFunctionError(
       `${fieldName} must be an array`,
@@ -216,7 +216,7 @@ export function validateArray(value: any, fieldName: string, minLength: number =
   }
 }
 
-export function validateString(value: any, fieldName: string, minLength: number = 1): void {
+export function validateString(value: unknown, fieldName: string, minLength: number = 1): void {
   if (typeof value !== 'string') {
     throw new EdgeFunctionError(
       `${fieldName} must be a string`,
@@ -233,7 +233,7 @@ export function validateString(value: any, fieldName: string, minLength: number 
   }
 }
 
-export function validateNumber(value: any, fieldName: string, min?: number, max?: number): void {
+export function validateNumber(value: unknown, fieldName: string, min?: number, max?: number): void {
   if (typeof value !== 'number' || isNaN(value)) {
     throw new EdgeFunctionError(
       `${fieldName} must be a valid number`,
@@ -275,7 +275,7 @@ export function getOptionalEnvVar(name: string, defaultValue: string = ''): stri
 }
 
 // JSON parsing with error handling
-export async function parseJsonBody(req: Request): Promise<any> {
+export async function parseJsonBody(req: Request): Promise<Record<string, unknown>> {
   try {
     return await req.json();
   } catch (error) {
@@ -283,13 +283,13 @@ export async function parseJsonBody(req: Request): Promise<any> {
       'Invalid JSON in request body',
       ErrorType.VALIDATION,
       400,
-      error.message
+      (error as Error).message
     );
   }
 }
 
 // Authentication helper
-export async function getAuthenticatedUser(req: Request, supabaseClient: any): Promise<any> {
+export async function getAuthenticatedUser(req: Request, supabaseClient: unknown): Promise<{ id: string; email?: string }> {
   const authHeader = req.headers.get('Authorization');
   if (!authHeader) {
     throw new EdgeFunctionError(
@@ -315,18 +315,18 @@ export async function getAuthenticatedUser(req: Request, supabaseClient: any): P
 }
 
 // Logging utilities with consistent formatting
-export function logInfo(message: string, data?: any): void {
+export function logInfo(message: string, data?: unknown): void {
   console.log(`✅ ${message}`, data ? JSON.stringify(data, null, 2) : '');
 }
 
-export function logError(message: string, error?: any): void {
+export function logError(message: string, error?: unknown): void {
   console.error(`❌ ${message}`, error);
 }
 
-export function logWarning(message: string, data?: any): void {
+export function logWarning(message: string, data?: unknown): void {
   console.warn(`⚠️ ${message}`, data ? JSON.stringify(data, null, 2) : '');
 }
 
-export function logDebug(message: string, data?: any): void {
+export function logDebug(message: string, data?: unknown): void {
   console.log(`🔍 ${message}`, data ? JSON.stringify(data, null, 2) : '');
 }

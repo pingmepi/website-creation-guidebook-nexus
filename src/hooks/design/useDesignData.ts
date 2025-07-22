@@ -1,10 +1,10 @@
-
-import { useState, useEffect } from "react";
-import { Theme, TSHIRT_COLORS } from "./types";
+import { useState, useEffect, useCallback } from "react";
+import { Theme } from "./types";
+import { TSHIRT_COLORS } from "./constants";
 import { Answer } from "@/components/design/QuestionFlow";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { useUser } from "@/contexts/UserContext";
 
 export function useDesignData(setDesignStage: () => void) {
@@ -15,35 +15,14 @@ export function useDesignData(setDesignStage: () => void) {
   const [designName, setDesignName] = useState<string>("");
   const [tshirtColor, setTshirtColor] = useState(TSHIRT_COLORS.WHITE);
   const [designImage, setDesignImage] = useState<string | undefined>(undefined);
+  const [selectedSize, setSelectedSize] = useState<string>("M");
   const [isLoading, setIsLoading] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Extract design ID from URL query parameters
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const id = params.get('id');
-
-    if (id) {
-      setDesignId(id);
-      fetchDesignData(id);
-    } else {
-      // Generate a design name using the current date and time
-      if (!designName) {
-        const date = new Date();
-        setDesignName(`Design ${date.toLocaleString("en-US", {
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "numeric"
-        })}`);
-      }
-    }
-  }, [location.search]);
-
   // Fetch existing design data if editing
-  const fetchDesignData = async (id: string) => {
+  const fetchDesignData = useCallback(async (id: string) => {
     try {
       setIsLoading(true);
 
@@ -120,7 +99,29 @@ export function useDesignData(setDesignStage: () => void) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setDesignStage, navigate]);
+
+  // Extract design ID from URL query parameters
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+
+    if (id) {
+      setDesignId(id);
+      fetchDesignData(id);
+    } else {
+      // Generate a design name using the current date and time
+      if (!designName) {
+        const date = new Date();
+        setDesignName(`Design ${date.toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "numeric"
+        })}`);
+      }
+    }
+  }, [location.search, designName, fetchDesignData]);
 
   const handleDesignChange = (designDataUrl: string) => {
     console.log("Design canvas updated");
@@ -167,6 +168,7 @@ export function useDesignData(setDesignStage: () => void) {
     designId,
     designName,
     tshirtColor,
+    selectedSize,
     designImage,
     isLoading,
     setSelectedTheme,
@@ -174,6 +176,7 @@ export function useDesignData(setDesignStage: () => void) {
     setDesignId,
     setDesignName,
     setTshirtColor,
+    setSelectedSize,
     setDesignImage,
     setIsLoading,
     fetchDesignData,

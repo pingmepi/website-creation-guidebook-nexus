@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useUser } from './UserContext';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/toast';
 import { tshirtImages } from '../../assets';
 import { Answer } from '@/components/design/QuestionFlow';
 
@@ -58,7 +58,7 @@ export const useCart = () => {
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Add try-catch for useUser hook to handle race conditions
-  let user: any = null;
+  let user: { id: string } | null = null;
   let isAuthenticated = false;
   
   try {
@@ -73,19 +73,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [customDesigns, setCustomDesigns] = useState<CustomDesign[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const mockProducts = [
-    { id: "1", name: "Classic White Tee", price: "$24.99", image: tshirtImages.mockup1 },
-    { id: "2", name: "Urban Black Design", price: "$29.99", image: tshirtImages.mockup2 },
-    { id: "3", name: "Summer Collection", price: "$26.99", image: tshirtImages.mockup3 },
-    { id: "4", name: "Vintage Edition", price: "$32.99", image: tshirtImages.mockup4 },
-    { id: "5", name: "Modern Minimalist", price: "$27.99", image: tshirtImages.mockup5 },
-    { id: "6", name: "Artist Series", price: "$34.99", image: tshirtImages.mockup6 },
-    { id: "7", name: "Classic Blue Tee", price: "$24.99", image: tshirtImages.mockup1 },
-    { id: "8", name: "Urban Gray Design", price: "$29.99", image: tshirtImages.mockup2 },
-    { id: "9", name: "Winter Collection", price: "$26.99", image: tshirtImages.mockup3 }
-  ];
+  const mockProducts = useMemo(() => [
+    { id: "1", name: "Classic White Tee", price: "₹2,070", image: tshirtImages.mockup1 },
+    { id: "2", name: "Urban Black Design", price: "₹2,490", image: tshirtImages.mockup2 },
+    { id: "3", name: "Summer Collection", price: "₹2,240", image: tshirtImages.mockup3 },
+    { id: "4", name: "Vintage Edition", price: "₹2,740", image: tshirtImages.mockup4 },
+    { id: "5", name: "Modern Minimalist", price: "₹2,320", image: tshirtImages.mockup5 },
+    { id: "6", name: "Artist Series", price: "₹2,900", image: tshirtImages.mockup6 },
+    { id: "7", name: "Classic Blue Tee", price: "₹2,070", image: tshirtImages.mockup1 },
+    { id: "8", name: "Urban Gray Design", price: "₹2,490", image: tshirtImages.mockup2 },
+    { id: "9", name: "Winter Collection", price: "₹2,240", image: tshirtImages.mockup3 }
+  ], []);
 
-  const fetchCartItems = async () => {
+  const fetchCartItems = useCallback(async () => {
     if (!user) {
       setCartItems([]);
       return;
@@ -119,9 +119,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, mockProducts]);
 
-  const fetchCustomDesigns = async () => {
+  const fetchCustomDesigns = useCallback(async () => {
     if (!user) {
       setCustomDesigns([]);
       return;
@@ -152,7 +152,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Error fetching custom designs:', error);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -187,7 +187,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCartItems([]);
       setCustomDesigns([]);
     }
-  }, [user, isAuthenticated]);
+  }, [user, isAuthenticated, fetchCartItems, fetchCustomDesigns]);
 
   const addToCart = async (variantId: string, quantity: number = 1) => {
     if (!user) {
@@ -296,9 +296,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .insert({
           user_id: user.id,
           design_image: customDesign.design_image,
-          answers: customDesign.answers as any,
+          answers: JSON.stringify(customDesign.answers) as any,
           base_price: customDesign.base_price,
-          design_data: customDesign.design_data as any,
+          design_data: JSON.stringify(customDesign.design_data) as any,
           design_name: customDesign.design_name,
           theme_name: customDesign.theme_name,
           tshirt_color: customDesign.tshirt_color

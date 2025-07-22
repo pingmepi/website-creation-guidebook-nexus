@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     }
 
     // Parse webhook payload
-    let webhookData: any;
+    let webhookData: Record<string, unknown>;
     try {
       webhookData = JSON.parse(body);
     } catch (error) {

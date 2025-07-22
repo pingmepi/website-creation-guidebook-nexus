@@ -30,21 +30,21 @@ const ShippingPolicy = () => {
           
           <div className="grid md:grid-cols-2 gap-6">
             <div className="border rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Domestic Shipping (US)</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Domestic Shipping (India)</h3>
               <ul className="text-gray-600 space-y-2">
-                <li><strong>Standard (5-7 business days):</strong> $5.99</li>
-                <li><strong>Express (2-3 business days):</strong> $12.99</li>
-                <li><strong>Overnight (1 business day):</strong> $24.99</li>
+                <li><strong>Standard (5-7 business days):</strong> ₹99</li>
+                <li><strong>Express (2-3 business days):</strong> ₹199</li>
+                <li><strong>Same Day (within city):</strong> ₹299</li>
               </ul>
-              <p className="text-sm text-green-600 mt-2">Free standard shipping on orders over $50!</p>
+              <p className="text-sm text-green-600 mt-2">Free standard shipping on orders over ₹999!</p>
             </div>
-            
+
             <div className="border rounded-lg p-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">International Shipping</h3>
               <ul className="text-gray-600 space-y-2">
-                <li><strong>Canada (7-14 business days):</strong> $15.99</li>
-                <li><strong>Europe (10-21 business days):</strong> $19.99</li>
-                <li><strong>Rest of World (14-28 business days):</strong> $24.99</li>
+                <li><strong>Asia (7-14 business days):</strong> ₹1,299</li>
+                <li><strong>Europe (10-21 business days):</strong> ₹1,699</li>
+                <li><strong>Rest of World (14-28 business days):</strong> ₹1,999</li>
               </ul>
               <p className="text-sm text-orange-600 mt-2">Additional customs fees may apply</p>
             </div>

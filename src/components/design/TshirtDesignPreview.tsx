@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { TSHIRT_COLOR_IMAGES } from "@/hooks/design/types";
+import { TSHIRT_COLOR_IMAGES } from "@/hooks/design/constants";
 
 interface TshirtDesignPreviewProps {
   color?: string;
@@ -133,14 +133,15 @@ const TshirtDesignPreview = ({ color = "#FFFFFF", designImage }: TshirtDesignPre
         />
         <span className="text-sm text-gray-700 font-medium capitalize">
           {(() => {
-            const colorNames = {
+            // Import color names from constants to avoid duplication
+            const colorNames: Record<string, string> = {
               "#000000": "Black",
               "#FFFFFF": "White",
               "#DC2626": "Red",
               "#8A898C": "Grey",
               "#1EAEDB": "Blue"
             };
-            return colorNames[color as keyof typeof colorNames] || "Custom";
+            return colorNames[color] || "Custom";
           })()}
         </span>
       </div>

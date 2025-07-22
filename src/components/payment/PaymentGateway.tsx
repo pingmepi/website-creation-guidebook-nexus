@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Smartphone, AlertCircle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 import PaymentTimer from "./PaymentTimer";
 import { usePaymentRetry } from "@/hooks/usePaymentRetry";
@@ -62,7 +62,7 @@ const PaymentGateway = ({
           }
         },
         (error) => {
-          const errorCode = (error as any)?.details?.code || (error as any)?.code || "UNKNOWN_ERROR";
+          const errorCode = (error as Error & { details?: { code?: string }; code?: string })?.details?.code || (error as Error & { code?: string })?.code || "UNKNOWN_ERROR";
           setLastError(getErrorMessage(errorCode));
           return isRetryableError(errorCode);
         }
@@ -70,8 +70,8 @@ const PaymentGateway = ({
 
     } catch (error) {
       console.error("PhonePe payment error:", error);
-      
-      const errorCode = (error as any)?.details?.code || "UNKNOWN_ERROR";
+
+      const errorCode = (error as Error & { details?: { code?: string } })?.details?.code || "UNKNOWN_ERROR";
       const userFriendlyMessage = getErrorMessage(errorCode);
       
       setLastError(userFriendlyMessage);

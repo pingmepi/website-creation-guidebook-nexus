@@ -4,7 +4,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useDesignStorage } from "./useDesignStorage";
 import { toast } from "@/hooks/use-toast";
 import { ErrorLogger } from "@/services/ErrorLogger";
-import { Theme } from "./useDesignTypes";
+import { Theme } from "./types";
 import { Answer } from "@/components/design/QuestionFlow";
 
 export function useDesignUI() {

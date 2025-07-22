@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { useCart } from "@/contexts/CartContext";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { Answer } from "./QuestionFlow";
 
 interface AddToCartButtonProps {
   designImage?: string;
   tshirtColor: string;
+  selectedSize?: string;
   designName: string;
   answers: Answer[];
   onSaveDesign?: () => void;
@@ -17,6 +18,7 @@ interface AddToCartButtonProps {
 const AddToCartButton = ({
   designImage,
   tshirtColor,
+  selectedSize = "M",
   designName,
   answers,
   onSaveDesign
@@ -49,6 +51,7 @@ const AddToCartButton = ({
         design_name: designName || "Custom Design",
         design_image: designImage,
         tshirt_color: tshirtColor,
+        selected_size: selectedSize,
         base_price: 2499, // Updated to INR pricing
         theme_name: answers.find(a => a.question?.includes("theme"))?.answer || "Custom",
         answers: answers,

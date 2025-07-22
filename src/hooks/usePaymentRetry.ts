@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 interface UsePaymentRetryProps {
   maxRetries?: number;

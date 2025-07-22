@@ -34,14 +34,14 @@ export const useCanvasObjectManager = ({
   };
 
   // Helper methods for object manipulation
-  const updateActiveObject = (property: string, value: any) => {
+  const updateActiveObject = (property: string, value: unknown) => {
     if (!canvas || updateInProgressRef.current) return;
-    
+
     const activeObject = canvas.getActiveObject();
     if (activeObject) {
       try {
         updateInProgressRef.current = true;
-        activeObject.set(property as any, value);
+        activeObject.set({ [property]: value });
         canvas.renderAll();
         
         if (onDesignChange) {

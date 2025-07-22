@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useUser } from "@/contexts/UserContext";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Palette, Edit, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 interface Design {
   id: string;
@@ -23,7 +23,7 @@ const SavedDesigns = () => {
   const [designs, setDesigns] = useState<Design[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchDesigns = async () => {
+  const fetchDesigns = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -44,7 +44,7 @@ const SavedDesigns = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const handleDeleteDesign = async (id: string) => {
     if (!confirm("Are you sure you want to delete this design?")) return;
@@ -67,7 +67,7 @@ const SavedDesigns = () => {
 
   useEffect(() => {
     fetchDesigns();
-  }, [user]);
+  }, [user, fetchDesigns]);
 
   return (
     <DashboardLayout title="My Designs">

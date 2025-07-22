@@ -7,7 +7,7 @@ import TshirtDesignPreview from "./TshirtDesignPreview";
 import { Separator } from "@/components/ui/separator";
 import { Save, Loader2 } from "lucide-react";
 import { Answer } from "./QuestionFlow";
-import DesignCanvas from "./DesignCanvas";
+import CanvasManager from "./canvas/CanvasManager";
 import { CanvasErrorBoundary } from "@/components/error/CanvasErrorBoundary";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import AddToCartButton from "./AddToCartButton";
@@ -21,8 +21,10 @@ interface CustomizationSectionProps {
   isGenerating?: boolean;
   tshirtColors: Record<string, string>;
   designName: string;
+  selectedSize?: string;
   onDesignNameChange?: (name: string) => void;
   onColorChange: (color: string) => void;
+  onSizeChange?: (size: string) => void;
   onDesignChange: (designDataUrl: string) => void;
   onSaveDesign: () => void;
 }
@@ -35,21 +37,28 @@ const CustomizationSection = ({
   isGenerating,
   tshirtColors,
   designName,
+  selectedSize = "M",
   onDesignNameChange,
   onColorChange,
+  onSizeChange,
   onDesignChange,
   onSaveDesign
 }: CustomizationSectionProps) => {
-  // Enhanced color options with proper names
-  const enhancedTshirtColors = {
-    ...tshirtColors,
-    RED: "#DC2626" // Add red to existing colors
-  };
-  
-  const tshirtColorOptions = Object.entries(enhancedTshirtColors).map(([name, value]) => ({
-    name: name.charAt(0) + name.slice(1).toLowerCase(), // Capitalize first letter
+  // Use centralized color definitions
+  const tshirtColorOptions = Object.entries(tshirtColors).map(([name, value]) => ({
+    name: name.charAt(0) + name.slice(1).toLowerCase(),
     value
   }));
+
+  // Import sizes from constants
+  const tshirtSizes = [
+    { name: "XS", value: "XS" },
+    { name: "S", value: "S" },
+    { name: "M", value: "M" },
+    { name: "L", value: "L" },
+    { name: "XL", value: "XL" },
+    { name: "XXL", value: "XXL" }
+  ];
 
   // Debounced design name change to prevent excessive logging
   const handleDesignNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,40 +96,65 @@ const CustomizationSection = ({
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-medium text-lg">Design Tools</h3>
                 
-                {/* T-shirt Color Selection */}
-                <div className="flex items-center">
-                  <label className="text-sm font-medium text-gray-700 mr-2">
-                    T-Shirt Color:
-                  </label>
-                  <Select
-                    value={tshirtColor}
-                    onValueChange={onColorChange}
-                    disabled={isGenerating}
-                  >
-                    <SelectTrigger className="bg-white w-36">
-                      <SelectValue placeholder="Select a color" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tshirtColorOptions.map(option => (
-                        <SelectItem key={option.name} value={option.value}>
-                          <div className="flex items-center">
-                            <div 
-                              className="w-4 h-4 rounded-full mr-2 border border-gray-300" 
-                              style={{ backgroundColor: option.value }}
-                            />
-                            {option.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                {/* T-shirt Color and Size Selection */}
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center">
+                    <label className="text-sm font-medium text-gray-700 mr-2">
+                      T-Shirt Color:
+                    </label>
+                    <Select
+                      value={tshirtColor}
+                      onValueChange={onColorChange}
+                      disabled={isGenerating}
+                    >
+                      <SelectTrigger className="bg-white w-36">
+                        <SelectValue placeholder="Select a color" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tshirtColorOptions.map(option => (
+                          <SelectItem key={option.name} value={option.value}>
+                            <div className="flex items-center">
+                              <div 
+                                className="w-4 h-4 rounded-full mr-2 border border-gray-300" 
+                                style={{ backgroundColor: option.value }}
+                              />
+                              {option.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* T-shirt Size Selection */}
+                  <div className="flex items-center">
+                    <label className="text-sm font-medium text-gray-700 mr-2">
+                      Size:
+                    </label>
+                    <Select
+                      value={selectedSize}
+                      onValueChange={onSizeChange}
+                      disabled={isGenerating}
+                    >
+                      <SelectTrigger className="bg-white w-24">
+                        <SelectValue placeholder="Select size" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tshirtSizes.map(size => (
+                          <SelectItem key={size.value} value={size.value}>
+                            {size.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
               
               {/* Design Canvas Tools with Error Boundary */}
               <div className="mb-4">
                 <CanvasErrorBoundary>
-                  <DesignCanvas 
+                  <CanvasManager 
                     tshirtColor={tshirtColor} 
                     onDesignChange={handleCanvasDesignChange}
                     initialImage={designImage}
@@ -175,6 +209,7 @@ const CustomizationSection = ({
                 <AddToCartButton 
                   designImage={designImage}
                   tshirtColor={tshirtColor}
+                  selectedSize={selectedSize}
                   designName={designName}
                   answers={answers}
                   onSaveDesign={onSaveDesign}
@@ -183,6 +218,7 @@ const CustomizationSection = ({
                 <PlaceOrderButton 
                   designImage={designImage}
                   tshirtColor={tshirtColor}
+                  selectedSize={selectedSize}
                   designName={designName}
                   answers={answers}
                   onSaveDesign={onSaveDesign}

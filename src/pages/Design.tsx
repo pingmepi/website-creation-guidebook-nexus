@@ -19,6 +19,7 @@ const Design = () => {
     showConfirmation,
     showLoginDialog,
     tshirtColor,
+    selectedSize,
     designImage,
     isSaving,
     isGenerating,
@@ -27,6 +28,7 @@ const Design = () => {
     setShowConfirmation,
     setShowLoginDialog,
     setTshirtColor,
+    setSelectedSize,
     setDesignName,
     handleThemeSelect,
     handleQuestionFlowComplete,
@@ -63,6 +65,7 @@ const Design = () => {
                 <CustomizationSection
                   answers={answers}
                   tshirtColor={tshirtColor}
+                  selectedSize={selectedSize}
                   designImage={designImage}
                   isSaving={isSaving}
                   isGenerating={isGenerating}
@@ -70,6 +73,7 @@ const Design = () => {
                   designName={designName}
                   onDesignNameChange={setDesignName}
                   onColorChange={setTshirtColor}
+                  onSizeChange={setSelectedSize}
                   onDesignChange={handleDesignChange}
                   onSaveDesign={handleSaveDesign}
                 />

@@ -48,7 +48,11 @@ Deno.serve(async (req) => {
     const body = await parseJsonBody(req);
     logDebug("Request Payload", body);
 
-    const { theme, answers, userId } = body;
+    const { theme, answers, userId } = body as {
+      theme: { id: string | number; name?: string };
+      answers: Array<{ question: string; answer: string }>;
+      userId?: string
+    };
 
     // Validate required parameters
     validateRequired(theme, 'theme');
@@ -59,7 +63,7 @@ Deno.serve(async (req) => {
     const openaiApiKey = getRequiredEnvVar('OPEN_AI_API_KEY');
 
     // Validate answers input more thoroughly
-    const validAnswers = answers.filter((answer: any) =>
+    const validAnswers = answers.filter((answer) =>
       answer && typeof answer.question === 'string' && typeof answer.answer === 'string'
     );
 
@@ -119,7 +123,7 @@ Deno.serve(async (req) => {
           const supabase = createClient(supabaseUrl, supabaseKey);
           
           // Convert theme.id to proper UUID format if it's a number
-          let themeId = null;
+          let themeId: string | null = null;
           if (theme.id) {
             if (typeof theme.id === 'number') {
               // Map numeric theme IDs to UUIDs - this would need proper mapping
@@ -187,7 +191,7 @@ Deno.serve(async (req) => {
 });
 
 // Enhanced prompt generator with validation and sanitization
-function generatePrompt(theme: any, answers: any[]): string {
+function generatePrompt(theme: { name?: string; description?: string }, answers: Array<{ question: string; answer: string }>): string {
   try {
     // Format theme information
     const themeName = theme.name || 'Unknown Theme';
@@ -205,7 +209,7 @@ function generatePrompt(theme: any, answers: any[]): string {
     }).join('\n\n');
 
     // Create a prompt that follows OpenAI guidelines
-    const prompt = `Create a flat, high-resolution illustration for apparel print influnced by  
+    const prompt = `Create a flat, high-resolution illustration for print influenced by  
     Themes: ${sanitizedThemeName} and 
     Theme description: ${sanitizedDescription}
 
@@ -213,12 +217,13 @@ The design should incorporate these preferences:
 ${formattedQA}
 
 Requirements:
-- Show ONLY the design artwork.
+- Show ONLY the design artwork, without any additional elements or text.
 - DO NOT include any t-shirt, clothing, model, or mockup.
 - Isolate the design on a plain white background.
 - Avoid 3D, shadows, or folds.
 - Use a clean, vector-style design suitable for printing.
 - No text unless explicitly requested.
+- Ensure the design is centered and balanced.
 `;
 
     return prompt;

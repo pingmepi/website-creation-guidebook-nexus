@@ -129,7 +129,7 @@ export function validatePromptContent(prompt: string): void {
 }
 
 // Sanitize text input for prompts
-export function sanitizePromptText(text: any): string {
+export function sanitizePromptText(text: unknown): string {
   if (!text || typeof text !== 'string') return '';
   
   // Remove potentially problematic characters
@@ -151,7 +151,7 @@ export function sanitizePromptText(text: any): string {
 export async function generateImageWithRetry(
   client: OpenAI,
   request: OpenAIImageRequest
-): Promise<any> {
+): Promise<{ data: Array<{ b64_json?: string; url?: string; revised_prompt?: string }> }> {
   // Validate request before making API call
   validateOpenAIRequest(request);
   validatePromptContent(request.prompt);
@@ -277,7 +277,7 @@ export async function generateFallbackImage(apiKey: string): Promise<Response> {
 }
 
 // Extract and validate image data from OpenAI response
-export function extractImageData(response: any): { imageBase64?: string; imageUrl?: string } {
+export function extractImageData(response: { data?: Array<{ b64_json?: string; url?: string }> }): { imageBase64?: string; imageUrl?: string } {
   const imageData = response.data?.[0];
   const imageBase64 = imageData?.b64_json;
   const imageUrl = imageData?.url;

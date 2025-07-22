@@ -101,9 +101,9 @@ const TermsConditions = () => {
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Pricing and Payment</h3>
               <ul className="list-disc pl-6 text-gray-600 space-y-1">
-                <li>All prices are in USD and subject to change without notice</li>
+                <li>All prices are in INR (Indian Rupees) and subject to change without notice</li>
                 <li>Payment is required at the time of order</li>
-                <li>We accept major credit cards and PayPal</li>
+                <li>We accept UPI, credit/debit cards, net banking, and digital wallets</li>
                 <li>Additional taxes and shipping fees may apply</li>
               </ul>
             </div>

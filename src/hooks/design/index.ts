@@ -83,6 +83,7 @@ export function useDesignState() {
     designId: data.designId,
     designName: data.designName,
     tshirtColor: data.tshirtColor,
+    selectedSize: data.selectedSize,
     designImage: data.designImage,
     
     // UI state
@@ -96,6 +97,7 @@ export function useDesignState() {
     setShowConfirmation: navigation.setShowConfirmation,
     setShowLoginDialog: navigation.setShowLoginDialog,
     setTshirtColor: data.setTshirtColor,
+    setSelectedSize: data.setSelectedSize,
     setDesignName: data.setDesignName,
     
     // Handlers
