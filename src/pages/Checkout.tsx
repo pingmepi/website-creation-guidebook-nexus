@@ -58,15 +58,15 @@ const Checkout = () => {
   });
 
   const mockProducts = [
-    { id: "1", name: "Classic White Tee", price: "$24.99", image: tshirtImages.mockup1 },
-    { id: "2", name: "Urban Black Design", price: "$29.99", image: tshirtImages.mockup2 },
-    { id: "3", name: "Summer Collection", price: "$26.99", image: tshirtImages.mockup3 },
-    { id: "4", name: "Vintage Edition", price: "$32.99", image: tshirtImages.mockup4 },
-    { id: "5", name: "Modern Minimalist", price: "$27.99", image: tshirtImages.mockup5 },
-    { id: "6", name: "Artist Series", price: "$34.99", image: tshirtImages.mockup6 },
-    { id: "7", name: "Classic Blue Tee", price: "$24.99", image: tshirtImages.mockup1 },
-    { id: "8", name: "Urban Gray Design", price: "$29.99", image: tshirtImages.mockup2 },
-    { id: "9", name: "Winter Collection", price: "$26.99", image: tshirtImages.mockup3 }
+    { id: "1", name: "Classic White Tee", price: "₹2,070", image: tshirtImages.mockup1 },
+    { id: "2", name: "Urban Black Design", price: "₹2,490", image: tshirtImages.mockup2 },
+    { id: "3", name: "Summer Collection", price: "₹2,240", image: tshirtImages.mockup3 },
+    { id: "4", name: "Vintage Edition", price: "₹2,740", image: tshirtImages.mockup4 },
+    { id: "5", name: "Modern Minimalist", price: "₹2,320", image: tshirtImages.mockup5 },
+    { id: "6", name: "Artist Series", price: "₹2,900", image: tshirtImages.mockup6 },
+    { id: "7", name: "Classic Blue Tee", price: "₹2,070", image: tshirtImages.mockup1 },
+    { id: "8", name: "Urban Gray Design", price: "₹2,490", image: tshirtImages.mockup2 },
+    { id: "9", name: "Winter Collection", price: "₹2,240", image: tshirtImages.mockup3 }
   ];
 
   const itemsWithProducts = cartItems.map(item => {
@@ -114,7 +114,7 @@ const Checkout = () => {
 
   const calculateSubtotal = () => {
     const regularItemsTotal = itemsWithProducts.reduce((total, item) => {
-      const price = parseFloat(item.product?.price?.replace('$', '') || '0');
+      const price = parseFloat(item.product?.price?.replace('₹', '').replace(',', '') || '0');
       return total + (price * item.quantity);
     }, 0);
 
@@ -224,8 +224,8 @@ const Checkout = () => {
         order_id: order.id,
         product_id: item.product_id,
         quantity: item.quantity,
-        unit_price: parseFloat(item.product?.price?.replace('$', '') || '0'),
-        total_price: parseFloat(item.product?.price?.replace('$', '') || '0') * item.quantity
+        unit_price: parseFloat(item.product?.price?.replace('₹', '').replace(',', '') || '0'),
+        total_price: parseFloat(item.product?.price?.replace('₹', '').replace(',', '') || '0') * item.quantity
       }));
 
       // Create order items for custom designs
@@ -427,7 +427,7 @@ const Checkout = () => {
                         <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                       </div>
                       <div className="text-sm font-medium">
-                        ${(parseFloat(item.product?.price?.replace('$', '') || '0') * item.quantity).toFixed(2)}
+                        ₹{(parseFloat(item.product?.price?.replace('₹', '').replace(',', '') || '0') * item.quantity).toLocaleString('en-IN')}
                       </div>
                     </div>
                   ))}
@@ -446,7 +446,7 @@ const Checkout = () => {
                         <p className="text-sm text-gray-500">Custom Design</p>
                       </div>
                       <div className="text-sm font-medium">
-                        ${design.base_price.toFixed(2)}
+                        ₹{design.base_price.toLocaleString('en-IN')}
                       </div>
                     </div>
                   ))}
@@ -457,7 +457,7 @@ const Checkout = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal</span>
-                    <span>${calculateSubtotal()}</span>
+                    <span>₹{parseFloat(calculateSubtotal()).toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>Shipping</span>
@@ -470,7 +470,7 @@ const Checkout = () => {
                   <Separator />
                   <div className="flex justify-between font-medium">
                     <span>Total</span>
-                    <span>${calculateSubtotal()}</span>
+                    <span>₹{parseFloat(calculateSubtotal()).toLocaleString('en-IN')}</span>
                   </div>
                 </div>
 

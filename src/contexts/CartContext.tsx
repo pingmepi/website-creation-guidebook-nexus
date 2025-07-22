@@ -74,15 +74,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(false);
 
   const mockProducts = useMemo(() => [
-    { id: "1", name: "Classic White Tee", price: "$24.99", image: tshirtImages.mockup1 },
-    { id: "2", name: "Urban Black Design", price: "$29.99", image: tshirtImages.mockup2 },
-    { id: "3", name: "Summer Collection", price: "$26.99", image: tshirtImages.mockup3 },
-    { id: "4", name: "Vintage Edition", price: "$32.99", image: tshirtImages.mockup4 },
-    { id: "5", name: "Modern Minimalist", price: "$27.99", image: tshirtImages.mockup5 },
-    { id: "6", name: "Artist Series", price: "$34.99", image: tshirtImages.mockup6 },
-    { id: "7", name: "Classic Blue Tee", price: "$24.99", image: tshirtImages.mockup1 },
-    { id: "8", name: "Urban Gray Design", price: "$29.99", image: tshirtImages.mockup2 },
-    { id: "9", name: "Winter Collection", price: "$26.99", image: tshirtImages.mockup3 }
+    { id: "1", name: "Classic White Tee", price: "₹2,070", image: tshirtImages.mockup1 },
+    { id: "2", name: "Urban Black Design", price: "₹2,490", image: tshirtImages.mockup2 },
+    { id: "3", name: "Summer Collection", price: "₹2,240", image: tshirtImages.mockup3 },
+    { id: "4", name: "Vintage Edition", price: "₹2,740", image: tshirtImages.mockup4 },
+    { id: "5", name: "Modern Minimalist", price: "₹2,320", image: tshirtImages.mockup5 },
+    { id: "6", name: "Artist Series", price: "₹2,900", image: tshirtImages.mockup6 },
+    { id: "7", name: "Classic Blue Tee", price: "₹2,070", image: tshirtImages.mockup1 },
+    { id: "8", name: "Urban Gray Design", price: "₹2,490", image: tshirtImages.mockup2 },
+    { id: "9", name: "Winter Collection", price: "₹2,240", image: tshirtImages.mockup3 }
   ], []);
 
   const fetchCartItems = useCallback(async () => {

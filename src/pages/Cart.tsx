@@ -47,14 +47,14 @@ const Cart = () => {
 
   const calculateSubtotal = () => {
     const cartItemsTotal = cartItems.reduce((total, item) => {
-      const price = parseFloat(item.product?.price?.replace('₹', '') || '0');
+      const price = parseFloat(item.product?.price?.replace('₹', '').replace(',', '') || '0');
       return total + (price * item.quantity);
     }, 0);
-    
+
     const customDesignsTotal = customDesigns.reduce((total, design) => {
       return total + design.base_price;
     }, 0);
-    
+
     return (cartItemsTotal + customDesignsTotal).toFixed(2);
   };
 
