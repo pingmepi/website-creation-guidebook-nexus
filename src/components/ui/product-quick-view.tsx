@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShoppingCart } from "lucide-react";
 import { ReactNode, useState } from "react";
 
@@ -16,7 +17,7 @@ interface ProductQuickViewProps {
 }
 
 export const ProductQuickView = ({ children, product, onAddToCart }: ProductQuickViewProps) => {
-  const [selectedColor, setSelectedColor] = useState(product.colorOptions?.[0] || "#FFFFFF");
+  const [selectedSize, setSelectedSize] = useState("M");
   
   const getColorName = (color: string) => {
     const colorNames: Record<string, string> = {
@@ -52,7 +53,31 @@ export const ProductQuickView = ({ children, product, onAddToCart }: ProductQuic
               <p className="text-2xl font-bold text-primary mt-2">{product.price}</p>
             </div>
             
-            <Button 
+            <div>
+              <h4 className="font-medium mb-2">Description</h4>
+              <p className="text-muted-foreground text-sm">
+                Premium quality t-shirt made from 100% cotton. Comfortable fit with excellent durability and softness.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-medium mb-2">Size</h4>
+              <Select value={selectedSize} onValueChange={setSelectedSize}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select size" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="XS">XS</SelectItem>
+                  <SelectItem value="S">S</SelectItem>
+                  <SelectItem value="M">M</SelectItem>
+                  <SelectItem value="L">L</SelectItem>
+                  <SelectItem value="XL">XL</SelectItem>
+                  <SelectItem value="XXL">XXL</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <Button
               onClick={onAddToCart}
               className="w-full flex items-center gap-2"
             >
