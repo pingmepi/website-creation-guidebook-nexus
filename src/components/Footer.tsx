@@ -29,8 +29,7 @@ const Footer = () => {
             <address className="text-gray-300 not-italic">
               Koramangala, Bangalore<br />
               560076<br />
-              <a href="mailto:info@customtshirts.com" className="hover:text-white transition-colors">info@customtshirts.com</a><br />
-              <a href="tel:+11234567890" className="hover:text-white transition-colors">(123) 456-7890</a>
+              <a href="mailto:info@customtshirts.com" className="hover:text-white transition-colors">karan@merekapade.com</a><br />
             </address>
           </div>
 
