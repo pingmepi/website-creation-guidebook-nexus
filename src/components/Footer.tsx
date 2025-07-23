@@ -27,8 +27,8 @@ const Footer = () => {
           <div>
             <h3 className="font-bold text-lg mb-4">Contact Us</h3>
             <address className="text-gray-300 not-italic">
-              123 T-Shirt Lane<br />
-              Fashion District, ST 12345<br />
+              Koramangala, Bangalore<br />
+              560076<br />
               <a href="mailto:info@customtshirts.com" className="hover:text-white transition-colors">info@customtshirts.com</a><br />
               <a href="tel:+11234567890" className="hover:text-white transition-colors">(123) 456-7890</a>
             </address>
