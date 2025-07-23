@@ -3,31 +3,60 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShoppingCart } from "lucide-react";
 import { ReactNode, useState } from "react";
+import { useProductVariants } from "@/hooks/useProductVariants";
+import { toast } from "@/hooks/use-toast";
 
 interface ProductQuickViewProps {
   children: ReactNode;
   product: {
-    id: number;
+    id: string;
     name: string;
     price: string;
     image: string;
     colorOptions?: string[];
   };
-  onAddToCart: () => void;
+  onAddToCart: (variantId: string, quantity?: number) => void;
 }
 
 export const ProductQuickView = ({ children, product, onAddToCart }: ProductQuickViewProps) => {
-  const [selectedSize, setSelectedSize] = useState("M");
-  
-  const getColorName = (color: string) => {
-    const colorNames: Record<string, string> = {
-      "#FFFFFF": "White",
-      "#000000": "Black", 
-      "#DC2626": "Red",
-      "#0000FF": "Blue",
-      "#8A898C": "Grey"
-    };
-    return colorNames[color] || "Color";
+  const [selectedColor, setSelectedColor] = useState<string>("");
+  const [quantity, setQuantity] = useState(1);
+  const { sizes, colors, loading, selectedSize, setSelectedSize, checkStock } = useProductVariants(product.id);
+
+  const handleAddToCart = async () => {
+    if (!selectedSize) {
+      toast({
+        title: "Please select a size",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const selectedVariant = colors.find(color => 
+      selectedColor ? color.color_hex === selectedColor : color.variant_id
+    );
+
+    if (!selectedVariant) {
+      toast({
+        title: "Product not available",
+        description: "Selected size/color combination is not available",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check stock before adding to cart
+    const hasStock = await checkStock(selectedVariant.variant_id, quantity);
+    if (!hasStock) {
+      toast({
+        title: "Out of stock",
+        description: "This item is currently out of stock",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    onAddToCart(selectedVariant.variant_id, quantity);
   };
 
   return (
@@ -62,24 +91,72 @@ export const ProductQuickView = ({ children, product, onAddToCart }: ProductQuic
 
             <div>
               <h4 className="font-medium mb-2">Size</h4>
-              <Select value={selectedSize} onValueChange={setSelectedSize}>
+              <Select value={selectedSize} onValueChange={setSelectedSize} disabled={loading}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select size" />
+                  <SelectValue placeholder={loading ? "Loading sizes..." : "Select size"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="XS">XS</SelectItem>
-                  <SelectItem value="S">S</SelectItem>
-                  <SelectItem value="M">M</SelectItem>
-                  <SelectItem value="L">L</SelectItem>
-                  <SelectItem value="XL">XL</SelectItem>
-                  <SelectItem value="XXL">XXL</SelectItem>
+                  {sizes.map((size) => (
+                    <SelectItem 
+                      key={size.size} 
+                      value={size.size}
+                      disabled={size.available_stock === 0}
+                    >
+                      {size.size} {size.available_stock === 0 ? "(Out of Stock)" : `(${size.available_stock} available)`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedSize && colors.length > 0 && (
+              <div>
+                <h4 className="font-medium mb-2">Color</h4>
+                <Select value={selectedColor} onValueChange={setSelectedColor}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select color" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {colors.map((color) => (
+                      <SelectItem 
+                        key={color.variant_id} 
+                        value={color.color_hex}
+                        disabled={color.stock_quantity === 0}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-4 h-4 rounded border"
+                            style={{ backgroundColor: color.color_hex }}
+                          />
+                          {color.color_name} ({color.stock_quantity} available)
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div>
+              <h4 className="font-medium mb-2">Quantity</h4>
+              <Select value={quantity.toString()} onValueChange={(value) => setQuantity(parseInt(value))}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5].map((num) => (
+                    <SelectItem key={num} value={num.toString()}>
+                      {num}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             
             <Button
-              onClick={onAddToCart}
+              onClick={handleAddToCart}
               className="w-full flex items-center gap-2"
+              disabled={!selectedSize || loading}
             >
               <ShoppingCart size={20} />
               Add to Cart

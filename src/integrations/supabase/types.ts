@@ -690,6 +690,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_variant_stock: {
+        Args: { variant_uuid: string; requested_quantity: number }
+        Returns: boolean
+      }
       create_migration_checkpoint: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -740,6 +744,23 @@ export type Database = {
           status: string
         }[]
       }
+      get_product_colors: {
+        Args: { product_uuid: string; size_param: string }
+        Returns: {
+          color_name: string
+          color_hex: string
+          stock_quantity: number
+          variant_id: string
+        }[]
+      }
+      get_product_sizes: {
+        Args: { product_uuid: string }
+        Returns: {
+          size: string
+          available_stock: number
+          sort_order: number
+        }[]
+      }
       get_sample_variants: {
         Args: { limit_count?: number }
         Returns: {
@@ -777,6 +798,14 @@ export type Database = {
       map_legacy_product_id_to_uuid: {
         Args: { legacy_id: string }
         Returns: string
+      }
+      release_stock: {
+        Args: { variant_uuid: string; quantity: number }
+        Returns: undefined
+      }
+      reserve_stock: {
+        Args: { variant_uuid: string; quantity: number }
+        Returns: boolean
       }
       update_order_items_variants: {
         Args: Record<PropertyKey, never>
