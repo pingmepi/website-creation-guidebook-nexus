@@ -199,13 +199,41 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       console.log("🛒 Adding to cart:", { variantId, quantity, userId: user.id });
       
+      // Check stock before adding
+      const { data: hasStock, error: stockError } = await supabase.rpc('check_variant_stock', {
+        variant_uuid: variantId,
+        requested_quantity: quantity
+      });
+
+      if (stockError) {
+        console.error("Error checking stock:", stockError);
+        toast.error("Unable to check stock availability");
+        return;
+      }
+
+      if (!hasStock) {
+        toast.error("This item is currently out of stock");
+        return;
+      }
+      
       // Check if item already exists in cart
       const existingItem = cartItems.find(item => item.variant_id === variantId);
 
       if (existingItem) {
-        // Update quantity - optimistic update first
+        // Update quantity - check stock for new total first
         const newQuantity = existingItem.quantity + quantity;
         console.log("📈 Updating existing item quantity:", { itemId: existingItem.id, newQuantity });
+        
+        // Check stock for new total quantity
+        const { data: hasStockForNew } = await supabase.rpc('check_variant_stock', {
+          variant_uuid: variantId,
+          requested_quantity: newQuantity
+        });
+
+        if (!hasStockForNew) {
+          toast.error("Not enough stock available for requested quantity");
+          return;
+        }
         
         // Optimistic update
         setCartItems(items => 

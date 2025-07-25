@@ -106,8 +106,8 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex gap-2 justify-center">
           <ProductQuickView 
-            product={{ id, name, price, image, colorOptions }}
-            onAddToCart={handleAddToCart}
+            product={{ id: id.toString(), name, price, image, colorOptions }}
+            onAddToCart={(variantId: string, quantity?: number) => handleAddToCart()}
           >
             <Button variant="secondary" size="sm" className="opacity-90 flex items-center gap-1">
               <Eye size={16} />
@@ -130,8 +130,8 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
       </div>
       <CardContent className="pt-4">
         <ProductQuickView 
-          product={{ id, name, price, image, colorOptions }}
-          onAddToCart={handleAddToCart}
+          product={{ id: id.toString(), name, price, image, colorOptions }}
+          onAddToCart={(variantId: string, quantity?: number) => handleAddToCart()}
         >
           <h3 className="font-medium hover:text-blue-600 transition-colors cursor-pointer">{name}</h3>
         </ProductQuickView>
