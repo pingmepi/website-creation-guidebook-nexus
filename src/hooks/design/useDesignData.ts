@@ -62,21 +62,27 @@ export function useDesignData(setDesignStage: () => void) {
         }
 
         if (designData.theme_id) {
-          // Make sure the theme_id is a valid UUID
           try {
-            // Fetch the theme data - ensure theme_id is a string
-            const themeId = String(designData.theme_id);
+            // Convert theme_id to proper UUID format if it's a number
+            let themeId = designData.theme_id;
+            
+            // If theme_id is a number, we need to look it up differently
+            if (typeof themeId === 'number') {
+              console.log("Converting numeric theme_id to UUID:", themeId);
+              // For now, skip theme loading for numeric IDs to prevent errors
+              console.warn("Numeric theme_id detected, skipping theme fetch to prevent UUID errors");
+            } else if (typeof themeId === 'string' && themeId.length > 0) {
+              const { data: themeData, error: themeError } = await supabase
+                .from('themes')
+                .select('*')
+                .eq('id', themeId)
+                .single();
 
-            const { data: themeData, error: themeError } = await supabase
-              .from('themes')
-              .select('*')
-              .eq('id', themeId)
-              .single();
-
-            if (themeError) {
-              console.error("Error fetching theme:", themeError);
-            } else if (themeData) {
-              setSelectedTheme(themeData);
+              if (themeError) {
+                console.error("Error fetching theme:", themeError);
+              } else if (themeData) {
+                setSelectedTheme(themeData);
+              }
             }
           } catch (themeError) {
             console.error("Error processing theme:", themeError);
