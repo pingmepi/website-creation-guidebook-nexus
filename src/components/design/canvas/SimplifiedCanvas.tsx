@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Canvas as FabricCanvas, Image as FabricImage, Rect, Text, Circle } from "fabric";
+import { fabric } from "fabric";
 
 interface SimplifiedCanvasProps {
   width?: number;
   height?: number;
   backgroundColor?: string;
-  onCanvasReady: (canvas: FabricCanvas) => void;
+  onCanvasReady: (canvas: fabric.Canvas) => void;
   onDesignChange?: (dataURL: string) => void;
   initialImage?: string;
   isDrawingMode?: boolean;
@@ -23,7 +23,7 @@ export const SimplifiedCanvas = ({
   brushSize = 2,
 }: SimplifiedCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricCanvasRef = useRef<FabricCanvas | null>(null);
+  const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const lastImageRef = useRef<string>("");
 
@@ -34,14 +34,14 @@ export const SimplifiedCanvas = ({
     console.log("Initializing SimplifiedCanvas");
     
     try {
-      const canvas = new FabricCanvas(canvasRef.current, {
+      const canvas = new fabric.Canvas(canvasRef.current, {
         width,
         height,
         backgroundColor,
       });
 
       // Add safety area (dashed border)
-      const safetyArea = new Rect({
+      const safetyArea = new fabric.Rect({
         width: width - 20,
         height: height - 20,
         left: 10,
@@ -128,9 +128,7 @@ export const SimplifiedCanvas = ({
     }
 
     // Load and add the image
-    FabricImage.fromURL(initialImage, {
-      crossOrigin: 'anonymous'
-    }).then((img) => {
+    fabric.Image.fromURL(initialImage, (img) => {
       if (!canvas) return;
 
       // Scale image to fit canvas
@@ -173,7 +171,7 @@ export const SimplifiedCanvas = ({
       console.error("Error loading image:", error);
       
       // Add placeholder text on error
-      const placeholderText = new Text("Failed to load image", {
+      const placeholderText = new fabric.Text("Failed to load image", {
         left: width / 2,
         top: height / 2,
         originX: 'center',
@@ -187,7 +185,7 @@ export const SimplifiedCanvas = ({
       });
       canvas.add(placeholderText);
       canvas.renderAll();
-    });
+    }, { crossOrigin: 'anonymous' });
   }, [initialImage, width, height, onDesignChange]);
 
   // Add placeholder text if no initial image
@@ -195,7 +193,7 @@ export const SimplifiedCanvas = ({
     const canvas = fabricCanvasRef.current;
     if (!canvas || initialImage) return;
 
-    const placeholderText = new Text("Upload your design", {
+    const placeholderText = new fabric.Text("Upload your design", {
       left: width / 2,
       top: height / 2,
       originX: 'center',

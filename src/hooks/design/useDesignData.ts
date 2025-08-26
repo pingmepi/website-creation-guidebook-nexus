@@ -112,22 +112,20 @@ export function useDesignData(setDesignStage: () => void) {
     const params = new URLSearchParams(location.search);
     const id = params.get('id');
 
-    if (id) {
+    if (id && id !== designId) {
       setDesignId(id);
       fetchDesignData(id);
-    } else {
+    } else if (!id && !designName) {
       // Generate a design name using the current date and time
-      if (!designName) {
-        const date = new Date();
-        setDesignName(`Design ${date.toLocaleString("en-US", {
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "numeric"
-        })}`);
-      }
+      const date = new Date();
+      setDesignName(`Design ${date.toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "numeric"
+      })}`);
     }
-  }, [location.search, designName, fetchDesignData]);
+  }, [location.search, designId, designName]); // Removed fetchDesignData from dependencies
 
   const handleDesignChange = (designDataUrl: string) => {
     console.log("Design canvas updated");

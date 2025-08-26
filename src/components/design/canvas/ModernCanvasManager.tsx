@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback } from "react";
-import { Canvas as FabricCanvas } from "fabric";
+import { fabric } from "fabric";
 import { SimplifiedCanvas } from "./SimplifiedCanvas";
 import { CanvasToolbar } from "./CanvasToolbar";
 
@@ -14,11 +14,11 @@ export const ModernCanvasManager = ({
   initialImage, 
   onDesignChange 
 }: ModernCanvasManagerProps) => {
-  const canvasRef = useRef<FabricCanvas | null>(null);
+  const canvasRef = useRef<fabric.Canvas | null>(null);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [brushSize, setBrushSize] = useState(2);
 
-  const handleCanvasReady = useCallback((canvas: FabricCanvas) => {
+  const handleCanvasReady = useCallback((canvas: fabric.Canvas) => {
     console.log("Canvas ready in ModernCanvasManager");
     canvasRef.current = canvas;
   }, []);

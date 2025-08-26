@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Canvas as FabricCanvas, Rect, Circle, Text } from "fabric";
+import { fabric } from "fabric";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 
 interface CanvasToolbarProps {
-  canvas: FabricCanvas | null;
+  canvas: fabric.Canvas | null;
   isDrawingMode: boolean;
   onDrawingModeChange: (mode: boolean) => void;
   brushSize: number;
@@ -25,7 +25,7 @@ export const CanvasToolbar = ({
   const addText = () => {
     if (!canvas) return;
 
-    const fabricText = new Text(textInput, {
+    const fabricText = new fabric.Text(textInput, {
       left: 150,
       top: 100,
       fontFamily: 'Arial',
@@ -42,7 +42,7 @@ export const CanvasToolbar = ({
   const addRectangle = () => {
     if (!canvas) return;
 
-    const rect = new Rect({
+    const rect = new fabric.Rect({
       left: 100,
       top: 100,
       fill: selectedColor,
@@ -59,7 +59,7 @@ export const CanvasToolbar = ({
   const addCircle = () => {
     if (!canvas) return;
 
-    const circle = new Circle({
+    const circle = new fabric.Circle({
       left: 100,
       top: 100,
       fill: selectedColor,
