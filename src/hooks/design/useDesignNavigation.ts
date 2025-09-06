@@ -66,7 +66,7 @@ export function useDesignNavigation() {
     selectedTheme: Theme | null,
     answers: Answer[],
     generateDesignWithAI: () => Promise<void>,
-    setDesignImage: (image: string) => void
+    setDesignImage: (image?: string) => void
   ) => {
     console.log("Proceeding to design stage");
     setCurrentStep("design");
@@ -74,10 +74,13 @@ export function useDesignNavigation() {
 
     // Generate design with AI using the selected theme and answers
     if (selectedTheme && answers.length > 0) {
-      generateDesignWithAI();
+      generateDesignWithAI().catch((error) => {
+        console.error("Error generating AI design:", error);
+        setDesignImage(undefined);
+      });
     } else {
       // Set placeholder design image if no theme or answers
-      setDesignImage("/assets/images/design/placeholder.svg");
+      setDesignImage(undefined);
     }
   };
 

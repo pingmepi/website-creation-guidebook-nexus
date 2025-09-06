@@ -7,7 +7,7 @@ import TshirtDesignPreview from "./TshirtDesignPreview";
 import { Separator } from "@/components/ui/separator";
 import { Save, Loader2 } from "lucide-react";
 import { Answer } from "./QuestionFlow";
-import CanvasManager from "./canvas/CanvasManager";
+import { ModernCanvasManager } from "./canvas/ModernCanvasManager";
 import { CanvasErrorBoundary } from "@/components/error/CanvasErrorBoundary";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import AddToCartButton from "./AddToCartButton";
@@ -154,7 +154,7 @@ const CustomizationSection = ({
               {/* Design Canvas Tools with Error Boundary */}
               <div className="mb-4">
                 <CanvasErrorBoundary>
-                  <CanvasManager 
+                  <ModernCanvasManager 
                     tshirtColor={tshirtColor} 
                     onDesignChange={handleCanvasDesignChange}
                     initialImage={designImage}

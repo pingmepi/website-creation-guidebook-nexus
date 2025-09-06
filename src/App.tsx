@@ -14,6 +14,7 @@ import Checkout from "./pages/Checkout";
 import TestPreview from "./pages/TestPreview";
 import DashboardRoutes from "./routes/DashboardRoutes";
 import NotFound from "./pages/NotFound";
+import AuthCallback from "./pages/auth/AuthCallback";
 
 import ShippingPolicy from "./pages/policies/ShippingPolicy";
 import ReturnRefundPolicy from "./pages/policies/ReturnRefundPolicy";
@@ -44,6 +45,7 @@ function App() {
                   <Route path="privacy-policy" element={<PrivacyPolicy />} />
                   <Route path="terms-conditions" element={<TermsConditions />} />
                   <Route path="dashboard/*" element={<DashboardRoutes />} />
+                  <Route path="auth/callback" element={<AuthCallback />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>
               </Routes>

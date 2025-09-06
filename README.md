@@ -45,19 +45,21 @@ The project uses environment variables for configuration. To set up your local e
 
 ### Project Status & Planning
 
-- [**Project Status**](./project_status.md) - Current state of the project, including implemented features, pending work, and known issues
-- [**Feature Tracker**](./feature_tracker.md) - Detailed tracking of feature implementation status
-- [**Product Requirements Document (PRD)**](./PRD.md) - Original product requirements and specifications
+- [**Implementation Tracker (Project Status)**](./docs/implementation_tracker.md) - Current state of the project, including implemented features, pending work, and known issues
+- [**Feature Tracker**](./docs/feature_tracker.md) - Detailed tracking of feature implementation status
+- [**Product Requirements Document (PRD)**](./docs/PRD.md) - Original product requirements and specifications
 
 ### Technical Documentation
 
-- [**Tech Stack**](./tech_stack.md) - Overview of the technologies used in the project
-- [**API Details**](./api_details.md) - Documentation of all APIs, including implementation status
+- [**Tech Stack**](./docs/tech_stack.md) - Overview of the technologies used in the project
+- [**API Details**](./docs/api_details.md) - Documentation of all APIs, including implementation status
 - [**Security Checklist**](./security_checklist_updated.md) - Comprehensive security audit with implementation status
 
 ### Implementation Guides
 
-- [**Test User Implementation Guide**](./test-user-implementation-guide.md) - Guide for implementing test user functionality
+- [**Test User Implementation Guide**](./docs/test-user-implementation-guide.md) - Guide for implementing test user functionality
+
+For a full index of documentation, see [docs/README.md](./docs/README.md).
 
 ## Project Overview
 
