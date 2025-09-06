@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { toast } from "@/components/ui/toast";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Chrome } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 
 type AuthMode = "login" | "signup";
@@ -35,7 +35,7 @@ const LoginDialog = ({ open, onClose, onSuccess }: LoginDialogProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  const { login, signup } = useUser();
+  const { login, signup, loginWithGoogle } = useUser();
   
   const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>();
   
@@ -86,7 +86,39 @@ const LoginDialog = ({ open, onClose, onSuccess }: LoginDialogProps) => {
               : "Fill in the details below to create a new account"}
           </DialogDescription>
         </DialogHeader>
-        
+
+        <div className="space-y-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full flex items-center justify-center gap-2"
+            disabled={isLoading}
+            onClick={async () => {
+              setIsLoading(true);
+              try {
+                await loginWithGoogle();
+              } catch (err) {
+                const errorMessage = err instanceof Error ? err.message : "Google login failed";
+                toast.error(errorMessage);
+              } finally {
+                setIsLoading(false);
+              }
+            }}
+          >
+            <Chrome className="h-4 w-4" />
+            Continue with Google
+          </Button>
+
+          <div className="relative py-2">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
+            </div>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {mode === "signup" && (
             <div className="space-y-2">

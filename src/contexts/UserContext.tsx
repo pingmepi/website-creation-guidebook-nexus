@@ -17,6 +17,7 @@ interface UserContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name?: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -198,19 +199,51 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   const logout = async () => {
     console.log("Logout attempt");
     setIsLoading(true);
-    
+
     try {
       const { error } = await supabase.auth.signOut();
-      
+
       if (error) {
         console.error("Logout error details:", error);
         throw error;
       }
-      
+
       console.log("Logout successful");
       setUser(null);
     } catch (error) {
       console.error("Logout error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loginWithGoogle = async () => {
+    console.log("Google login attempt");
+    setIsLoading(true);
+
+    try {
+      const redirectTo = import.meta.env.VITE_GOOGLE_REDIRECT_URI as string | undefined;
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+      console.log("OAuth redirect URI:", redirectTo);
+      if (!redirectTo) {
+        console.warn("VITE_GOOGLE_REDIRECT_URI is not set. Supabase will use the default site URL.");
+      }
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          queryParams: clientId ? { client_id: clientId } : undefined,
+        },
+      });
+
+      console.log("Google OAuth response:", data ? "Data present" : "No data", error ? `Error: ${error.message}` : "No error");
+      if (error) throw error;
+
+      // With redirect flow, the browser navigates away. If popup flow is used, we'd handle data.url
+    } catch (error) {
+      console.error("Google login error:", error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -225,6 +258,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         login,
         signup,
         logout,
+        loginWithGoogle,
       }}
     >
       {children}

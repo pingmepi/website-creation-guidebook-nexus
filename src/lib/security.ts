@@ -42,6 +42,8 @@ export const CSP_DIRECTIVES = {
     "*.supabase.co", // Supabase API
     "*.supabase.com", // Supabase API
     "https://api.openai.com", // OpenAI API
+    "https://accounts.google.com", // Google OAuth
+    "https://oauth2.googleapis.com", // Google OAuth
     "wss:", // WebSocket connections
     "ws:", // WebSocket connections (dev)
     "localhost:*", // Allow localhost connections for development
