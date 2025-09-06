@@ -319,17 +319,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       console.log("🎨 Adding custom design to cart:", customDesign);
       
+      const clean = (v: string) => v.replace(/<[^>]*>/g, '').trim();
       const { data, error } = await supabase
         .from('custom_designs')
         .insert({
           user_id: user.id,
           design_image: customDesign.design_image,
-          answers: JSON.stringify(customDesign.answers) as any,
+          answers: JSON.stringify((customDesign.answers || []).map(a => ({
+            question: clean(String(a?.question || '')),
+            answer: clean(String(a?.answer || '')),
+          }))) as any,
           base_price: customDesign.base_price,
           design_data: JSON.stringify(customDesign.design_data) as any,
-          design_name: customDesign.design_name,
-          theme_name: customDesign.theme_name,
-          tshirt_color: customDesign.tshirt_color
+          design_name: clean(customDesign.design_name),
+          theme_name: customDesign.theme_name ? clean(customDesign.theme_name) : undefined,
+          tshirt_color: clean(customDesign.tshirt_color)
         })
         .select('id, design_name, design_image, tshirt_color, base_price, theme_name, answers, design_data, created_at')
         .single();

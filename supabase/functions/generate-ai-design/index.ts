@@ -133,10 +133,11 @@ Deno.serve(async (req) => {
             }
           }
           
+          const sanitize = (s: string) => s.replace(/<[^>]*>/g, '').trim();
           const { error } = await supabase.from('ai_generated_designs').insert({
             user_id: userId,
             design_image: `data:image/png;base64,${imageBase64}`,
-            prompt: prompt,
+            prompt: sanitize(prompt),
             theme_id: themeId,
             is_favorite: false
           });

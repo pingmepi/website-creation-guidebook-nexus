@@ -104,10 +104,11 @@ const Profile = () => {
       setIsUpdating(true);
 
       // Update profile in the profiles table
+      const clean = (v: string) => v.replace(/<[^>]*>/g, '').trim();
       const { error } = await supabase
         .from("profiles")
         .update({
-          full_name: formData.fullName
+          full_name: clean(formData.fullName)
         })
         .eq("id", user.id);
 
@@ -190,15 +191,16 @@ const Profile = () => {
 
       if (currentAddress) {
         // Update existing address
+        const clean = (v: string) => v.replace(/<[^>]*>/g, '').trim();
         const { error } = await supabase
           .from("addresses")
           .update({
-            name: addressFormData.name,
-            street_address: addressFormData.street_address,
-            city: addressFormData.city,
-            state: addressFormData.state,
-            postal_code: addressFormData.postal_code,
-            country: addressFormData.country,
+            name: clean(addressFormData.name),
+            street_address: clean(addressFormData.street_address),
+            city: clean(addressFormData.city),
+            state: clean(addressFormData.state),
+            postal_code: clean(addressFormData.postal_code),
+            country: clean(addressFormData.country),
             is_default: addressFormData.is_default,
             updated_at: new Date().toISOString()
           })
@@ -209,16 +211,17 @@ const Profile = () => {
         toast.success("Address updated successfully");
       } else {
         // Create new address
+        const clean = (v: string) => v.replace(/<[^>]*>/g, '').trim();
         const { error } = await supabase
           .from("addresses")
           .insert({
             user_id: user.id,
-            name: addressFormData.name,
-            street_address: addressFormData.street_address,
-            city: addressFormData.city,
-            state: addressFormData.state,
-            postal_code: addressFormData.postal_code,
-            country: addressFormData.country,
+            name: clean(addressFormData.name),
+            street_address: clean(addressFormData.street_address),
+            city: clean(addressFormData.city),
+            state: clean(addressFormData.state),
+            postal_code: clean(addressFormData.postal_code),
+            country: clean(addressFormData.country),
             is_default: addressFormData.is_default
           });
 
