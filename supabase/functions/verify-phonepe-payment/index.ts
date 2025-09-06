@@ -26,10 +26,16 @@ declare const Deno: {
   };
 };
 
+import { isRateLimited, rateLimitResponse } from '../_shared/rate-limit.ts';
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return createOptionsResponse();
   }
+
+  // Basic IP-based rate limit: 15 req/min per IP
+  const rl = isRateLimited(req, { windowMs: 60_000, max: 15, keyPrefix: 'verify-phonepe' });
+  if (rl.limited) return rateLimitResponse(rl.retryAfter);
 
   logInfo("PhonePe payment verification requested");
 
