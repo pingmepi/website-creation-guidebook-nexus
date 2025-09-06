@@ -39,15 +39,19 @@ export function useDesignStorage() {
       });
       
       // Create a new design record or update if designId exists
+      const clean = (v: string) => v.replace(/<[^>]*>/g, '').trim();
       const designData = {
         user_id: user.id,
-        name: designName,
-        t_shirt_color: tshirtColor,
+        name: clean(designName),
+        t_shirt_color: clean(tshirtColor),
         preview_url: imageUrl,
         design_data: JSON.stringify({
-          answers: answers,
+          answers: (answers || []).map(a => ({
+            question: clean(String(a?.question || '')),
+            answer: clean(String(a?.answer || '')),
+          })),
           theme_id: selectedTheme?.id,
-          prompt: prompt
+          prompt: clean(prompt)
         })
       };
       

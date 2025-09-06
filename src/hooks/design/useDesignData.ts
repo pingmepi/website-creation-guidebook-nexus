@@ -145,13 +145,16 @@ export function useDesignData(setDesignStage: () => void) {
         .from('designs')
         .insert({
           user_id: userId,
-          name: designName,
-          t_shirt_color: tshirtColor,
+          name: designName.replace(/<[^>]*>/g, '').trim(),
+          t_shirt_color: tshirtColor.replace(/<[^>]*>/g, '').trim(),
           preview_url: imageUrl,
           design_data: JSON.stringify({
-            answers: answers,
+            answers: (answers || []).map(a => ({
+              question: String(a?.question || '').replace(/<[^>]*>/g, '').trim(),
+              answer: String(a?.answer || '').replace(/<[^>]*>/g, '').trim(),
+            })),
             theme_id: selectedTheme?.id,
-            prompt: prompt
+            prompt: String(prompt || '').replace(/<[^>]*>/g, '').trim()
           })
         })
         .select('id');

@@ -139,11 +139,22 @@ const Checkout = () => {
     if (!user || !saveAddress) return null;
 
     try {
+      // Basic sanitization for address fields
+      const clean = (v: string) => v.replace(/<[^>]*>/g, '').trim();
+      const safeAddress = {
+        name: clean(shippingAddress.name),
+        street_address: clean(shippingAddress.street_address),
+        city: clean(shippingAddress.city),
+        state: clean(shippingAddress.state),
+        postal_code: clean(shippingAddress.postal_code),
+        country: clean(shippingAddress.country)
+      };
+
       const { data, error } = await supabase
         .from("addresses")
         .insert({
           user_id: user.id,
-          ...shippingAddress,
+          ...safeAddress,
           is_default: savedAddresses.length === 0
         })
         .select('id')
@@ -203,13 +214,17 @@ const Checkout = () => {
 
       const totalAmount = parseFloat(calculateSubtotal());
 
-      // Create order
+      // Create order (ensure address object is sanitized)
+      const sanitizeObj = (obj: any) => Object.fromEntries(
+        Object.entries(obj).map(([k, v]) => [k, typeof v === 'string' ? v.replace(/<[^>]*>/g, '').trim() : v])
+      );
+
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
           user_id: user.id,
           total_amount: totalAmount,
-          shipping_address: finalShippingAddress,
+          shipping_address: sanitizeObj(finalShippingAddress),
           shipping_address_id: savedAddressId,
           status: 'pending',
           order_number: ''
