@@ -16,8 +16,8 @@
   - Authenticated-only access.
   - Design ownership for user-saved designs and orders.
 - ✅ **Implemented:** Supabase storage buckets set to **private** unless explicitly public (e.g., preview images).
-- ❌ **Security Issue:** API calls via Supabase client are not scoped to the **minimum necessary tables/fields**.
-- ❌ **Security Issue:** Unscoped `select *` queries are used in production, potentially exposing unnecessary data.
+- ✅ **Implemented:** API calls via Supabase client are scoped to the **minimum necessary fields**.
+- ✅ **Implemented:** Unscoped `select *` queries replaced with explicit column selects across client and edge functions.
 
 ---
 
@@ -29,7 +29,7 @@
 ---
 
 ## 🎨 **4. Canvas & Design Editor**
-- ❌ **Security Issue:** Input to the Canvas (e.g., text, images) is not sanitized to prevent injection or DoS attacks.
+- ✅ **Implemented (partial):** Inputs used in design payloads (answers, name, color, prompt) are sanitized before storage/processing. Remaining: deep canvas content sanitization and file export review.
 - ❌ **Security Issue:** File export logic (e.g., downloading .png/.svg) may leak user-specific data.
 - ✅ **Implemented:** No access to other users' designs via predictable file paths or IDs.
 
@@ -37,7 +37,7 @@
 
 ## 🧩 **5. Frontend Code Practices**
 - ✅ **Implemented:** Sensitive keys are injected via environment variables (`VITE_PUBLIC_` if needed).
-- ❌ **Not Implemented:** React Query responses are sanitized before being rendered in UI.
+- ❌ **Not Implemented:** React Query responses are sanitized before being rendered in UI. (Planned: sanitize on render for any user-generated strings)
 - ❌ **Not Implemented:** No exposure of internal error messages in production (use `console.error` + toast fallback).
 - ✅ **Implemented:** All modals/popups (Radix UI) respect focus trap and escape behavior (for accessibility and security).
 
@@ -62,13 +62,9 @@
 ---
 
 ## 🌐 **8. Browser-Side Protections**
-- ❌ **Security Issue:** Missing secure headers in application:
-  - `Content-Security-Policy`
-  - `Strict-Transport-Security`
-  - `X-Frame-Options`
-  - `Referrer-Policy`
-- ❌ **Security Issue:** No rate-limiting on sensitive endpoints, making them vulnerable to brute force attacks.
-- ❌ **Not Implemented:** CORS policies are not tightened for cross-origin requests.
+- ✅ **Implemented:** Production security headers configured via vercel.json (CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy) and environment-aware CSP in src/lib/security.ts. Dev remains permissive for Vite.
+- ✅ **Implemented:** Rate limiting added to sensitive Supabase Edge Functions (PhonePe initiate/verify, AI generation).
+- ✅ **Implemented:** CORS policies aligned to https://merekapade.com in production; localhost in dev.
 
 ---
 
@@ -102,38 +98,35 @@
 - ESLint and TypeScript for code quality
 - User ID verification for designs and orders
 
-### Critical Security Issues (4/30)
-- Unscoped API queries with `select *`
-- Lack of input sanitization for user content
-- Missing security headers
-- No rate limiting on sensitive endpoints
+### Critical Security Issues (4/30) — addressed
+- Unscoped API queries with `select *` — fixed
+- Lack of input sanitization for user content — implemented for critical flows
+- Missing security headers — implemented for production
+- No rate limiting on sensitive endpoints — implemented for key functions
 
-### Not Implemented (12/30)
-- Scoped API calls
+### Not Implemented (8/30)
 - Validation error handling
 - Image upload validation
-- Canvas input sanitization
-- File export security
+- Deep canvas input sanitization and file export security
 - React Query response sanitization
 - Production error handling
 - Comprehensive testing
-- Security scanning tools
+- Security scanning tools (e.g., Semgrep)
 - Supabase service role limitations
-- CORS policy configuration
 - Anomaly detection and monitoring
 
 ## Security Recommendations (Prioritized)
 
 ### High Priority (Critical Issues)
-1. **Implement proper input sanitization** for all user inputs to prevent XSS and injection attacks
-2. **Scope API queries** to only return necessary fields instead of using `select *`
+1. ✅ Implement proper input sanitization for critical flows (done) — expand to canvas/file export
+2. ✅ Scope API queries to only return necessary fields (done)
 3. **Add validation for file uploads** to prevent malicious file uploads
-4. **Implement security headers** to improve browser-side protection
+4. ✅ Implement security headers to improve browser-side protection (done)
 
 ### Medium Priority
-6. Add rate limiting for sensitive endpoints like authentication
+6. ✅ Add rate limiting for sensitive endpoints like authentication (done for payment/AI functions)
 7. Improve error handling to prevent leaking technical details
-8. Implement CORS policies for cross-origin requests
+8. ✅ Implement CORS policies for cross-origin requests (done)
 9. Add sanitization for Canvas inputs and file exports
 
 ### Low Priority
