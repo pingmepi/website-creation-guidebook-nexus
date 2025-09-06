@@ -27,7 +27,7 @@ export function useDesignFetch() {
       
       const { data, error } = await supabase
         .from('designs')
-        .select('*')
+        .select('id, name, t_shirt_color, preview_url, design_data')
         .eq('id', id)
         .single();
       
@@ -74,7 +74,7 @@ export function useDesignFetch() {
               
               const { data: themeData, error: themeError } = await supabase
                 .from('themes')
-                .select('*')
+                .select('id, name, description, category, is_active, thumbnail_url, created_at')
                 .eq('id', themeId)
                 .single();
                 

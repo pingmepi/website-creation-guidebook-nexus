@@ -94,7 +94,7 @@ const Checkout = () => {
     try {
       const { data, error } = await supabase
         .from("addresses")
-        .select("*")
+        .select("id, name, street_address, city, state, postal_code, country, is_default")
         .eq("user_id", user.id)
         .order("is_default", { ascending: false });
 
@@ -146,7 +146,7 @@ const Checkout = () => {
           ...shippingAddress,
           is_default: savedAddresses.length === 0
         })
-        .select()
+        .select('id')
         .single();
 
       if (error) throw error;
@@ -214,7 +214,7 @@ const Checkout = () => {
           status: 'pending',
           order_number: ''
         })
-        .select()
+        .select('id')
         .single();
 
       if (orderError) throw orderError;

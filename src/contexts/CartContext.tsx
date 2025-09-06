@@ -97,7 +97,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const { data, error } = await supabase
         .from('cart_items')
-        .select('*')
+        .select('id, user_id, product_id, variant_id, quantity, created_at, updated_at, selected_color, selected_size')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -132,7 +132,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const { data, error } = await supabase
         .from('custom_designs')
-        .select('*')
+        .select('id, design_name, design_image, tshirt_color, base_price, theme_name, answers, design_data, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -285,7 +285,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             selected_color: variant.color_hex,
             quantity
           })
-          .select()
+          .select('id, user_id, product_id, variant_id, quantity, created_at, updated_at, selected_color, selected_size')
           .single();
 
         if (error) throw error;
@@ -331,7 +331,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           theme_name: customDesign.theme_name,
           tshirt_color: customDesign.tshirt_color
         })
-        .select()
+        .select('id, design_name, design_image, tshirt_color, base_price, theme_name, answers, design_data, created_at')
         .single();
 
       if (error) throw error;

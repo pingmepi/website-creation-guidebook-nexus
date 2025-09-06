@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     // Get user profile for mobile number
     const { data: profile } = await supabaseClient
       .from('profiles')
-      .select('*')
+      .select('id, full_name, avatar_url, marketing_emails')
       .eq('id', user.id)
       .single();
 

@@ -60,14 +60,14 @@ export function useDesignStorage() {
           .from('designs')
           .update(designData)
           .eq('id', designId)
-          .select();
+          .select('id');
       } else {
         console.log("Creating new design");
         // Create new design
         result = await supabase
           .from('designs')
           .insert(designData)
-          .select();
+          .select('id');
       }
       
       const { data, error } = result;
