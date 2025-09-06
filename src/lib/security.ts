@@ -57,9 +57,22 @@ export const CSP_DIRECTIVES = {
   'upgrade-insecure-requests': [] // Upgrade HTTP to HTTPS
 };
 
-// Generate CSP header value
+// Generate CSP header value with environment-aware tightening
 export const generateCSPHeader = (): string => {
-  return Object.entries(CSP_DIRECTIVES)
+  const isDev = process.env.NODE_ENV !== 'production';
+  // Clone directives
+  const directives: Record<string, string[]> = JSON.parse(JSON.stringify(CSP_DIRECTIVES));
+
+  if (!isDev) {
+    // Remove unsafe script allowances in production
+    directives['script-src'] = (directives['script-src'] || [])
+      .filter(src => src !== "'unsafe-inline'" && src !== "'unsafe-eval'" && !src.includes('localhost') && !src.includes('127.0.0.1'));
+    // Tighten connect-src in production
+    directives['connect-src'] = (directives['connect-src'] || [])
+      .filter(src => !src.startsWith('ws') && !src.includes('localhost') && !src.includes('127.0.0.1'));
+  }
+
+  return Object.entries(directives)
     .map(([directive, sources]) => {
       if (sources.length === 0) {
         return directive;
@@ -107,8 +120,8 @@ export const CORS_CONFIG = {
   origin: process.env.NODE_ENV === 'development'
     ? ['http://localhost:8080', 'http://localhost:8081', 'http://localhost:3000']
     : [
-        'https://your-domain.com',
-        'https://your-app.vercel.app'
+        'https://merekapade.com',
+        'https://www.merekapade.com'
       ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

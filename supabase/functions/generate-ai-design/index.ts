@@ -35,6 +35,8 @@ declare const Deno: {
 };
 
 // Start Edge Function
+import { isRateLimited, rateLimitResponse } from '../_shared/rate-limit.ts';
+
 Deno.serve(async (req) => {
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
@@ -42,6 +44,10 @@ Deno.serve(async (req) => {
   }
 
   logInfo("Function invoked");
+
+  // Moderate rate limit: 5 req/min per IP for AI design generation
+  const rl = isRateLimited(req, { windowMs: 60_000, max: 5, keyPrefix: 'generate-ai' });
+  if (rl.limited) return rateLimitResponse(rl.retryAfter);
 
   try {
     // Parse JSON safely
@@ -133,10 +139,11 @@ Deno.serve(async (req) => {
             }
           }
           
+          const sanitize = (s: string) => s.replace(/<[^>]*>/g, '').trim();
           const { error } = await supabase.from('ai_generated_designs').insert({
             user_id: userId,
             design_image: `data:image/png;base64,${imageBase64}`,
-            prompt: prompt,
+            prompt: sanitize(prompt),
             theme_id: themeId,
             is_favorite: false
           });

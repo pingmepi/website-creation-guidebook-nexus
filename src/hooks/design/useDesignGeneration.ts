@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useUser } from "@/contexts/UserContext";
 import { ErrorLogger } from "@/services/ErrorLogger";
+import { sanitizeAnswers, sanitizeText } from "@/lib/sanitization";
 
 export function useDesignGeneration() {
   const { user, isAuthenticated } = useUser();
@@ -52,10 +53,14 @@ export function useDesignGeneration() {
         throw new Error("No valid answers provided");
       }
 
+      // Sanitize inputs
+      const sanitizedTheme = selectedTheme ? { ...selectedTheme, name: sanitizeText(selectedTheme.name) } : null;
+      const sanitizedAnswers = sanitizeAnswers(validAnswers);
+
       // Prepare payload with explicit userId
       const payload = {
-        theme: selectedTheme,
-        answers: validAnswers,
+        theme: sanitizedTheme,
+        answers: sanitizedAnswers,
         userId: user?.id || null
       };
 

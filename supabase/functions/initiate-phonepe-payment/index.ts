@@ -43,12 +43,18 @@ interface PaymentRequest {
 
 
 
+import { isRateLimited, rateLimitResponse } from '../_shared/rate-limit.ts';
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return createOptionsResponse();
   }
 
   logInfo("PhonePe payment initiation requested");
+
+  // IP-based rate limit: 10 req/min per IP for payment initiation
+  const rl = isRateLimited(req, { windowMs: 60_000, max: 10, keyPrefix: 'initiate-phonepe' });
+  if (rl.limited) return rateLimitResponse(rl.retryAfter);
 
   try {
     // Parse request body
@@ -75,7 +81,7 @@ Deno.serve(async (req) => {
     // Get user profile for mobile number
     const { data: profile } = await supabaseClient
       .from('profiles')
-      .select('*')
+      .select('id, full_name, avatar_url, marketing_emails')
       .eq('id', user.id)
       .single();
 

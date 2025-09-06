@@ -68,7 +68,7 @@ const PaymentSuccess = () => {
           if (orderId) {
             const { data: order } = await supabase
               .from('orders')
-              .select('*')
+              .select('id, user_id, total_amount, status, created_at, updated_at, order_number, shipping_address, payment_method, payment_status')
               .eq('id', orderId)
               .single();
             

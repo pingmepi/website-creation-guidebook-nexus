@@ -71,19 +71,20 @@ The project has implemented core authentication and design functionality but req
 
 ## Security Status
 
-Several security issues have been identified and addressed, with remaining items to be completed:
+All four critical security items are now addressed in branch `pathc/security-update`.
 
 **✅ Completed Security Improvements:**
-1. Authentication tokens now stored in HttpOnly cookies (XSS protection)
-2. Security headers implemented (CSP, XSS protection, CSRF protection)
-3. Enhanced cookie configuration with secure settings
+1. Scoped Supabase selects to explicit columns (removed `select *` / unscoped `.select()`)
+2. Input sanitization utilities and integration in critical flows (design payloads/saves, profile, addresses, checkout)
+3. Production security headers (CSP, HSTS, X-Frame-Options, Referrer-Policy) via `vercel.json`, with environment-aware CSP in code
+4. Rate limiting on sensitive Supabase Edge Functions (PhonePe initiate/verify, AI generation)
 
-**🔄 Remaining Security Items:**
-1. Unscoped API queries
-2. Input sanitization for user content
-3. Rate limiting on sensitive endpoints
+**ℹ️ Notes:**
+- Dev remains permissive for local development (CSP is tightened automatically in production)
+- CORS in production restricted to https://merekapade.com (and www)
+- Sanitization is intentionally lightweight for plain text; can be extended (e.g., DOMPurify) for rich HTML inputs
 
-See the [Security Checklist](./security_checklist_updated.md) for a detailed breakdown of security concerns and recommendations.
+See the [Security Checklist](./security_checklist_updated.md) for a detailed breakdown and remaining medium/low-priority items.
 
 ## Next Steps
 
