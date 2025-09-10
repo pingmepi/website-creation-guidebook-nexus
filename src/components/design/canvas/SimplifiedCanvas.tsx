@@ -27,12 +27,12 @@ export const SimplifiedCanvas = ({
   const [isInitialized, setIsInitialized] = useState(false);
   const lastImageRef = useRef<string>("");
 
-  // Initialize canvas once
+  // Initialize canvas once (strict-mode safe)
   useEffect(() => {
-    if (!canvasRef.current || isInitialized) return;
+    if (!canvasRef.current || fabricCanvasRef.current) return;
 
     console.log("Initializing SimplifiedCanvas");
-    
+
     try {
       const canvas = new fabric.Canvas(canvasRef.current, {
         width,
@@ -70,8 +70,9 @@ export const SimplifiedCanvas = ({
       const handleChange = () => {
         clearTimeout(timeoutId);
         timeoutId = window.setTimeout(() => {
-          if (onDesignChange && canvas) {
-            const dataURL = canvas.toDataURL({
+          const cv = fabricCanvasRef.current;
+          if (onDesignChange && cv && (cv as any).contextContainer) {
+            const dataURL = cv.toDataURL({
               format: "png",
               quality: 1,
               multiplier: 2,
@@ -94,12 +95,15 @@ export const SimplifiedCanvas = ({
 
       return () => {
         clearTimeout(timeoutId);
-        canvas.dispose();
+        try { canvas.dispose(); } catch {}
+        // Reset refs/state so re-mount (React StrictMode) re-initializes cleanly
+        fabricCanvasRef.current = null;
+        setIsInitialized(false);
       };
     } catch (error) {
       console.error("Error initializing canvas:", error);
     }
-  }, [width, height, backgroundColor, onCanvasReady, onDesignChange, brushSize, isInitialized]);
+  }, [width, height, backgroundColor, onCanvasReady, onDesignChange, brushSize]);
 
   // Handle drawing mode changes
   useEffect(() => {
@@ -112,7 +116,7 @@ export const SimplifiedCanvas = ({
     }
   }, [isDrawingMode, brushSize]);
 
-  // Load initial image
+  // Load initial image (robust with preloading to avoid fromURL errors)
   useEffect(() => {
     const canvas = fabricCanvasRef.current;
     if (!canvas || !initialImage || initialImage === lastImageRef.current) return;
@@ -127,51 +131,64 @@ export const SimplifiedCanvas = ({
       canvas.remove(placeholderText);
     }
 
-    // Load and add the image
-    fabric.Image.fromURL(initialImage, (img) => {
-      if (!canvas) return;
+    // Preload image to handle errors explicitly and set crossOrigin
+    const imgEl = new Image();
+    imgEl.crossOrigin = 'anonymous';
+    imgEl.onload = () => {
+      try {
+        const cv = fabricCanvasRef.current;
+        if (!cv) return; // canvas disposed/unmounted
+        const img = new fabric.Image(imgEl);
 
-      // Scale image to fit canvas
-      const scale = Math.min(
-        (width - 40) / (img.width || 1),
-        (height - 40) / (img.height || 1)
-      );
+        // Scale image to fit canvas
+        const scale = Math.min(
+          (width - 40) / ((img.width as number) || 1),
+          (height - 40) / ((img.height as number) || 1)
+        );
 
-      img.set({
-        left: width / 2,
-        top: height / 2,
-        originX: 'center',
-        originY: 'center',
-        scaleX: scale,
-        scaleY: scale,
-        name: "mainImage"
-      });
-
-      canvas.add(img);
-      canvas.bringToFront(img);
-      
-      // Keep safety area at back
-      const safetyArea = canvas.getObjects().find(obj => obj.name === "safetyArea");
-      if (safetyArea) {
-        canvas.sendToBack(safetyArea);
-      }
-
-      canvas.renderAll();
-
-      // Trigger design change
-      if (onDesignChange) {
-        const dataURL = canvas.toDataURL({
-          format: "png",
-          quality: 1,
-          multiplier: 2,
+        img.set({
+          left: width / 2,
+          top: height / 2,
+          originX: 'center',
+          originY: 'center',
+          scaleX: scale,
+          scaleY: scale,
+          name: "mainImage"
         });
-        onDesignChange(dataURL);
+
+        cv.add(img);
+        cv.bringToFront(img);
+
+        // Keep safety area at back
+        const safetyArea = cv.getObjects().find(obj => (obj as any).name === "safetyArea");
+        if (safetyArea) {
+          cv.sendToBack(safetyArea);
+        }
+
+        // Guard to ensure fabric still has a context container
+        if ((cv as any).contextContainer) {
+          cv.renderAll();
+        }
+
+        // Trigger design change
+        if (onDesignChange && (cv as any).contextContainer) {
+          const dataURL = cv.toDataURL({
+            format: "png",
+            quality: 1,
+            multiplier: 2,
+          });
+          onDesignChange(dataURL);
+        }
+      } catch (error) {
+        console.error("Error processing loaded image:", error);
       }
-    }).catch((error) => {
-      console.error("Error loading image:", error);
-      
+    };
+    imgEl.onerror = () => {
+      const cv = fabricCanvasRef.current;
+      console.error("Error loading image element:", initialImage);
+      if (!cv) return;
       // Add placeholder text on error
-      const placeholderText = new fabric.Text("Failed to load image", {
+      const errorText = new fabric.Text("Failed to load image", {
         left: width / 2,
         top: height / 2,
         originX: 'center',
@@ -183,10 +200,13 @@ export const SimplifiedCanvas = ({
         evented: false,
         name: "placeholderText",
       });
-      canvas.add(placeholderText);
-      canvas.renderAll();
-    }, { crossOrigin: 'anonymous' });
-  }, [initialImage, width, height, onDesignChange]);
+      cv.add(errorText);
+      if ((cv as any).contextContainer) {
+        cv.renderAll();
+      }
+    };
+    imgEl.src = initialImage;
+  }, [initialImage, width, height, onDesignChange, isInitialized]);
 
   // Add placeholder text if no initial image
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { fabric } from "fabric";
 import { SimplifiedCanvas } from "./SimplifiedCanvas";
 import { CanvasToolbar } from "./CanvasToolbar";
@@ -9,18 +9,19 @@ interface ModernCanvasManagerProps {
   onDesignChange?: (dataURL: string) => void;
 }
 
-export const ModernCanvasManager = ({ 
-  tshirtColor, 
-  initialImage, 
-  onDesignChange 
+export const ModernCanvasManager = ({
+  tshirtColor,
+  initialImage,
+  onDesignChange
 }: ModernCanvasManagerProps) => {
-  const canvasRef = useRef<fabric.Canvas | null>(null);
+  // Store canvas in state so Toolbar re-renders when ready
+  const [canvas, setCanvas] = useState<fabric.Canvas | null>(null);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [brushSize, setBrushSize] = useState(2);
 
-  const handleCanvasReady = useCallback((canvas: fabric.Canvas) => {
+  const handleCanvasReady = useCallback((canvasInstance: fabric.Canvas) => {
     console.log("Canvas ready in ModernCanvasManager");
-    canvasRef.current = canvas;
+    setCanvas(canvasInstance);
   }, []);
 
   const handleDesignChange = useCallback((dataURL: string) => {
@@ -56,7 +57,7 @@ export const ModernCanvasManager = ({
 
       {/* Toolbar */}
       <CanvasToolbar
-        canvas={canvasRef.current}
+        canvas={canvas}
         isDrawingMode={isDrawingMode}
         onDrawingModeChange={handleDrawingModeChange}
         brushSize={brushSize}
