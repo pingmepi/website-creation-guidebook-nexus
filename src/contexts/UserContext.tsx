@@ -106,8 +106,6 @@ export const UserProvider = ({ children }: UserProviderProps) => {
                 .eq("id", authUser.id)
                 .single();
                 
-              console.log("Profile data fetch on auth change:", profileData, profileError ? `Error: ${profileError.message}` : "No error");
-                
               setUser({
                 id: authUser.id,
                 email: authUser.email || "",
