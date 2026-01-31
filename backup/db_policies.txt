@@ -1,0 +1,40 @@
+Allow authenticated users to upload design assets
+Allow everyone to view questions
+Allow everyone to view themes
+Allow public read access to design assets
+Allow users to delete their own design assets
+Allow users to delete their own designs
+Allow users to insert their own designs
+Allow users to insert their own responses
+Allow users to update their own design assets
+Allow users to update their own designs
+Allow users to update their own profile
+Allow users to view all profiles
+Allow users to view their own designs
+Allow users to view their own responses
+Categories are publicly readable
+Product variants are publicly readable
+Products are publicly readable
+Users can create their own AI designs
+Users can create their own cart items
+Users can create their own custom designs
+Users can create their own order items
+Users can create their own orders
+Users can delete their own AI designs
+Users can delete their own addresses
+Users can delete their own cart items
+Users can delete their own custom designs
+Users can insert their own addresses
+Users can insert their own cart items
+Users can update their own AI designs
+Users can update their own addresses
+Users can update their own cart items
+Users can update their own custom designs
+Users can update their own orders
+Users can view their own AI designs
+Users can view their own addresses
+Users can view their own cart items
+Users can view their own custom designs
+Users can view their own order items
+Users can view their own orders
+Users can view their own payment transactions
