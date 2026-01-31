@@ -27,8 +27,8 @@ const Header = () => {
   return (
     <header className="border-b bg-white sticky top-0 z-50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-          Nexus
+        <Link href="/" className="flex items-center space-x-2">
+          <img src="/logo.png" alt="Merekapade" className="h-10 w-auto grayscale" />
         </Link>
 
         <nav className="hidden md:flex items-center space-x-6">
