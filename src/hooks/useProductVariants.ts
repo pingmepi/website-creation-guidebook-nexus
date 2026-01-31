@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ProductSize {
@@ -21,9 +21,16 @@ export function useProductVariants(productId: string) {
   const [loading, setLoading] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>('');
 
+  // Track if we've already fetched for this product to prevent Strict Mode double-fetch
+  const fetchedProductIdRef = useRef<string | null>(null);
+
   // Fetch available sizes for the product
   useEffect(() => {
     if (!productId) return;
+
+    // Skip if we've already fetched for this product
+    if (fetchedProductIdRef.current === productId) return;
+    fetchedProductIdRef.current = productId;
 
     const fetchSizes = async () => {
       setLoading(true);
