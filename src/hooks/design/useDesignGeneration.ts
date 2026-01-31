@@ -24,7 +24,7 @@ export function useDesignGeneration() {
         hasTheme: !!selectedTheme,
         answersLength: answers.length
       });
-      
+
       toast({
         variant: "destructive",
         title: "Error",
@@ -45,10 +45,10 @@ export function useDesignGeneration() {
       console.log("🔍 CLIENT: User data:", user ? `ID: ${user.id}` : "No user");
 
       // Validate answers to ensure they have the right format
-      const validAnswers = answers.filter(answer => 
+      const validAnswers = answers.filter(answer =>
         answer && typeof answer.question === 'string' && typeof answer.answer === 'string'
       );
-      
+
       if (validAnswers.length === 0) {
         throw new Error("No valid answers provided");
       }
@@ -125,16 +125,16 @@ export function useDesignGeneration() {
 
       toast({
         title: aiResponse.fallback ? "Design created with fallback" : "Your design is ready!",
-        description: aiResponse.fallback 
-          ? "We used a simplified design due to content restrictions." 
+        description: aiResponse.fallback
+          ? "We used a simplified design due to content restrictions."
           : "We've created a custom t-shirt design based on your preferences."
       });
     } catch (error) {
       console.error("❌ CLIENT: Error generating design with AI:", error);
       console.error("❌ CLIENT: Error details:", {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
+        message: (error as any).message,
+        stack: (error as any).stack,
+        name: (error as any).name
       });
 
       ErrorLogger.log(error as Error, "DesignGeneration:GeneralError", {

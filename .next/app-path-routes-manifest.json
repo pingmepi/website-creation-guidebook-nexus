@@ -1,0 +1,22 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/about/page": "/about",
+  "/auth/callback/page": "/auth/callback",
+  "/cart/page": "/cart",
+  "/checkout/page": "/checkout",
+  "/dashboard/designs/page": "/dashboard/designs",
+  "/dashboard/orders/page": "/dashboard/orders",
+  "/dashboard/page": "/dashboard",
+  "/dashboard/profile/page": "/dashboard/profile",
+  "/dashboard/settings/page": "/dashboard/settings",
+  "/design/page": "/design",
+  "/page": "/",
+  "/payment-callback/page": "/payment-callback",
+  "/payment-success/page": "/payment-success",
+  "/privacy-policy/page": "/privacy-policy",
+  "/return-refund-policy/page": "/return-refund-policy",
+  "/shipping-policy/page": "/shipping-policy",
+  "/shop/page": "/shop",
+  "/terms-conditions/page": "/terms-conditions"
+}

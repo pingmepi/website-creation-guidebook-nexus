@@ -1,3 +1,5 @@
+'use client';
+
 
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,17 +26,17 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
   const [justAdded, setJustAdded] = useState(false);
   const { isAuthenticated } = useUser();
   const { addToCart } = useCart();
-  
+
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       console.log("🔒 User not authenticated for cart action");
       return;
     }
-    
+
     try {
       console.log("🛒 Adding item to cart:", { id, name, selectedColor });
       setIsAdding(true);
-      
+
       // Get the product ID first
       const { data: products, error: productError } = await supabase
         .from('products')
@@ -51,17 +53,17 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
       const { data: variant, error } = await supabase
         .from('product_variants')
         .select('id')
-        .eq('product_id', products[0].id)
-        .eq('color_hex', selectedColor)
-        .eq('size', 'M')
+        .eq('product_id', (products[0] as any).id)
+        .eq('color_hex', selectedColor as any)
+        .eq('size', 'M' as any)
         .single();
 
       if (error || !variant) {
         throw new Error('Product variant not found');
       }
 
-      await addToCart(variant.id);
-      
+      await addToCart((variant as any).id);
+
       // Show success state briefly
       setJustAdded(true);
       console.log("✅ Item added to cart successfully");
@@ -85,7 +87,7 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
   const getColorName = (color: string) => {
     const colorNames: Record<string, string> = {
       "#FFFFFF": "White",
-      "#000000": "Black", 
+      "#000000": "Black",
       "#DC2626": "Red",
       "#0000FF": "Blue",
       "#8A898C": "Grey"
@@ -97,15 +99,15 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
     <Card className="overflow-hidden group bg-white" data-testid={`tshirt-card-${id}`}>
       <div className="relative pb-[125%] overflow-hidden">
         <ImagePopup image={image} alt={name}>
-          <img 
-            src={image} 
-            alt={name} 
-            className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105 cursor-pointer" 
+          <img
+            src={image}
+            alt={name}
+            className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105 cursor-pointer"
           />
         </ImagePopup>
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex gap-2 justify-center">
-          <ProductQuickView 
+          <ProductQuickView
             product={{ id: id.toString(), name, price, image, colorOptions }}
             onAddToCart={(variantId: string, quantity?: number) => handleAddToCart()}
           >
@@ -114,11 +116,10 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
               <span>Quick view</span>
             </Button>
           </ProductQuickView>
-          <Button 
-            size="sm" 
-            className={`opacity-90 flex items-center gap-1 transition-colors ${
-              justAdded ? 'bg-green-600 hover:bg-green-700' : ''
-            }`}
+          <Button
+            size="sm"
+            className={`opacity-90 flex items-center gap-1 transition-colors ${justAdded ? 'bg-green-600 hover:bg-green-700' : ''
+              }`}
             onClick={handleAddToCart}
             disabled={isAdding || !isAuthenticated}
             data-testid="add-to-cart-button"
@@ -129,7 +130,7 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
         </div>
       </div>
       <CardContent className="pt-4">
-        <ProductQuickView 
+        <ProductQuickView
           product={{ id: id.toString(), name, price, image, colorOptions }}
           onAddToCart={(variantId: string, quantity?: number) => handleAddToCart()}
         >

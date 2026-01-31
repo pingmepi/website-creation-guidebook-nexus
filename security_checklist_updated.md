@@ -36,7 +36,7 @@
 ---
 
 ## 🧩 **5. Frontend Code Practices**
-- ✅ **Implemented:** Sensitive keys are injected via environment variables (`VITE_PUBLIC_` if needed).
+- ✅ **Implemented:** Sensitive keys are injected via environment variables (`NEXT_PUBLIC_PUBLIC_` if needed).
 - ❌ **Not Implemented:** React Query responses are sanitized before being rendered in UI. (Planned: sanitize on render for any user-generated strings)
 - ❌ **Not Implemented:** No exposure of internal error messages in production (use `console.error` + toast fallback).
 - ✅ **Implemented:** All modals/popups (Radix UI) respect focus trap and escape behavior (for accessibility and security).

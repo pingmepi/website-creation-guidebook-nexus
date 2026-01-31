@@ -21,9 +21,9 @@ export const useCanvasCore = ({
 
   useEffect(() => {
     if (!canvasRef.current || isInitialized) return;
-    
+
     console.log("Initializing canvas core");
-    
+
     try {
       const canvasSize = Math.min(width, height);
 
@@ -62,12 +62,12 @@ export const useCanvasCore = ({
         id: "placeholderText",
       });
       fabricCanvas.add(placeholderText);
-      
+
       fabricCanvas.renderAll();
-      setCanvas(fabricCanvas);
+      setCanvas(fabricCanvas as any);
       setIsInitialized(true);
-      onCanvasReady(fabricCanvas);
-      
+      onCanvasReady(fabricCanvas as any);
+
     } catch (error) {
       console.error("Error initializing canvas:", error);
     }

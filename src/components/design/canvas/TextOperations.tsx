@@ -36,7 +36,7 @@ const TextOperations = ({
 }: TextOperationsProps) => {
   const handleAddText = () => {
     if (!text.trim()) return;
-    
+
     const fabricText = new fabric.Text(text, {
       left: 50,
       top: 50,
@@ -48,8 +48,8 @@ const TextOperations = ({
       fill: currentColor,
       id: `text_${Date.now()}`
     });
-    
-    addObject(fabricText);
+
+    addObject(fabricText as any);
     setText("");
   };
 

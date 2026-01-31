@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart, CreditCard } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { useCart } from "@/contexts/CartContext";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Answer } from "./QuestionFlow";
@@ -27,7 +27,7 @@ const PlaceOrderButton = ({
 }: PlaceOrderButtonProps) => {
   const { isAuthenticated } = useUser();
   const { addCustomDesignToCart } = useCart();
-  const navigate = useNavigate();
+  const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handlePlaceOrder = async () => {
@@ -62,12 +62,12 @@ const PlaceOrderButton = ({
       };
 
       await addCustomDesignToCart(customDesign);
-      
+
       toast.success("Design added to cart! Redirecting to checkout...");
-      
+
       // Navigate to checkout
       setTimeout(() => {
-        navigate("/checkout");
+        router.push("/checkout");
       }, 1500);
 
     } catch (error) {
@@ -80,7 +80,7 @@ const PlaceOrderButton = ({
 
   return (
     <div className="flex gap-3">
-      <Button 
+      <Button
         onClick={handlePlaceOrder}
         disabled={isProcessing || !designImage}
         className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700"

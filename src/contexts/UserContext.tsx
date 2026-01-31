@@ -1,4 +1,6 @@
 
+'use client';
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
@@ -38,39 +40,39 @@ interface UserProviderProps {
 export const UserProvider = ({ children }: UserProviderProps) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   console.log("UserProvider initialized");
-  
+
   // Check for user session on mount
   useEffect(() => {
     const checkUserSession = async () => {
       console.log("Checking user session...");
       try {
         setIsLoading(true);
-        
+
         // Get session from Supabase
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         console.log("Session check result:", session ? "Session found" : "No session", sessionError ? `Error: ${sessionError.message}` : "No error");
-        
+
         if (session?.user) {
           const { user: authUser } = session;
           console.log("User found in session:", authUser.id);
-          
+
           // Get user profile data
           const { data: profileData, error: profileError } = await supabase
             .from("profiles")
             .select("full_name, avatar_url, marketing_emails")
-            .eq("id", authUser.id)
+            .eq("id", authUser.id as any)
             .single();
-            
+
           console.log("Profile data fetch result:", profileData, profileError ? `Error: ${profileError.message}` : "No error");
-            
+
           setUser({
             id: authUser.id,
             email: authUser.email || "",
-            name: profileData?.full_name || authUser.email?.split("@")[0] || "",
-            avatar_url: profileData?.avatar_url || undefined,
-            marketing_emails: profileData?.marketing_emails ?? true
+            name: (profileData as any)?.full_name || authUser.email?.split("@")[0] || "",
+            avatar_url: (profileData as any)?.avatar_url || undefined,
+            marketing_emails: (profileData as any)?.marketing_emails ?? true
           });
           console.log("User state set to:", authUser.id);
         } else {
@@ -82,20 +84,20 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         setIsLoading(false);
       }
     };
-    
+
     checkUserSession();
-    
+
     // Set up auth state change listener
     console.log("Setting up auth state change listener");
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log("Auth state change event:", event);
         console.log("Session in auth change event:", session ? "Present" : "Not present");
-        
+
         if (session?.user) {
           const { user: authUser } = session;
           console.log("Auth changed: User logged in:", authUser.id);
-          
+
           // Use setTimeout to avoid deadlocks with Supabase calls
           setTimeout(async () => {
             try {
@@ -103,17 +105,17 @@ export const UserProvider = ({ children }: UserProviderProps) => {
               const { data: profileData, error: profileError } = await supabase
                 .from("profiles")
                 .select("full_name, avatar_url, marketing_emails")
-                .eq("id", authUser.id)
+                .eq("id", authUser.id as any)
                 .single();
-                
+
               console.log("Profile data fetch on auth change:", profileData, profileError ? `Error: ${profileError.message}` : "No error");
-                
+
               setUser({
                 id: authUser.id,
                 email: authUser.email || "",
-                name: profileData?.full_name || authUser.email?.split("@")[0] || "",
-                avatar_url: profileData?.avatar_url || undefined,
-                marketing_emails: profileData?.marketing_emails ?? true
+                name: (profileData as any)?.full_name || authUser.email?.split("@")[0] || "",
+                avatar_url: (profileData as any)?.avatar_url || undefined,
+                marketing_emails: (profileData as any)?.marketing_emails ?? true
               });
               console.log("User state updated on auth change to:", authUser.id);
             } catch (error) {
@@ -124,38 +126,38 @@ export const UserProvider = ({ children }: UserProviderProps) => {
           console.log("Auth changed: User logged out or no user");
           setUser(null);
         }
-        
+
         setIsLoading(false);
       }
     );
-    
+
     // Cleanup subscription
     return () => {
       console.log("Cleaning up auth subscription");
       subscription.unsubscribe();
     };
   }, []);
-  
+
   // Authentication methods
   const login = async (email: string, password: string) => {
     console.log("Login attempt with email:", email);
     setIsLoading(true);
-    
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      
+
       console.log("Login response:", data ? "Data received" : "No data", error ? `Error: ${error.message}` : "No error");
-      
+
       if (error) {
         console.error("Login error details:", error);
         throw error;
       }
-      
+
       console.log("Login successful for user:", data.user?.id);
-      
+
     } catch (error) {
       console.error("Login error:", error);
       throw error;
@@ -163,11 +165,11 @@ export const UserProvider = ({ children }: UserProviderProps) => {
       setIsLoading(false);
     }
   };
-  
+
   const signup = async (email: string, password: string, name?: string) => {
     console.log("Signup attempt with email:", email, "and name:", name);
     setIsLoading(true);
-    
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -178,16 +180,16 @@ export const UserProvider = ({ children }: UserProviderProps) => {
           },
         },
       });
-      
+
       console.log("Signup response:", data ? "Data received" : "No data", error ? `Error: ${error.message}` : "No error");
-      
+
       if (error) {
         console.error("Signup error details:", error);
         throw error;
       }
-      
+
       console.log("Signup successful, user created:", data.user?.id);
-      
+
     } catch (error) {
       console.error("Signup error:", error);
       throw error;
@@ -195,7 +197,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
       setIsLoading(false);
     }
   };
-  
+
   const logout = async () => {
     console.log("Logout attempt");
     setIsLoading(true);
@@ -222,11 +224,11 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     setIsLoading(true);
 
     try {
-      const redirectTo = import.meta.env.VITE_GOOGLE_REDIRECT_URI as string | undefined;
-      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+      const redirectTo = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI as string | undefined;
+      const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string | undefined;
       console.log("OAuth redirect URI:", redirectTo);
       if (!redirectTo) {
-        console.warn("VITE_GOOGLE_REDIRECT_URI is not set. Supabase will use the default site URL.");
+        console.warn("NEXT_PUBLIC_GOOGLE_REDIRECT_URI is not set. Supabase will use the default site URL.");
       }
 
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -248,7 +250,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <UserContext.Provider
       value={{

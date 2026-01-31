@@ -32,7 +32,7 @@ export function useDesignUI() {
         "DesignSave:Validation",
         { hasImage: !!designImage, hasUser: !!user }
       );
-      
+
       toast({
         variant: "destructive",
         title: "Cannot save design",
@@ -53,8 +53,8 @@ export function useDesignUI() {
         tshirtColor,
         designId,
         designName,
-        setDesignId,
-        () => {} // No unsaved changes callback needed here
+        setDesignId as any,
+        () => { } // No unsaved changes callback needed here
       );
 
       toast({
@@ -70,7 +70,7 @@ export function useDesignUI() {
         designName,
         userId: user?.id
       });
-      
+
       toast({
         variant: "destructive",
         title: "Failed to save design",

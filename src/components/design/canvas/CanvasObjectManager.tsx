@@ -16,13 +16,13 @@ export const useCanvasObjectManager = ({
   // Add object to canvas helper
   const addObject = (obj: fabric.Object) => {
     if (!canvas || updateInProgressRef.current) return;
-    
+
     try {
       updateInProgressRef.current = true;
       canvas.add(obj);
       canvas.setActiveObject(obj);
       canvas.renderAll();
-      
+
       if (onDesignChange) {
         onDesignChange();
       }
@@ -43,7 +43,7 @@ export const useCanvasObjectManager = ({
         updateInProgressRef.current = true;
         activeObject.set({ [property]: value });
         canvas.renderAll();
-        
+
         if (onDesignChange) {
           onDesignChange();
         }
@@ -54,17 +54,17 @@ export const useCanvasObjectManager = ({
       }
     }
   };
-  
+
   const deleteActiveObject = () => {
     if (!canvas || updateInProgressRef.current) return;
-    
+
     const activeObject = canvas.getActiveObject();
-    if (activeObject && activeObject.id !== "safetyArea") {
+    if (activeObject && (activeObject as any).id !== "safetyArea") {
       try {
         updateInProgressRef.current = true;
         canvas.remove(activeObject);
         canvas.renderAll();
-        
+
         if (onDesignChange) {
           onDesignChange();
         }

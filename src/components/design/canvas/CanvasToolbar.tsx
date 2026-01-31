@@ -32,10 +32,10 @@ export const CanvasToolbar = ({
       fontSize: 20,
       fill: selectedColor,
       name: "userText"
-    });
+    } as any);
 
-    canvas.add(fabricText);
-    canvas.setActiveObject(fabricText);
+    canvas.add(fabricText as any);
+    canvas.setActiveObject(fabricText as any);
     canvas.renderAll();
   };
 
@@ -48,11 +48,11 @@ export const CanvasToolbar = ({
       fill: selectedColor,
       width: 80,
       height: 60,
-      name: "userRect"
-    });
+      name: "userShape"
+    } as any);
 
-    canvas.add(rect);
-    canvas.setActiveObject(rect);
+    canvas.add(rect as any);
+    canvas.setActiveObject(rect as any);
     canvas.renderAll();
   };
 
@@ -64,11 +64,11 @@ export const CanvasToolbar = ({
       top: 100,
       fill: selectedColor,
       radius: 40,
-      name: "userCircle"
-    });
+      name: "userShape"
+    } as any);
 
-    canvas.add(circle);
-    canvas.setActiveObject(circle);
+    canvas.add(circle as any);
+    canvas.setActiveObject(circle as any);
     canvas.renderAll();
   };
 
