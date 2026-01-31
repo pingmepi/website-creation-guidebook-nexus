@@ -13,7 +13,7 @@ import { ProductQuickView } from "@/components/ui/product-quick-view";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TshirtCardProps {
-  id: number;
+  id: string;
   name: string;
   price: string;
   image: string;
@@ -37,23 +37,11 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
       console.log("🛒 Adding item to cart:", { id, name, selectedColor });
       setIsAdding(true);
 
-      // Get the product ID first
-      const { data: products, error: productError } = await supabase
-        .from('products')
-        .select('id')
-        .order('created_at')
-        .limit(1)
-        .range(id - 1, id - 1);
-
-      if (productError || !products || products.length === 0) {
-        throw new Error('Product not found');
-      }
-
       // Find the corresponding variant for the selected color and default size (M)
       const { data: variant, error } = await supabase
         .from('product_variants')
         .select('id')
-        .eq('product_id', (products[0] as any).id)
+        .eq('product_id', id)
         .eq('color_hex', selectedColor as any)
         .eq('size', 'M' as any)
         .single();
@@ -105,10 +93,10 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
             className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105 cursor-pointer"
           />
         </ImagePopup>
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex gap-2 justify-center">
+        <div className="absolute inset-0 bg-black/0 transition-colors duration-300 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 right-0 p-4 flex gap-2 justify-center">
           <ProductQuickView
-            product={{ id: id.toString(), name, price, image, colorOptions }}
+            product={{ id, name, price, image, colorOptions }}
             onAddToCart={(variantId: string, quantity?: number) => handleAddToCart()}
           >
             <Button variant="secondary" size="sm" className="opacity-90 flex items-center gap-1">
@@ -131,7 +119,7 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
       </div>
       <CardContent className="pt-4">
         <ProductQuickView
-          product={{ id: id.toString(), name, price, image, colorOptions }}
+          product={{ id, name, price, image, colorOptions }}
           onAddToCart={(variantId: string, quantity?: number) => handleAddToCart()}
         >
           <h3 className="font-medium hover:text-blue-600 transition-colors cursor-pointer">{name}</h3>
