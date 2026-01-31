@@ -23,6 +23,12 @@ dist-ssr
 *.sln
 *.sw?
 
+# macOS
+.AppleDouble
+.LSOverride
+._*
+.!*
+
 # Environment variables
 .env
 .env*.local
@@ -37,3 +43,19 @@ next-env.d.ts
 # Supabase
 supabase/.branches/
 supabase/.temp/
+
+# Testing
+coverage/
+*.coverage
+.nyc_output/
+test-results/
+playwright-report/
+
+# Cache
+.eslintcache
+.prettiercache
+.turbo/
+
+# Vercel
+.vercel
+.vercel.json
