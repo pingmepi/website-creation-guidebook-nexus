@@ -11,33 +11,33 @@ const TshirtDesignPreview = ({ color = "#FFFFFF", designImage }: TshirtDesignPre
   const [isLoading, setIsLoading] = useState(true);
   const [tshirtImageError, setTshirtImageError] = useState(false);
   const [designImageError, setDesignImageError] = useState(false);
-  
+
   // Get the corresponding t-shirt image for the selected color
-  const tshirtImageSrc = TSHIRT_COLOR_IMAGES[color] || TSHIRT_COLOR_IMAGES["#FFFFFF"];
-  
+  const tshirtImageSrc = TSHIRT_COLOR_IMAGES[color as keyof typeof TSHIRT_COLOR_IMAGES] || TSHIRT_COLOR_IMAGES["#FFFFFF"];
+
   const handleTshirtImageLoad = () => {
     setIsLoading(false);
     setTshirtImageError(false);
   };
-  
+
   const handleTshirtImageError = () => {
     console.error("Failed to load t-shirt image:", tshirtImageSrc);
     setTshirtImageError(true);
     setIsLoading(false);
   };
-  
+
   const handleDesignImageError = () => {
     console.error("Failed to load design image:", designImage);
     setDesignImageError(true);
   };
-  
+
   return (
     <div className="relative w-full max-w-md mx-auto">
       <div className="relative w-full aspect-[4/5]">
         {/* T-shirt base image */}
         {!tshirtImageError ? (
-          <img 
-            src={tshirtImageSrc}
+          <img
+            src={typeof tshirtImageSrc === 'string' ? tshirtImageSrc : (tshirtImageSrc as any).src}
             alt={`T-shirt in ${color}`}
             className="w-full h-full object-contain filter drop-shadow-lg"
             onLoad={handleTshirtImageLoad}
@@ -48,60 +48,60 @@ const TshirtDesignPreview = ({ color = "#FFFFFF", designImage }: TshirtDesignPre
           />
         ) : (
           // Enhanced fallback SVG if image fails to load
-          <div 
+          <div
             className="w-full h-full rounded-lg shadow-lg relative flex items-center justify-center border border-gray-200"
             style={{ backgroundColor: color }}
           >
-            <svg 
-              className="w-full h-full" 
-              viewBox="0 0 400 500" 
-              fill="none" 
+            <svg
+              className="w-full h-full"
+              viewBox="0 0 400 500"
+              fill="none"
               preserveAspectRatio="xMidYMid meet"
             >
               {/* T-shirt outline */}
-              <path 
-                d="M150 50 L100 100 L100 400 L300 400 L300 100 L250 50 L220 80 L200 90 L180 80 L150 50Z" 
-                stroke="#00000033" 
-                strokeWidth="3" 
+              <path
+                d="M150 50 L100 100 L100 400 L300 400 L300 100 L250 50 L220 80 L200 90 L180 80 L150 50Z"
+                stroke="#00000033"
+                strokeWidth="3"
                 fill={color}
               />
               {/* Left sleeve */}
-              <path 
-                d="M100 100 L50 80 L75 150 L100 140" 
-                stroke="#00000033" 
-                strokeWidth="3" 
+              <path
+                d="M100 100 L50 80 L75 150 L100 140"
+                stroke="#00000033"
+                strokeWidth="3"
                 fill={color}
               />
               {/* Right sleeve */}
-              <path 
-                d="M300 100 L350 80 L325 150 L300 140" 
-                stroke="#00000033" 
-                strokeWidth="3" 
+              <path
+                d="M300 100 L350 80 L325 150 L300 140"
+                stroke="#00000033"
+                strokeWidth="3"
                 fill={color}
               />
               {/* Neck opening */}
-              <ellipse 
-                cx="200" 
-                cy="75" 
-                rx="20" 
-                ry="15" 
-                fill="none" 
-                stroke="#00000033" 
+              <ellipse
+                cx="200"
+                cy="75"
+                rx="20"
+                ry="15"
+                fill="none"
+                stroke="#00000033"
                 strokeWidth="2"
               />
             </svg>
           </div>
         )}
-        
+
         {/* Design overlay positioned in the center of the t-shirt - Increased size */}
         <div className="absolute inset-0 flex items-center justify-center">
           {/* Position the design in the center-upper area of the t-shirt with larger size */}
           <div className="relative" style={{ marginTop: '8%' }}>
             <div className="w-44 h-44 flex items-center justify-center">
               {designImage && !designImageError ? (
-                <img 
-                  src={designImage} 
-                  alt="T-shirt design" 
+                <img
+                  src={designImage}
+                  alt="T-shirt design"
                   className="max-w-full max-h-full object-contain"
                   style={{
                     filter: `drop-shadow(0 2px 6px rgba(0,0,0,0.15))`,
@@ -124,10 +124,10 @@ const TshirtDesignPreview = ({ color = "#FFFFFF", designImage }: TshirtDesignPre
           </div>
         </div>
       </div>
-      
+
       {/* Enhanced color indicator */}
       <div className="mt-4 flex items-center justify-center gap-3">
-        <div 
+        <div
           className="w-5 h-5 rounded-full border-2 border-white shadow-lg ring-1 ring-gray-200"
           style={{ backgroundColor: color }}
         />
@@ -145,7 +145,7 @@ const TshirtDesignPreview = ({ color = "#FFFFFF", designImage }: TshirtDesignPre
           })()}
         </span>
       </div>
-      
+
       {/* Loading overlay */}
       {isLoading && !tshirtImageError && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-lg backdrop-blur-sm">

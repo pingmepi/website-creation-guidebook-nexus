@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -35,10 +37,10 @@ export function useProductVariants(productId: string) {
           return;
         }
 
-        setSizes(data || []);
+        setSizes((data as any) || []);
         // Auto-select first available size
-        if (data && data.length > 0) {
-          setSelectedSize(data[0].size);
+        if (data && (data as any).length > 0) {
+          setSelectedSize((data as any)[0].size);
         }
       } catch (error) {
         console.error('Error fetching product sizes:', error);
@@ -66,7 +68,7 @@ export function useProductVariants(productId: string) {
           return;
         }
 
-        setColors(data || []);
+        setColors((data as any) || []);
       } catch (error) {
         console.error('Error fetching product colors:', error);
       }
@@ -87,7 +89,7 @@ export function useProductVariants(productId: string) {
         return false;
       }
 
-      return data;
+      return data as boolean;
     } catch (error) {
       console.error('Error checking stock:', error);
       return false;

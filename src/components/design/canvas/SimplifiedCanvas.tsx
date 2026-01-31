@@ -32,7 +32,7 @@ export const SimplifiedCanvas = ({
     if (!canvasRef.current || isInitialized) return;
 
     console.log("Initializing SimplifiedCanvas");
-    
+
     try {
       const canvas = new fabric.Canvas(canvasRef.current, {
         width,
@@ -52,7 +52,7 @@ export const SimplifiedCanvas = ({
         selectable: false,
         evented: false,
         name: "safetyArea",
-      });
+      } as any);
       canvas.add(safetyArea);
 
       // Initialize drawing brush
@@ -61,9 +61,9 @@ export const SimplifiedCanvas = ({
         canvas.freeDrawingBrush.width = brushSize;
       }
 
-      fabricCanvasRef.current = canvas;
+      fabricCanvasRef.current = canvas as any;
       setIsInitialized(true);
-      onCanvasReady(canvas);
+      onCanvasReady(canvas as any);
 
       // Handle canvas changes with debouncing
       let timeoutId: number;
@@ -83,7 +83,7 @@ export const SimplifiedCanvas = ({
 
       // Add event listeners
       canvas.on('object:modified', handleChange);
-      canvas.on('object:added', (e) => {
+      canvas.on('object:added', (e: any) => {
         // Don't trigger for safety area
         if (e.target?.name !== 'safetyArea') {
           handleChange();
@@ -122,7 +122,7 @@ export const SimplifiedCanvas = ({
 
     // Remove placeholder text if exists
     const objects = canvas.getObjects();
-    const placeholderText = objects.find(obj => obj.name === "placeholderText");
+    const placeholderText = objects.find(obj => (obj as any).name === "placeholderText");
     if (placeholderText) {
       canvas.remove(placeholderText);
     }
@@ -145,13 +145,13 @@ export const SimplifiedCanvas = ({
         scaleX: scale,
         scaleY: scale,
         name: "mainImage"
-      });
+      } as any);
 
-      canvas.add(img);
-      canvas.bringToFront(img);
-      
+      canvas.add(img as any);
+      canvas.bringToFront(img as any);
+
       // Keep safety area at back
-      const safetyArea = canvas.getObjects().find(obj => obj.name === "safetyArea");
+      const safetyArea = canvas.getObjects().find(obj => (obj as any).name === "safetyArea");
       if (safetyArea) {
         canvas.sendToBack(safetyArea);
       }
@@ -167,24 +167,6 @@ export const SimplifiedCanvas = ({
         });
         onDesignChange(dataURL);
       }
-    }).catch((error) => {
-      console.error("Error loading image:", error);
-      
-      // Add placeholder text on error
-      const placeholderText = new fabric.Text("Failed to load image", {
-        left: width / 2,
-        top: height / 2,
-        originX: 'center',
-        originY: 'center',
-        fontFamily: 'Arial',
-        fontSize: 16,
-        fill: '#999999',
-        selectable: false,
-        evented: false,
-        name: "placeholderText",
-      });
-      canvas.add(placeholderText);
-      canvas.renderAll();
     }, { crossOrigin: 'anonymous' });
   }, [initialImage, width, height, onDesignChange]);
 
@@ -204,8 +186,8 @@ export const SimplifiedCanvas = ({
       selectable: false,
       evented: false,
       name: "placeholderText",
-    });
-    canvas.add(placeholderText);
+    } as any);
+    canvas.add(placeholderText as any);
     canvas.renderAll();
   }, [width, height, initialImage]);
 

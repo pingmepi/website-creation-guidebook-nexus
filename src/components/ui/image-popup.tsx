@@ -1,5 +1,6 @@
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
 import { ReactNode } from "react";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 
 interface ImagePopupProps {
   children: ReactNode;
@@ -14,9 +15,12 @@ export const ImagePopup = ({ children, image, alt }: ImagePopupProps) => {
         {children}
       </DialogTrigger>
       <DialogContent className="max-w-3xl w-full max-h-[90vh] p-0">
+        <VisuallyHidden.Root>
+          <DialogTitle>{alt}</DialogTitle>
+        </VisuallyHidden.Root>
         <div className="relative">
-          <img 
-            src={image} 
+          <img
+            src={image}
             alt={alt}
             className="w-full h-auto object-contain rounded-lg"
           />

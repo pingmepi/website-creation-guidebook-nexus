@@ -32,7 +32,7 @@ const CanvasManager = ({ tshirtColor, initialImage, onDesignChange }: CanvasMana
       const objects = canvasRef.current.getObjects();
       // Keep only the safety area
       objects.forEach(obj => {
-        if (obj.id !== "safetyArea") {
+        if ((obj as any).id !== "safetyArea") {
           canvasRef.current?.remove(obj);
         }
       });
@@ -49,15 +49,15 @@ const CanvasManager = ({ tshirtColor, initialImage, onDesignChange }: CanvasMana
         fontSize: 20,
         fill: '#000000'
       });
-      canvasRef.current.add(fabricText);
-      canvasRef.current.setActiveObject(fabricText);
+      canvasRef.current.add(fabricText as any);
+      canvasRef.current.setActiveObject(fabricText as any);
     }
   };
 
   const addShape = (type: 'rectangle' | 'circle') => {
     if (!canvasRef.current) return;
 
-    let shape: fabric.Object;
+    let shape: any;
     if (type === 'rectangle') {
       shape = new fabric.Rect({
         left: 100,
@@ -74,16 +74,16 @@ const CanvasManager = ({ tshirtColor, initialImage, onDesignChange }: CanvasMana
         radius: 50,
       });
     }
-    
-    canvasRef.current.add(shape);
-    canvasRef.current.setActiveObject(shape);
+
+    canvasRef.current.add(shape as any);
+    canvasRef.current.setActiveObject(shape as any);
   };
 
   const deleteSelected = () => {
     if (canvasRef.current) {
       const activeObject = canvasRef.current.getActiveObject();
-      if (activeObject && activeObject.id !== "safetyArea") {
-        canvasRef.current.remove(activeObject);
+      if (activeObject && (activeObject as any).id !== "safetyArea") {
+        canvasRef.current.remove(activeObject as any);
       }
     }
   };
@@ -94,48 +94,47 @@ const CanvasManager = ({ tshirtColor, initialImage, onDesignChange }: CanvasMana
       <div className="flex flex-wrap gap-2 p-2 bg-gray-50 rounded-md">
         <button
           onClick={toggleDrawingMode}
-          className={`px-3 py-1 rounded text-sm ${
-            isDrawingMode ? 'bg-blue-500 text-white' : 'bg-white border'
-          }`}
+          className={`px-3 py-1 rounded text-sm ${isDrawingMode ? 'bg-blue-500 text-white' : 'bg-white border'
+            }`}
         >
           {isDrawingMode ? 'Exit Draw' : 'Draw'}
         </button>
-        
+
         <button
           onClick={() => addText('Sample Text')}
           className="px-3 py-1 rounded text-sm bg-white border"
         >
           Add Text
         </button>
-        
+
         <button
           onClick={() => addShape('rectangle')}
           className="px-3 py-1 rounded text-sm bg-white border"
         >
           Rectangle
         </button>
-        
+
         <button
           onClick={() => addShape('circle')}
           className="px-3 py-1 rounded text-sm bg-white border"
         >
           Circle
         </button>
-        
+
         <button
           onClick={deleteSelected}
           className="px-3 py-1 rounded text-sm bg-red-500 text-white"
         >
           Delete
         </button>
-        
+
         <button
           onClick={clearCanvas}
           className="px-3 py-1 rounded text-sm bg-gray-500 text-white"
         >
           Clear
         </button>
-        
+
         {isDrawingMode && (
           <input
             type="range"

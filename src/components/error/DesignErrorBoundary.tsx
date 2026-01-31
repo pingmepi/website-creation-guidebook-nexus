@@ -3,14 +3,14 @@ import React, { ReactNode } from 'react';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Button } from '@/components/ui/button';
 import { Home, RefreshCw } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 
 interface DesignErrorBoundaryProps {
   children: ReactNode;
 }
 
 const DesignErrorFallback = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center">
@@ -31,7 +31,7 @@ const DesignErrorFallback = () => {
             Reload Page
           </Button>
           <Button
-            onClick={() => navigate('/')}
+            onClick={() => router.push('/')}
             className="flex items-center gap-2"
           >
             <Home className="h-4 w-4" />

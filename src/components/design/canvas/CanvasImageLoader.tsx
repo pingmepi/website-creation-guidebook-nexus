@@ -20,7 +20,7 @@ export const useCanvasImageLoader = ({
 
   useEffect(() => {
     if (isGeneratingDataURLRef.current || !canvas || !initialImage || updateInProgressRef.current) return;
-    
+
     if (lastProcessedImageRef.current === initialImage) {
       console.log("Skipping duplicate image processing");
       return;
@@ -40,7 +40,7 @@ export const useCanvasImageLoader = ({
       const objects = canvas.getObjects();
       const placeholderText = objects.find((obj: fabric.Object) =>
         obj.type === 'text' &&
-        (obj.id === "placeholderText" || obj.text === 'upload your design')
+        ((obj as any).id === "placeholderText" || (obj as any).text === 'upload your design')
       );
       if (placeholderText) {
         canvas.remove(placeholderText);
@@ -56,7 +56,7 @@ export const useCanvasImageLoader = ({
       // Load the image
       fabric.Image.fromURL(
         initialImage,
-        (img: fabric.Object) => {
+        (img: any) => {
           try {
             if (!img || !img.width || !img.height) {
               console.error("Loaded image is invalid");
@@ -79,13 +79,13 @@ export const useCanvasImageLoader = ({
               top: canvasHeight / 2,
               originX: 'center',
               originY: 'center',
-              id: "initialImage"
-            });
+              id: "uploadedImage",
+            } as any);
 
             canvas.add(img);
             canvas.renderAll();
             initialImageLoadedRef.current = true;
-            
+
             if (onImageLoaded) {
               onImageLoaded();
             }

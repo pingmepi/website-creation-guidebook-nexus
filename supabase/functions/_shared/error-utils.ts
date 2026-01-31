@@ -1,5 +1,11 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
+
 // Standard CORS and Security headers
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -86,18 +92,18 @@ export async function retryOperation<T>(
   shouldRetry?: (error: Error) => boolean
 ): Promise<T> {
   const finalConfig = { ...defaultRetryConfig, ...config };
-  let lastError: Error;
+  let lastError: Error = new Error('Operation failed');
   let delay = finalConfig.initialDelay;
 
   for (let attempt = 1; attempt <= finalConfig.maxRetries; attempt++) {
     try {
       return await operation();
     } catch (error) {
-      lastError = error;
+      lastError = error as Error;
       console.log(`Attempt ${attempt}/${finalConfig.maxRetries} failed:`, error);
 
       // Check if we should retry this error
-      if (shouldRetry && !shouldRetry(error)) {
+      if (shouldRetry && !shouldRetry(error as Error)) {
         break;
       }
 
@@ -109,7 +115,7 @@ export async function retryOperation<T>(
       // Wait before retrying
       console.log(`Retrying in ${delay}ms...`);
       await new Promise(resolve => setTimeout(resolve, delay));
-      
+
       // Exponential backoff with max delay cap
       delay = Math.min(delay * finalConfig.backoffMultiplier, finalConfig.maxDelay);
     }
@@ -151,13 +157,13 @@ export function createErrorResponse(
     errorData = {
       error: error.message,
       code: error.type,
-      details: error.details || details
+      details: (error.details || details) as string
     };
     status = error.statusCode;
   } else {
     errorData = {
       error: typeof error === 'string' ? error : 'Unknown error',
-      details
+      details: details as string
     };
     status = statusCode || 500;
   }
@@ -300,7 +306,7 @@ export async function getAuthenticatedUser(req: Request, supabaseClient: unknown
   }
 
   const token = authHeader.replace('Bearer ', '');
-  const { data, error } = await supabaseClient.auth.getUser(token);
+  const { data, error } = await (supabaseClient as any).auth.getUser(token);
 
   if (error || !data.user) {
     throw new EdgeFunctionError(

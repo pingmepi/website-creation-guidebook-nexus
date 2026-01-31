@@ -18,19 +18,21 @@ const ShapeOperations = ({ currentColor, addObject }: ShapeOperationsProps) => {
       top: 100,
       id: `circle_${Date.now()}`
     });
-    addObject(circle);
+    addObject(circle as any);
   };
 
   const handleAddSquare = () => {
     const square = new fabric.Rect({
-      width: 60,
-      height: 60,
-      fill: currentColor,
       left: 100,
       top: 100,
+      fill: 'transparent',
+      stroke: '#000000',
+      strokeWidth: 2,
+      width: 100,
+      height: 100,
       id: `square_${Date.now()}`
-    });
-    addObject(square);
+    } as any);
+    addObject(square as any);
   };
 
   return (

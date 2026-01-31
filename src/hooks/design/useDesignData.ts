@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Theme } from "./types";
 import { TSHIRT_COLORS } from "./constants";
 import { Answer } from "@/components/design/QuestionFlow";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/toast";
 import { useUser } from "@/contexts/UserContext";
@@ -18,8 +18,8 @@ export function useDesignData(setDesignStage: () => void) {
   const [selectedSize, setSelectedSize] = useState<string>("M");
   const [isLoading, setIsLoading] = useState(false);
 
-  const location = useLocation();
-  const navigate = useNavigate();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Fetch existing design data if editing
   const fetchDesignData = useCallback(async (id: string) => {
@@ -29,7 +29,7 @@ export function useDesignData(setDesignStage: () => void) {
       const { data, error } = await supabase
         .from('designs')
         .select('id, name, t_shirt_color, preview_url, design_data')
-        .eq('id', id)
+        .eq('id', id as any)
         .single();
 
       if (error) {
@@ -38,22 +38,22 @@ export function useDesignData(setDesignStage: () => void) {
 
       if (!data) {
         toast.error("Design not found");
-        navigate('/dashboard/designs');
+        router.push('/dashboard/designs');
         return;
       }
 
       console.log("Fetched design data:", data);
 
       // Set the design data
-      setDesignName(data.name || "Untitled Design");
-      setTshirtColor(data.t_shirt_color || TSHIRT_COLORS.WHITE);
-      setDesignImage(data.preview_url);
+      setDesignName((data as any).name || "Untitled Design");
+      setTshirtColor((data as any).t_shirt_color || TSHIRT_COLORS.WHITE);
+      setDesignImage((data as any).preview_url);
 
       // Parse the design data JSON
-      if (data.design_data) {
-        const designData = typeof data.design_data === 'string'
-          ? JSON.parse(data.design_data)
-          : data.design_data;
+      if ((data as any).design_data) {
+        const designData = typeof (data as any).design_data === 'string'
+          ? JSON.parse((data as any).design_data)
+          : (data as any).design_data;
 
         console.log("Parsed design data:", designData);
 
@@ -65,7 +65,7 @@ export function useDesignData(setDesignStage: () => void) {
           try {
             // Convert theme_id to proper UUID format if it's a number
             let themeId = designData.theme_id;
-            
+
             // If theme_id is a number, we need to look it up differently
             if (typeof themeId === 'number') {
               console.log("Converting numeric theme_id to UUID:", themeId);
@@ -75,13 +75,13 @@ export function useDesignData(setDesignStage: () => void) {
               const { data: themeData, error: themeError } = await supabase
                 .from('themes')
                 .select('id, name, description, category, is_active, thumbnail_url, created_at')
-                .eq('id', themeId)
+                .eq('id', themeId as any)
                 .single();
 
               if (themeError) {
                 console.error("Error fetching theme:", themeError);
               } else if (themeData) {
-                setSelectedTheme(themeData);
+                setSelectedTheme(themeData as any);
               }
             }
           } catch (themeError) {
@@ -105,12 +105,11 @@ export function useDesignData(setDesignStage: () => void) {
     } finally {
       setIsLoading(false);
     }
-  }, [setDesignStage, navigate]);
+  }, [setDesignStage, router]);
 
   // Extract design ID from URL query parameters
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const id = params.get('id');
+    const id = searchParams.get('id');
 
     if (id && id !== designId) {
       setDesignId(id);
@@ -125,7 +124,7 @@ export function useDesignData(setDesignStage: () => void) {
         minute: "numeric"
       })}`);
     }
-  }, [location.search, designId, designName]); // Removed fetchDesignData from dependencies
+  }, [searchParams, designId, designName]); // Removed fetchDesignData from dependencies
 
   const handleDesignChange = (designDataUrl: string) => {
     console.log("Design canvas updated");
@@ -133,7 +132,7 @@ export function useDesignData(setDesignStage: () => void) {
   };
 
   const saveDesignToDatabase = async (
-    imageUrl: string, 
+    imageUrl: string,
     prompt: string,
     userId: string
   ) => {
@@ -156,13 +155,13 @@ export function useDesignData(setDesignStage: () => void) {
             theme_id: selectedTheme?.id,
             prompt: String(prompt || '').replace(/<[^>]*>/g, '').trim()
           })
-        })
+        } as any)
         .select('id');
 
       if (error) throw error;
 
       if (data && data.length > 0) {
-        setDesignId(data[0].id);
+        setDesignId((data as any)[0].id);
       }
     } catch (error) {
       console.error("Error saving AI design to database:", error);

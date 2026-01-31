@@ -1,10 +1,10 @@
 // Centralized design constants and color definitions
-import { tshirtColors } from "../../../assets/index";
+import { tshirtColors } from "../../assets";
 
 // Define t-shirt color options
 export const TSHIRT_COLORS = {
   BLACK: "#000000",
-  WHITE: "#FFFFFF", 
+  WHITE: "#FFFFFF",
   RED: "#DC2626",
   GREY: "#8A898C",
   BLUE: "#1EAEDB"

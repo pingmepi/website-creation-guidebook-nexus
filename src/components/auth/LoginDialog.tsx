@@ -1,3 +1,4 @@
+'use client';
 
 import { useState } from "react";
 import {
@@ -34,22 +35,22 @@ const LoginDialog = ({ open, onClose, onSuccess }: LoginDialogProps) => {
   const [mode, setMode] = useState<AuthMode>("login");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const { login, signup, loginWithGoogle } = useUser();
-  
+
   const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>();
-  
+
   const toggleMode = () => {
     console.log("Mode toggled from", mode, "to", mode === "login" ? "signup" : "login");
     setMode(mode === "login" ? "signup" : "login");
     reset();
   };
-  
+
   const onSubmit = async (data: FormData) => {
     console.log("Form submitted:", data);
     console.log("Current mode:", mode);
     setIsLoading(true);
-    
+
     try {
       if (mode === "login") {
         console.log("Attempting login with:", data.email);
@@ -72,7 +73,7 @@ const LoginDialog = ({ open, onClose, onSuccess }: LoginDialogProps) => {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -81,8 +82,8 @@ const LoginDialog = ({ open, onClose, onSuccess }: LoginDialogProps) => {
             {mode === "login" ? "Log in to your account" : "Create an account"}
           </DialogTitle>
           <DialogDescription>
-            {mode === "login" 
-              ? "Enter your email and password to continue with your design" 
+            {mode === "login"
+              ? "Enter your email and password to continue with your design"
               : "Fill in the details below to create a new account"}
           </DialogDescription>
         </DialogHeader>
@@ -131,13 +132,13 @@ const LoginDialog = ({ open, onClose, onSuccess }: LoginDialogProps) => {
               {errors.name && <p className="text-sm text-red-500">Name is required</p>}
             </div>
           )}
-          
+
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
-              {...register("email", { 
+              {...register("email", {
                 required: "Email is required",
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
@@ -148,21 +149,21 @@ const LoginDialog = ({ open, onClose, onSuccess }: LoginDialogProps) => {
             />
             {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <div className="relative">
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                {...register("password", { 
+                {...register("password", {
                   required: "Password is required",
                   minLength: { value: 6, message: "Password must be at least 6 characters" }
                 })}
                 placeholder="Enter your password"
                 className="pr-10"
               />
-              <button 
+              <button
                 type="button"
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 onClick={() => setShowPassword(!showPassword)}
@@ -172,7 +173,7 @@ const LoginDialog = ({ open, onClose, onSuccess }: LoginDialogProps) => {
             </div>
             {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
           </div>
-          
+
           <DialogFooter className="mt-6">
             <Button type="button" variant="outline" onClick={toggleMode} disabled={isLoading}>
               {mode === "login" ? "Need an account? Sign up" : "Already have an account? Log in"}
