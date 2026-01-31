@@ -5,8 +5,13 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-    title: "Nexus T-Shirt Design",
-    description: "Create and order custom t-shirts",
+    title: "Merekapade - AI-Powered Custom T-Shirt Design",
+    description: "Create personalized t-shirts with Merekapade. Our AI-assisted design flow helps you create unique apparel with ease.",
+    icons: {
+        icon: "/favicon.ico",
+        shortcut: "/favicon.ico",
+        apple: "/favicon.ico",
+    },
 };
 
 export default function RootLayout({

@@ -7,9 +7,9 @@ const Footer = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="font-bold text-lg mb-4">Nexus T-Shirt Design</h3>
+            <h3 className="font-bold text-lg mb-4">Merekapade</h3>
             <p className="text-gray-600 text-sm">
-              Create custom t-shirts with our AI-powered design tool. High-quality printing and fast delivery.
+              Create unique, AI-powered custom t-shirts with Merekapade. Premium quality, personalized designs, and fast delivery.
             </p>
           </div>
           <div>
@@ -52,13 +52,13 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4">Contact</h4>
             <ul className="space-y-2 text-sm">
-              <li className="text-gray-600">Email: support@nexus.com</li>
+              <li className="text-gray-600">Email: support@merekapade.com</li>
               <li className="text-gray-600">Phone: +1 (555) 123-4567</li>
             </ul>
           </div>
         </div>
         <div className="border-t mt-8 pt-8 text-center text-sm text-gray-500">
-          <p>&copy; {new Date().getFullYear()} Nexus T-Shirt Design. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Merekapade. All rights reserved.</p>
         </div>
       </div>
     </footer>
