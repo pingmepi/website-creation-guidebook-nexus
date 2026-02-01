@@ -72,11 +72,41 @@ export const SimplifiedCanvas = ({
         clearTimeout(timeoutId);
         timeoutId = window.setTimeout(() => {
           if (onDesignChange && canvas) {
+            // Get all design objects (excluding safety area)
+            const designObjects = canvas.getObjects().filter(
+              (obj: any) => obj.name !== 'safetyArea' && obj.name !== 'placeholderText'
+            );
+
+            // If no design objects, don't export
+            if (designObjects.length === 0) {
+              return;
+            }
+
+            // Save current background
+            const originalBg = canvas.backgroundColor;
+
+            // Temporarily hide safety area and set transparent background
+            const safetyArea = canvas.getObjects().find((obj: any) => obj.name === 'safetyArea');
+            const placeholderText = canvas.getObjects().find((obj: any) => obj.name === 'placeholderText');
+
+            if (safetyArea) (safetyArea as any).visible = false;
+            if (placeholderText) (placeholderText as any).visible = false;
+            canvas.backgroundColor = 'transparent';
+            canvas.renderAll();
+
+            // Export with transparent background
             const dataURL = canvas.toDataURL({
               format: "png",
               quality: 1,
               multiplier: 2,
             });
+
+            // Restore original state
+            if (safetyArea) (safetyArea as any).visible = true;
+            if (placeholderText) (placeholderText as any).visible = true;
+            canvas.backgroundColor = originalBg;
+            canvas.renderAll();
+
             lastPushedImageRef.current = dataURL;
             onDesignChange(dataURL);
           }

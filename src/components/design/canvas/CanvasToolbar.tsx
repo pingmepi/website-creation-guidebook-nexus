@@ -1,107 +1,50 @@
 import { useState } from "react";
-import { fabric } from "fabric";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 
 interface CanvasToolbarProps {
-  canvas: fabric.Canvas | null;
   isDrawingMode: boolean;
   onDrawingModeChange: (mode: boolean) => void;
   brushSize: number;
   onBrushSizeChange: (size: number) => void;
+  onAddText: (text: string, color: string) => void;
+  onAddRect: (color: string) => void;
+  onAddCircle: (color: string) => void;
+  onDelete: () => void;
+  onClear: () => void;
+  onUpdateColor: (color: string) => void;
 }
 
 export const CanvasToolbar = ({
-  canvas,
   isDrawingMode,
   onDrawingModeChange,
   brushSize,
   onBrushSizeChange,
+  onAddText,
+  onAddRect,
+  onAddCircle,
+  onDelete,
+  onClear,
+  onUpdateColor
 }: CanvasToolbarProps) => {
   const [textInput, setTextInput] = useState("Sample Text");
   const [selectedColor, setSelectedColor] = useState("#000000");
 
-  const addText = () => {
-    if (!canvas) return;
-
-    const fabricText = new fabric.Text(textInput, {
-      left: 150,
-      top: 100,
-      fontFamily: 'Arial',
-      fontSize: 20,
-      fill: selectedColor,
-      name: "userText"
-    } as any);
-
-    canvas.add(fabricText as any);
-    canvas.setActiveObject(fabricText as any);
-    canvas.renderAll();
+  const handleAddText = () => {
+    onAddText(textInput, selectedColor);
   };
 
-  const addRectangle = () => {
-    if (!canvas) return;
-
-    const rect = new fabric.Rect({
-      left: 100,
-      top: 100,
-      fill: selectedColor,
-      width: 80,
-      height: 60,
-      name: "userShape"
-    } as any);
-
-    canvas.add(rect as any);
-    canvas.setActiveObject(rect as any);
-    canvas.renderAll();
+  const handleAddRectangle = () => {
+    onAddRect(selectedColor);
   };
 
-  const addCircle = () => {
-    if (!canvas) return;
-
-    const circle = new fabric.Circle({
-      left: 100,
-      top: 100,
-      fill: selectedColor,
-      radius: 40,
-      name: "userShape"
-    } as any);
-
-    canvas.add(circle as any);
-    canvas.setActiveObject(circle as any);
-    canvas.renderAll();
+  const handleAddCircle = () => {
+    onAddCircle(selectedColor);
   };
 
-  const deleteSelected = () => {
-    if (!canvas) return;
-
-    const activeObject = canvas.getActiveObject();
-    if (activeObject && activeObject.name !== "safetyArea" && activeObject.name !== "mainImage") {
-      canvas.remove(activeObject);
-      canvas.renderAll();
-    }
-  };
-
-  const clearCanvas = () => {
-    if (!canvas) return;
-
-    const objects = canvas.getObjects();
-    objects.forEach(obj => {
-      if (obj.name !== "safetyArea" && obj.name !== "mainImage") {
-        canvas.remove(obj);
-      }
-    });
-    canvas.renderAll();
-  };
-
-  const updateSelectedColor = () => {
-    if (!canvas) return;
-
-    const activeObject = canvas.getActiveObject();
-    if (activeObject && activeObject.name !== "safetyArea" && activeObject.name !== "mainImage") {
-      activeObject.set('fill', selectedColor);
-      canvas.renderAll();
-    }
+  const handleUpdateColor = () => {
+    onUpdateColor(selectedColor);
   };
 
   return (
@@ -116,23 +59,23 @@ export const CanvasToolbar = ({
           {isDrawingMode ? "Exit Draw" : "Draw"}
         </Button>
 
-        <Button variant="outline" size="sm" onClick={addText}>
+        <Button variant="outline" size="sm" onClick={handleAddText}>
           Add Text
         </Button>
 
-        <Button variant="outline" size="sm" onClick={addRectangle}>
+        <Button variant="outline" size="sm" onClick={handleAddRectangle}>
           Rectangle
         </Button>
 
-        <Button variant="outline" size="sm" onClick={addCircle}>
+        <Button variant="outline" size="sm" onClick={handleAddCircle}>
           Circle
         </Button>
 
-        <Button variant="destructive" size="sm" onClick={deleteSelected}>
+        <Button variant="destructive" size="sm" onClick={onDelete}>
           Delete
         </Button>
 
-        <Button variant="secondary" size="sm" onClick={clearCanvas}>
+        <Button variant="secondary" size="sm" onClick={onClear}>
           Clear All
         </Button>
       </div>
@@ -146,7 +89,7 @@ export const CanvasToolbar = ({
           onChange={(e) => setSelectedColor(e.target.value)}
           className="w-8 h-8 rounded border"
         />
-        <Button variant="outline" size="sm" onClick={updateSelectedColor}>
+        <Button variant="outline" size="sm" onClick={handleUpdateColor}>
           Apply Color
         </Button>
       </div>
