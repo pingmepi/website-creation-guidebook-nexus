@@ -1,8 +1,8 @@
 import { OpenAI } from 'openai';
-import { 
-  EdgeFunctionError, 
-  ErrorType, 
-  retryOperation, 
+import {
+  EdgeFunctionError,
+  ErrorType,
+  retryOperation,
   shouldRetryError,
   createErrorResponse,
   createSuccessResponse,
@@ -32,7 +32,7 @@ export interface OpenAIImageRequest {
 
 // Content safety filters - only truly harmful content
 const PROHIBITED_CONTENT = [
-  'explicit sexual', 'graphic violence', 'disturbing gore', 'harmful illegal', 
+  'explicit sexual', 'graphic violence', 'disturbing gore', 'harmful illegal',
   'unethical hate', 'discriminatory slur', 'offensive explicit'
 ];
 
@@ -117,7 +117,7 @@ export function validateOpenAIRequest(request: OpenAIImageRequest): void {
 export function validatePromptContent(prompt: string): void {
   const lowerPrompt = prompt.toLowerCase();
   const foundProhibited = PROHIBITED_CONTENT.find(term => lowerPrompt.includes(term));
-  
+
   if (foundProhibited) {
     throw new EdgeFunctionError(
       'Prompt contains prohibited content',
@@ -131,18 +131,18 @@ export function validatePromptContent(prompt: string): void {
 // Sanitize text input for prompts
 export function sanitizePromptText(text: unknown): string {
   if (!text || typeof text !== 'string') return '';
-  
+
   // Remove potentially problematic characters
   let sanitized = text
     .replace(/[^\w\s\-,.!?:;()[\]{}]/g, '') // Only allow basic punctuation and alphanumeric
     .trim();
-  
+
   // Remove potential prompt injection attempts
   sanitized = sanitized
     .replace(/ignore previous instructions/gi, '[redacted]')
     .replace(/ignore all instructions/gi, '[redacted]')
     .replace(/disregard/gi, '[consider]');
-  
+
   // Limit length
   return sanitized.length > 500 ? sanitized.substring(0, 500) + '...' : sanitized;
 }
@@ -162,13 +162,13 @@ export async function generateImageWithRetry(
   });
 
   const startTime = Date.now();
-  
+
   try {
     const response = await retryOperation(
       () => client.images.generate(request),
       { maxRetries: 3, initialDelay: 1000 },
       (error) => {
-        const openaiError = error as OpenAIError;
+        const openaiError = error as unknown as OpenAIError;
         // Only retry on rate limits or server errors
         return openaiError.status === 429 || (openaiError.status >= 500 && openaiError.status < 600);
       }
@@ -177,9 +177,9 @@ export async function generateImageWithRetry(
     const duration = Date.now() - startTime;
     logInfo(`Image generation completed in ${duration}ms`);
 
-    return response;
+    return response as any;
   } catch (error) {
-    const openaiError = error as OpenAIError;
+    const openaiError = error as unknown as OpenAIError;
     logError('OpenAI API Error', {
       status: openaiError.status,
       type: openaiError.type,
@@ -238,10 +238,10 @@ export function convertOpenAIError(error: OpenAIError): EdgeFunctionError {
 // Fallback image generation with simpler prompt
 export async function generateFallbackImage(apiKey: string): Promise<Response> {
   logInfo('Attempting fallback image generation');
-  
+
   try {
     const client = createOpenAIClient(apiKey, 0); // No retries for fallback
-    
+
     const fallbackRequest: OpenAIImageRequest = {
       model: 'dall-e-2',
       prompt: 'A simple geometric pattern suitable for a t-shirt with blue and white colors',
@@ -265,13 +265,13 @@ export async function generateFallbackImage(apiKey: string): Promise<Response> {
     throw new Error('No image data in fallback response');
   } catch (error) {
     logError('Fallback image generation failed', error);
-    
+
     // Return static placeholder as final fallback
     return createSuccessResponse({
       error: 'Image generation service unavailable',
       fallback: true,
       placeholderImage: true,
-      imageUrl: '/assets/images/design/placeholder.svg'
+      imageUrl: '/placeholder.svg'
     });
   }
 }

@@ -52,7 +52,12 @@ Deno.serve(async (req) => {
   try {
     // Parse JSON safely
     const body = await parseJsonBody(req);
-    logDebug("Request Payload", body);
+
+    // Log headers to identify request source
+    const clientInfo = req.headers.get('x-client-info');
+    const userAgent = req.headers.get('user-agent');
+    logDebug("Request Context", { clientInfo, userAgent });
+    logDebug("Request Body", body);
 
     const { theme, answers, userId } = body as {
       theme: { id: string | number; name?: string };
@@ -60,8 +65,11 @@ Deno.serve(async (req) => {
       userId?: string
     };
 
-    // Validate required parameters
-    validateRequired(theme, 'theme');
+    // Validate required parameters with more context
+    if (!theme) {
+      logError("Validation Failed: Missing theme object", { body });
+      throw new EdgeFunctionError("theme is required (must be an object with id)", ErrorType.VALIDATION, 400);
+    }
     validateRequired(answers, 'answers');
     validateArray(answers, 'answers');
 
@@ -127,7 +135,7 @@ Deno.serve(async (req) => {
           const supabaseKey = getRequiredEnvVar('SUPABASE_SERVICE_ROLE_KEY');
 
           const supabase = createClient(supabaseUrl, supabaseKey);
-          
+
           // Convert theme.id to proper UUID format if it's a number
           let themeId: string | null = null;
           if (theme.id) {
@@ -138,7 +146,7 @@ Deno.serve(async (req) => {
               themeId = theme.id;
             }
           }
-          
+
           const sanitize = (s: string) => s.replace(/<[^>]*>/g, '').trim();
           const { error } = await supabase.from('ai_generated_designs').insert({
             user_id: userId,
@@ -170,8 +178,8 @@ Deno.serve(async (req) => {
 
       // Check if it's a validation error that might benefit from fallback
       if (apiError instanceof EdgeFunctionError &&
-          apiError.type === ErrorType.VALIDATION &&
-          apiError.statusCode === 400) {
+        apiError.type === ErrorType.VALIDATION &&
+        apiError.statusCode === 400) {
         logInfo("Attempting fallback due to validation error");
         return await generateFallbackImage(openaiApiKey);
       }
@@ -192,7 +200,7 @@ Deno.serve(async (req) => {
     return createErrorResponse(
       'Internal Server Error',
       500,
-      err.message
+      err instanceof Error ? err.message : String(err)
     );
   }
 });

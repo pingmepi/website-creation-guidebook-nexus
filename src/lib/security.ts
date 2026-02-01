@@ -67,9 +67,9 @@ export const generateCSPHeader = (): string => {
     // Remove unsafe script allowances in production
     directives['script-src'] = (directives['script-src'] || [])
       .filter(src => src !== "'unsafe-inline'" && src !== "'unsafe-eval'" && !src.includes('localhost') && !src.includes('127.0.0.1'));
-    // Tighten connect-src in production
+    // Tighten connect-src in production but keep WebSockets for Supabase
     directives['connect-src'] = (directives['connect-src'] || [])
-      .filter(src => !src.startsWith('ws') && !src.includes('localhost') && !src.includes('127.0.0.1'));
+      .filter(src => !src.includes('localhost') && !src.includes('127.0.0.1'));
   }
 
   return Object.entries(directives)
@@ -86,22 +86,22 @@ export const generateCSPHeader = (): string => {
 export const SECURITY_HEADERS = {
   // Content Security Policy
   'Content-Security-Policy': generateCSPHeader(),
-  
+
   // Prevent MIME type sniffing
   'X-Content-Type-Options': 'nosniff',
-  
+
   // Enable XSS protection
   'X-XSS-Protection': '1; mode=block',
-  
+
   // Prevent clickjacking
   'X-Frame-Options': 'DENY',
-  
+
   // Strict Transport Security (HTTPS only)
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
-  
+
   // Referrer Policy
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  
+
   // Permissions Policy (Feature Policy)
   'Permissions-Policy': [
     'camera=()',
@@ -120,9 +120,9 @@ export const CORS_CONFIG = {
   origin: process.env.NODE_ENV === 'development'
     ? ['http://localhost:8080', 'http://localhost:8081', 'http://localhost:3000']
     : [
-        'https://merekapade.com',
-        'https://www.merekapade.com'
-      ],
+      'https://merekapade.com',
+      'https://www.merekapade.com'
+    ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
@@ -151,15 +151,15 @@ export const sanitizeInput = (input: string): string => {
 export const validateFileUpload = (file: File): { valid: boolean; error?: string } => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   const maxSize = 5 * 1024 * 1024; // 5MB
-  
+
   if (!allowedTypes.includes(file.type)) {
     return { valid: false, error: 'Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.' };
   }
-  
+
   if (file.size > maxSize) {
     return { valid: false, error: 'File size too large. Maximum size is 5MB.' };
   }
-  
+
   return { valid: true };
 };
 

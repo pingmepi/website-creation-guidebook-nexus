@@ -64,7 +64,7 @@ export function useDesignGeneration() {
         userId: user?.id || null
       };
 
-      console.log("CLIENT: Invoking generate-ai-design function with:", {
+      console.log("CLIENT [DEPLOY_CHECK]: Invoking generate-ai-design function with:", {
         theme: selectedTheme.name,
         answersCount: validAnswers.length,
         userId: user?.id || "not provided"
@@ -74,10 +74,18 @@ export function useDesignGeneration() {
 
       // Get the current session
       const { data: { session } } = await supabase.auth.getSession();
-      console.log("🔑 CLIENT: Session available:", !!session);
+      console.log("🔑 CLIENT: Session available for function call:", !!session);
+      if (session) {
+        console.log("🔑 CLIENT: Token prefix:", session.access_token.substring(0, 10) + "...");
+      }
 
-      // Call the edge function to generate the design with explicit headers
-      console.log("📡 CLIENT: Calling supabase.functions.invoke now...");
+      // Call the edge function to generate the design
+      console.log("📡 CLIENT: Invoking generate-ai-design. Payload (truncated):", {
+        theme: payload.theme?.name,
+        answersCount: payload.answers.length,
+        userId: payload.userId
+      });
+
       const { data: aiResponse, error: aiError } = await supabase.functions.invoke(
         'generate-ai-design',
         {
@@ -151,7 +159,8 @@ export function useDesignGeneration() {
       });
 
       // Set placeholder design image if generation fails
-      setDesignImage("/assets/images/design/placeholder.svg");
+      console.log("Setting fallback placeholder design image");
+      setDesignImage("/placeholder.svg");
     } finally {
       setIsGenerating(false);
     }

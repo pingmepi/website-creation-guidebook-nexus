@@ -26,6 +26,7 @@ export const SimplifiedCanvas = ({
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const lastImageRef = useRef<string>("");
+  const lastPushedImageRef = useRef<string>("");
 
   // Initialize canvas once
   useEffect(() => {
@@ -76,6 +77,7 @@ export const SimplifiedCanvas = ({
               quality: 1,
               multiplier: 2,
             });
+            lastPushedImageRef.current = dataURL;
             onDesignChange(dataURL);
           }
         }, 300);
@@ -115,59 +117,70 @@ export const SimplifiedCanvas = ({
   // Load initial image
   useEffect(() => {
     const canvas = fabricCanvasRef.current;
-    if (!canvas || !initialImage || initialImage === lastImageRef.current) return;
+    if (!canvas || !initialImage) return;
 
-    console.log("Loading initial image:", initialImage);
+    // Prevent loop if image is the same as last loaded or last pushed
+    if (initialImage === lastImageRef.current || initialImage === lastPushedImageRef.current) return;
+
+    console.log("Loading initial image into canvas");
     lastImageRef.current = initialImage;
 
-    // Remove placeholder text if exists
+    // Remove placeholder text and previous main image if they exist
     const objects = canvas.getObjects();
     const placeholderText = objects.find(obj => (obj as any).name === "placeholderText");
     if (placeholderText) {
       canvas.remove(placeholderText);
     }
 
+    const previousImage = objects.find(obj => (obj as any).name === "mainImage");
+    if (previousImage) {
+      canvas.remove(previousImage);
+    }
+
     // Load and add the image
-    fabric.Image.fromURL(initialImage, (img) => {
-      if (!canvas) return;
+    try {
+      fabric.Image.fromURL(initialImage, (img) => {
+        if (!canvas || !img) {
+          console.error("Failed to load image or canvas disposed:", initialImage.substring(0, 30) + "...");
+          return;
+        }
 
-      // Scale image to fit canvas
-      const scale = Math.min(
-        (width - 40) / (img.width || 1),
-        (height - 40) / (img.height || 1)
-      );
+        try {
+          // Scale image to fit canvas
+          const scale = Math.min(
+            (width - 40) / (img.width || 1),
+            (height - 40) / (img.height || 1)
+          );
 
-      img.set({
-        left: width / 2,
-        top: height / 2,
-        originX: 'center',
-        originY: 'center',
-        scaleX: scale,
-        scaleY: scale,
-        name: "mainImage"
-      } as any);
+          img.set({
+            left: width / 2,
+            top: height / 2,
+            originX: 'center',
+            originY: 'center',
+            scaleX: scale,
+            scaleY: scale,
+            name: "mainImage"
+          } as any);
 
-      canvas.add(img as any);
-      canvas.bringToFront(img as any);
+          canvas.add(img as any);
+          canvas.bringToFront(img as any);
 
-      // Keep safety area at back
-      const safetyArea = canvas.getObjects().find(obj => (obj as any).name === "safetyArea");
-      if (safetyArea) {
-        canvas.sendToBack(safetyArea);
-      }
+          // Keep safety area at back
+          const safetyArea = canvas.getObjects().find(obj => (obj as any).name === "safetyArea");
+          if (safetyArea) {
+            canvas.sendToBack(safetyArea);
+          }
 
-      canvas.renderAll();
-
-      // Trigger design change
-      if (onDesignChange) {
-        const dataURL = canvas.toDataURL({
-          format: "png",
-          quality: 1,
-          multiplier: 2,
-        });
-        onDesignChange(dataURL);
-      }
-    }, { crossOrigin: 'anonymous' });
+          if (canvas && (canvas as any).contextContainer) {
+            canvas.renderAll();
+          }
+        } catch (innerError) {
+          console.error("Error processing loaded image:", innerError);
+        }
+      }, { crossOrigin: 'anonymous' });
+    } catch (outerError) {
+      console.error("Error calling fabric.Image.fromURL:", outerError);
+    }
   }, [initialImage, width, height, onDesignChange]);
 
   // Add placeholder text if no initial image

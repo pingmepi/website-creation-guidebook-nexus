@@ -161,7 +161,14 @@ export function useDesignData(setDesignStage: () => void) {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        setDesignId((data as any)[0].id);
+        const newId = (data as any)[0].id;
+        setDesignId(newId);
+
+        // Update URL with the design ID
+        const currentId = searchParams.get('id');
+        if (currentId !== newId) {
+          router.replace(`/design?id=${newId}`);
+        }
       }
     } catch (error) {
       console.error("Error saving AI design to database:", error);
