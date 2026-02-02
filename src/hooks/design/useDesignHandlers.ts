@@ -19,6 +19,7 @@ export function useDesignHandlers() {
   const [designName, setDesignName] = useState<string>("");
   const [tshirtColor, setTshirtColor] = useState("#FFFFFF"); // Default to white
   const [designImage, setDesignImage] = useState<string | undefined>(undefined);
+  const [initialCanvasImage, setInitialCanvasImage] = useState<string | undefined>(undefined);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const { saveDesignToDatabase, isSaving } = useDesignStorage();
@@ -62,6 +63,7 @@ export function useDesignHandlers() {
         selectedTheme,
         answers,
         setDesignImage,
+        setInitialCanvasImage,
         async (imageUrl: string, prompt: string, userId: string) => {
           if (user) {
             await saveDesignToDatabase(
@@ -81,6 +83,7 @@ export function useDesignHandlers() {
     } else {
       // Set placeholder design image if no theme or answers
       setDesignImage("/placeholder.svg");
+      setInitialCanvasImage("/placeholder.svg");
     }
   };
 
@@ -146,6 +149,7 @@ export function useDesignHandlers() {
     showLoginDialog,
     tshirtColor,
     designImage,
+    initialCanvasImage,
     isSaving,
     isGenerating,
     designId,
@@ -157,6 +161,7 @@ export function useDesignHandlers() {
     setDesignName,
     setAnswers,
     setDesignImage,
+    setInitialCanvasImage,
     setSelectedTheme,
     setCurrentStep,
     setCurrentStage,

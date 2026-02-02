@@ -49,6 +49,7 @@ export function useDesignState() {
       data.selectedTheme,
       data.answers,
       data.setDesignImage,
+      data.setInitialCanvasImage,
       data.saveDesignToDatabase
     );
   };
@@ -64,7 +65,7 @@ export function useDesignState() {
         data.answers,
         data.setDesignId
       );
-      
+
       if (!success && !navigation.showLoginDialog) {
         navigation.setShowLoginDialog(true);
       }
@@ -76,7 +77,7 @@ export function useDesignState() {
     // Navigation state
     currentStep: navigation.currentStep,
     currentStage: navigation.currentStage,
-    
+
     // Design data
     selectedTheme: data.selectedTheme,
     answers: data.answers,
@@ -85,21 +86,22 @@ export function useDesignState() {
     tshirtColor: data.tshirtColor,
     selectedSize: data.selectedSize,
     designImage: data.designImage,
-    
+    initialCanvasImage: data.initialCanvasImage,
+
     // UI state
     showConfirmation: navigation.showConfirmation,
     showLoginDialog: navigation.showLoginDialog,
     isSaving: ui.isSaving,
     isGenerating: generation.isGenerating,
     isLoading: data.isLoading,
-    
+
     // Setters
     setShowConfirmation: navigation.setShowConfirmation,
     setShowLoginDialog: navigation.setShowLoginDialog,
     setTshirtColor: data.setTshirtColor,
     setSelectedSize: data.setSelectedSize,
     setDesignName: data.setDesignName,
-    
+
     // Handlers
     handleThemeSelect,
     handleQuestionFlowComplete,

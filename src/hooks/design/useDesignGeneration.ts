@@ -16,6 +16,7 @@ export function useDesignGeneration() {
     selectedTheme: Theme | null,
     answers: Answer[],
     setDesignImage: (image: string) => void,
+    setInitialCanvasImage: (image: string) => void,
     saveDesignCallback: (imageUrl: string, prompt: string, userId: string) => Promise<void>
   ) => {
     if (!selectedTheme || answers.length === 0) {
@@ -125,6 +126,7 @@ export function useDesignGeneration() {
 
       // Set the generated design image
       setDesignImage(aiResponse.imageUrl);
+      setInitialCanvasImage(aiResponse.imageUrl); // Set as initial canvas background
 
       // Save the design image with the answers and theme
       if (user) {
@@ -161,6 +163,7 @@ export function useDesignGeneration() {
       // Set placeholder design image if generation fails
       console.log("Setting fallback placeholder design image");
       setDesignImage("/placeholder.svg");
+      setInitialCanvasImage("/placeholder.svg");
     } finally {
       setIsGenerating(false);
     }

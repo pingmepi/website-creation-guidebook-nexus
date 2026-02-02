@@ -80,6 +80,11 @@ export const KonvaCanvas = forwardRef<KonvaCanvasHandle, KonvaCanvasProps>(({
     const transformerRef = useRef<Konva.Transformer>(null);
     const isDrawing = useRef(false);
 
+    // Text editing state
+    const [editingTextId, setEditingTextId] = useState<string | null>(null);
+    const [editingTextValue, setEditingTextValue] = useState<string>("");
+    const [editingTextPos, setEditingTextPos] = useState<{ x: number; y: number; fontSize: number; fill: string } | null>(null);
+
     // Load initial image if present
     // We handle this via a special component or effect. 
     // Simplified: We treat everything as elements.
@@ -208,7 +213,7 @@ export const KonvaCanvas = forwardRef<KonvaCanvasHandle, KonvaCanvasProps>(({
                 const dataURL = exportStage();
                 onDesignChangeRef.current(dataURL);
             }
-        }, 500);
+        }, 100); // Reduced from 500ms for faster preview updates
         return () => clearTimeout(timeout);
     }, [elements, lines, exportStage]); // Removed onDesignChange from dependencies
 
@@ -278,8 +283,57 @@ export const KonvaCanvas = forwardRef<KonvaCanvasHandle, KonvaCanvasProps>(({
         isDrawing.current = false;
     };
 
+    // Handle double-click on text to start editing
+    const handleTextDblClick = (el: CanvasElement) => {
+        if (isDrawingMode) return;
+        setSelectedId(null); // Deselect to hide transformer
+        setEditingTextId(el.id);
+        setEditingTextValue(el.attrs.text);
+        setEditingTextPos({
+            x: el.attrs.x,
+            y: el.attrs.y,
+            fontSize: el.attrs.fontSize || 20,
+            fill: el.attrs.fill || '#000000'
+        });
+    };
+
+    // Handle text edit completion
+    const handleTextEditComplete = () => {
+        if (editingTextId && editingTextValue.trim()) {
+            setElements(prev => prev.map(el => {
+                if (el.id === editingTextId) {
+                    return { ...el, attrs: { ...el.attrs, text: editingTextValue } };
+                }
+                return el;
+            }));
+        }
+        setEditingTextId(null);
+        setEditingTextValue("");
+        setEditingTextPos(null);
+    };
+
+    // Helper to update element after drag or transform
+    const updateElementFromNode = (id: string, node: Konva.Node) => {
+        setElements(prev => prev.map(el => {
+            if (el.id === id) {
+                return {
+                    ...el,
+                    attrs: {
+                        ...el.attrs,
+                        x: node.x(),
+                        y: node.y(),
+                        scaleX: node.scaleX(),
+                        scaleY: node.scaleY(),
+                        rotation: node.rotation(),
+                    }
+                };
+            }
+            return el;
+        }));
+    };
+
     return (
-        <div style={{ backgroundColor, border: "1px solid #e0e0e0", borderRadius: "8px", overflow: 'hidden' }}>
+        <div style={{ position: 'relative', backgroundColor, border: "1px solid #e0e0e0", borderRadius: "8px", overflow: 'hidden' }}>
             <Stage
                 width={width}
                 height={height}
@@ -324,10 +378,8 @@ export const KonvaCanvas = forwardRef<KonvaCanvasHandle, KonvaCanvasProps>(({
                                 {...el.attrs}
                                 onClick={() => !isDrawingMode && setSelectedId(el.id)}
                                 onTap={() => !isDrawingMode && setSelectedId(el.id)}
-                                onDragEnd={() => {
-                                    // Force update to trigger export
-                                    setElements([...elements]);
-                                }}
+                                onDragEnd={(e) => updateElementFromNode(el.id, e.target)}
+                                onTransformEnd={(e) => updateElementFromNode(el.id, e.target)}
                             />
                         );
                         if (el.type === 'circle') return (
@@ -337,7 +389,8 @@ export const KonvaCanvas = forwardRef<KonvaCanvasHandle, KonvaCanvasProps>(({
                                 {...el.attrs}
                                 onClick={() => !isDrawingMode && setSelectedId(el.id)}
                                 onTap={() => !isDrawingMode && setSelectedId(el.id)}
-                                onDragEnd={() => setElements([...elements])}
+                                onDragEnd={(e) => updateElementFromNode(el.id, e.target)}
+                                onTransformEnd={(e) => updateElementFromNode(el.id, e.target)}
                             />
                         );
                         if (el.type === 'text') return (
@@ -345,9 +398,13 @@ export const KonvaCanvas = forwardRef<KonvaCanvasHandle, KonvaCanvasProps>(({
                                 key={el.id}
                                 id={el.id}
                                 {...el.attrs}
+                                visible={editingTextId !== el.id}
                                 onClick={() => !isDrawingMode && setSelectedId(el.id)}
                                 onTap={() => !isDrawingMode && setSelectedId(el.id)}
-                                onDragEnd={() => setElements([...elements])}
+                                onDblClick={() => handleTextDblClick(el)}
+                                onDblTap={() => handleTextDblClick(el)}
+                                onDragEnd={(e) => updateElementFromNode(el.id, e.target)}
+                                onTransformEnd={(e) => updateElementFromNode(el.id, e.target)}
                             />
                         );
                         return null;
@@ -381,6 +438,42 @@ export const KonvaCanvas = forwardRef<KonvaCanvasHandle, KonvaCanvasProps>(({
                     <Transformer ref={transformerRef} />
                 </Layer>
             </Stage>
+
+            {/* HTML Input for inline text editing */}
+            {editingTextId && editingTextPos && (
+                <input
+                    type="text"
+                    value={editingTextValue}
+                    onChange={(e) => setEditingTextValue(e.target.value)}
+                    onBlur={handleTextEditComplete}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            handleTextEditComplete();
+                        }
+                        if (e.key === 'Escape') {
+                            setEditingTextId(null);
+                            setEditingTextValue("");
+                            setEditingTextPos(null);
+                        }
+                    }}
+                    autoFocus
+                    style={{
+                        position: 'absolute',
+                        top: editingTextPos.y,
+                        left: editingTextPos.x,
+                        fontSize: editingTextPos.fontSize,
+                        fontFamily: 'Arial',
+                        color: editingTextPos.fill,
+                        background: 'rgba(255,255,255,0.9)',
+                        border: '1px solid #3b82f6',
+                        borderRadius: '4px',
+                        padding: '2px 4px',
+                        outline: 'none',
+                        zIndex: 10,
+                        minWidth: '100px'
+                    }}
+                />
+            )}
         </div>
     );
 });

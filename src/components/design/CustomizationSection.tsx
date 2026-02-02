@@ -17,6 +17,7 @@ interface CustomizationSectionProps {
   answers: Answer[];
   tshirtColor: string;
   designImage?: string;
+  initialCanvasImage?: string; // Used for the canvas background (external/initial images only)
   isSaving: boolean;
   isGenerating?: boolean;
   tshirtColors: Record<string, string>;
@@ -33,6 +34,7 @@ const CustomizationSection = ({
   answers,
   tshirtColor,
   designImage,
+  initialCanvasImage,
   isSaving,
   isGenerating,
   tshirtColors,
@@ -156,7 +158,7 @@ const CustomizationSection = ({
                   <ModernCanvasManager
                     tshirtColor={tshirtColor}
                     onDesignChange={handleCanvasDesignChange}
-                    initialImage={designImage}
+                    initialImage={initialCanvasImage}
                   />
                 </CanvasErrorBoundary>
               </div>
