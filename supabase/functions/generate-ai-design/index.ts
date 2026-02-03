@@ -220,31 +220,36 @@ function generatePrompt(theme: { name?: string; description?: string }, answers:
     const formattedQA = answers.map(a => {
       const sanitizedQuestion = sanitizePromptText(a.question);
       const sanitizedAnswer = sanitizePromptText(a.answer);
-      return `Question: ${sanitizedQuestion}\nAnswer: ${sanitizedAnswer}`;
-    }).join('\n\n');
+      return `Q: ${sanitizedQuestion}? A: ${sanitizedAnswer}`;
+    }).join('\n');
 
-    // Create a prompt that follows OpenAI guidelines
-    const prompt = `Create a flat, high-resolution illustration for print influenced by  
-    Themes: ${sanitizedThemeName} and 
-    Theme description: ${sanitizedDescription}
+    // Refined professional prompt for better AI generation
+    const prompt = `**Persona:** Act as a professional graphic designer specializing in creating vector illustrations for print.
 
-The design should incorporate these preferences:
+**Context:** I need a high-resolution, print-ready illustration based on a provided theme and design preferences. This illustration will be used for custom t-shirt printing.
+
+**Task:** Generate a flat, vector-style illustration adhering to the specified theme, description, and preferences.
+
+**Input Data:**
+*   **Theme Name:** ${sanitizedThemeName}
+*   **Theme Description:** ${sanitizedDescription}
+*   **Design Preferences:**
 ${formattedQA}
 
-Requirements:
-- Show ONLY the design artwork, without any additional elements or text.
-- DO NOT include any t-shirt, clothing, model, or mockup.
-- Isolate the design on a plain white background.
-- Avoid 3D, shadows, or folds.
-- Use a clean, vector-style design suitable for printing.
-- No text unless explicitly requested.
-- Ensure the design is centered and balanced.
-`;
+**Format/Output Constraints:**
+*   **Resolution:** High resolution (1024x1024 pixels) suitable for print.
+*   **Style:** Clean, vector-style design. Avoid gradients, textures, or photographic elements.
+*   **Composition:** Centered and balanced composition.
+*   **Background:** Isolate the design on a plain white background (#FFFFFF).
+*   **Elements to Exclude:** Do not include any t-shirts, clothing, models, mockups, 3D effects, shadows, or folds.
+*   **Text:** No text unless explicitly requested within the Design Preferences.
+
+**Goal:** Create a visually appealing and print-ready illustration that effectively communicates the specified theme and design preferences.`;
 
     return prompt;
   } catch (error) {
     logError("Error generating prompt", error);
-    return "Create a simple, abstract t-shirt design with geometric shapes";
+    return "Create a simple, abstract t-shirt design with geometric shapes on a white background";
   }
 }
 
