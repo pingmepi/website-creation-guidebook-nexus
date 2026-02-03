@@ -19,49 +19,51 @@ export function useDesignHandlers() {
   const [designName, setDesignName] = useState<string>("");
   const [tshirtColor, setTshirtColor] = useState("#FFFFFF"); // Default to white
   const [designImage, setDesignImage] = useState<string | undefined>(undefined);
+  const [initialCanvasImage, setInitialCanvasImage] = useState<string | undefined>(undefined);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  
+
   const { saveDesignToDatabase, isSaving } = useDesignStorage();
   const { generateDesignWithAI, isGenerating } = useDesignGeneration();
 
-  
+
   const handleThemeSelect = (theme: Theme) => {
     setSelectedTheme(theme);
     setCurrentStage("question-flow");
   };
-  
+
   const handleQuestionFlowComplete = (questionAnswers: Answer[]) => {
     setAnswers(questionAnswers);
     setShowConfirmation(true);
   };
-  
+
   const handleConfirmDesign = () => {
     setShowConfirmation(false);
-    
+
     // Check if user is logged in
     if (!isAuthenticated) {
       setShowLoginDialog(true);
       return;
     }
-    
+
     proceedToDesignStage();
   };
-  
+
   const handleLoginSuccess = () => {
     setShowLoginDialog(false);
     proceedToDesignStage();
   };
-  
+
   const proceedToDesignStage = async () => {
     setCurrentStep("design");
     setCurrentStage("customization");
-    
+
     // Generate design with AI using the selected theme and answers
     if (selectedTheme && answers.length > 0) {
       await generateDesignWithAI(
-        selectedTheme, 
-        answers, 
+        selectedTheme,
+        answers,
         setDesignImage,
+        setInitialCanvasImage,
         async (imageUrl: string, prompt: string, userId: string) => {
           if (user) {
             await saveDesignToDatabase(
@@ -80,10 +82,11 @@ export function useDesignHandlers() {
       );
     } else {
       // Set placeholder design image if no theme or answers
-      setDesignImage("/assets/images/design/placeholder.svg");
+      setDesignImage("/placeholder.svg");
+      setInitialCanvasImage("/placeholder.svg");
     }
   };
-  
+
   const handleBackToThemes = () => {
     setCurrentStage("theme-selection");
     setSelectedTheme(null);
@@ -94,13 +97,13 @@ export function useDesignHandlers() {
     setDesignImage(designDataUrl);
     setHasUnsavedChanges(true);
   };
-  
+
   const handleSaveDesign = async () => {
     if (!isAuthenticated) {
       setShowLoginDialog(true);
       return;
     }
-    
+
     if (!designImage || !user) {
       toast({
         variant: "destructive",
@@ -109,7 +112,7 @@ export function useDesignHandlers() {
       });
       return;
     }
-    
+
     try {
       await saveDesignToDatabase(
         designImage,
@@ -122,7 +125,7 @@ export function useDesignHandlers() {
         setDesignId,
         setHasUnsavedChanges
       );
-      
+
       toast({
         title: "Design saved successfully!",
         description: "You can find it in your saved designs."
@@ -146,6 +149,7 @@ export function useDesignHandlers() {
     showLoginDialog,
     tshirtColor,
     designImage,
+    initialCanvasImage,
     isSaving,
     isGenerating,
     designId,
@@ -157,6 +161,7 @@ export function useDesignHandlers() {
     setDesignName,
     setAnswers,
     setDesignImage,
+    setInitialCanvasImage,
     setSelectedTheme,
     setCurrentStep,
     setCurrentStage,

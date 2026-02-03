@@ -22,6 +22,7 @@ function DesignContent() {
         tshirtColor,
         selectedSize,
         designImage,
+        initialCanvasImage,
         isSaving,
         isGenerating,
         isLoading,
@@ -68,6 +69,7 @@ function DesignContent() {
                                     tshirtColor={tshirtColor}
                                     selectedSize={selectedSize}
                                     designImage={designImage}
+                                    initialCanvasImage={initialCanvasImage}
                                     isSaving={isSaving}
                                     isGenerating={isGenerating}
                                     tshirtColors={TSHIRT_COLORS}

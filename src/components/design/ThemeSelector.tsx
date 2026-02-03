@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 
 // Define theme categories and themes
-const categories = ["All", "Artistic", "Minimal", "Nature", "Abstract", "Typography"];
+const categories = ["All", "Artistic", "Minimal", "Nature", "Abstract", "Typography", "Lifestyle", "Style"];
 
 interface Theme {
   id: number;
@@ -17,6 +17,7 @@ interface Theme {
 }
 
 const themes: Theme[] = [
+  // Original 8 themes
   { id: 1, name: "Travel", description: "Capture your wanderlust", color: "#00BCD4", category: ["Artistic"], image: "/uploads/1fb8d5ab-666d-49a1-b349-c0a086a816fa.png" },
   { id: 2, name: "Music", description: "Express your rhythm", color: "#9C27B0", category: ["Abstract", "Artistic"], image: "/uploads/754dd742-8aea-49d6-ac83-97af6c757084.png" },
   { id: 3, name: "Vintage", description: "Classic retro style", color: "#A67C52", category: ["Artistic"], image: "/uploads/6676f311-43f9-47ee-86aa-e7bd93150976.png" },
@@ -24,8 +25,20 @@ const themes: Theme[] = [
   { id: 5, name: "Abstract", description: "Bold geometric patterns", color: "#FF1493", category: ["Abstract"], image: "/uploads/3390f772-94a3-49ac-9380-6d8e091a4c65.png" },
   { id: 6, name: "Artistic", description: "Expressive and creative", color: "#00E5B2", category: ["Artistic"], image: "/uploads/0a1a3611-6080-4670-a291-9e87b4247dec.png" },
   { id: 7, name: "Cyberpunk", description: "Futuristic neon aesthetics", color: "#E91E63", category: ["Abstract"], image: "/uploads/8398eed3-bd38-4e5f-9278-00f9f2ca7c7a.png" },
-  { id: 8, name: "Funny", description: "Lighthearted and humorous", color: "#FFC107", category: ["Typography"], image: "/uploads/a864a361-eb88-4887-ae3b-93c9731c347a.png" }
+  { id: 8, name: "Funny", description: "Lighthearted and humorous", color: "#FFC107", category: ["Typography"], image: "/uploads/a864a361-eb88-4887-ae3b-93c9731c347a.png" },
+  // 10 new themes for PRD compliance
+  { id: 9, name: "Sports", description: "Athletic and sports-themed designs", color: "#FF5722", category: ["Lifestyle"], image: "/uploads/theme_sports.png" },
+  { id: 10, name: "Motivational", description: "Inspiring quotes and positive vibes", color: "#FFB300", category: ["Typography"], image: "/uploads/theme_motivational.png" },
+  { id: 11, name: "Pop Culture", description: "Trending memes and cultural references", color: "#E040FB", category: ["Abstract"], image: "/uploads/theme_popculture.png" },
+  { id: 12, name: "Food & Drink", description: "Culinary and beverage inspired art", color: "#F48FB1", category: ["Artistic"], image: "/uploads/theme_food.png" },
+  { id: 13, name: "Animals", description: "Wildlife and pet-themed designs", color: "#795548", category: ["Nature"], image: "/uploads/theme_animals.png" },
+  { id: 14, name: "Tech", description: "Developer and technology aesthetics", color: "#00BFA5", category: ["Abstract"], image: "/uploads/theme_tech.png" },
+  { id: 15, name: "Fashion", description: "High-fashion and streetwear style", color: "#212121", category: ["Style"], image: "/uploads/theme_fashion.png" },
+  { id: 16, name: "Humor", description: "Witty and comedic designs", color: "#FFEB3B", category: ["Typography"], image: "/uploads/theme_humor.png" },
+  { id: 17, name: "Spiritual", description: "Zen, meditation, and mindfulness", color: "#CE93D8", category: ["Minimal"], image: "/uploads/theme_spiritual.png" },
+  { id: 18, name: "Fitness", description: "Gym and workout motivation", color: "#F44336", category: ["Lifestyle"], image: "/uploads/theme_fitness.png" }
 ];
+
 
 interface ThemeSelectorProps {
   onThemeSelect: (theme: Theme) => void;

@@ -337,6 +337,13 @@ const FabricCanvas = ({
       // Load the new image if provided
       try {
         (fabric as any).Image.fromURL(initialImage, (img: any) => {
+          if (!fabricCanvas || !img) {
+            console.error("Failed to load image or canvas disposed:", initialImage);
+            updateInProgressRef.current = false;
+            safetyAreaManagedRef.current = false;
+            return;
+          }
+
           try {
             // Scale image to fit within the canvas
             const canvasWidth = (fabricCanvas as any).width || 300;
@@ -385,7 +392,7 @@ const FabricCanvas = ({
             }, 200);
 
           } catch (error) {
-            console.error("Error loading initial image:", error);
+            console.error("Error processing loaded image in FabricCanvas:", error);
             updateInProgressRef.current = false;
             safetyAreaManagedRef.current = false;
           }

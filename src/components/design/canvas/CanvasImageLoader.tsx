@@ -83,7 +83,9 @@ export const useCanvasImageLoader = ({
             } as any);
 
             canvas.add(img);
-            canvas.renderAll();
+            if (canvas && (canvas as any).contextContainer) {
+              canvas.renderAll();
+            }
             initialImageLoadedRef.current = true;
 
             if (onImageLoaded) {

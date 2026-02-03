@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowDown, Bold, Italic, Underline } from "lucide-react";
+import { sanitizeCanvasText } from "@/utils/sanitize";
 
 interface TextToolsProps {
   text: string;
@@ -36,7 +37,7 @@ const TextTools = ({
       <div className="flex gap-2">
         <Input
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => setText(sanitizeCanvasText(e.target.value))}
           placeholder="Enter text"
           className="flex-grow"
         />

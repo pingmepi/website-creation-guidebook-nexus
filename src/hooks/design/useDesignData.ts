@@ -15,6 +15,9 @@ export function useDesignData(setDesignStage: () => void) {
   const [designName, setDesignName] = useState<string>("");
   const [tshirtColor, setTshirtColor] = useState(TSHIRT_COLORS.WHITE);
   const [designImage, setDesignImage] = useState<string | undefined>(undefined);
+  // New state: Tracks the initial/external image for the canvas (e.g., from DB or AI generation)
+  // This is separate from 'designImage' which gets updated by the canvas output and is used for the T-shirt preview.
+  const [initialCanvasImage, setInitialCanvasImage] = useState<string | undefined>(undefined);
   const [selectedSize, setSelectedSize] = useState<string>("M");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -48,6 +51,7 @@ export function useDesignData(setDesignStage: () => void) {
       setDesignName((data as any).name || "Untitled Design");
       setTshirtColor((data as any).t_shirt_color || TSHIRT_COLORS.WHITE);
       setDesignImage((data as any).preview_url);
+      setInitialCanvasImage((data as any).preview_url); // Set initial canvas image from DB
 
       // Parse the design data JSON
       if ((data as any).design_data) {
@@ -161,7 +165,14 @@ export function useDesignData(setDesignStage: () => void) {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        setDesignId((data as any)[0].id);
+        const newId = (data as any)[0].id;
+        setDesignId(newId);
+
+        // Update URL with the design ID
+        const currentId = searchParams.get('id');
+        if (currentId !== newId) {
+          router.replace(`/design?id=${newId}`);
+        }
       }
     } catch (error) {
       console.error("Error saving AI design to database:", error);
@@ -176,6 +187,7 @@ export function useDesignData(setDesignStage: () => void) {
     tshirtColor,
     selectedSize,
     designImage,
+    initialCanvasImage,
     isLoading,
     setSelectedTheme,
     setAnswers,
@@ -184,6 +196,7 @@ export function useDesignData(setDesignStage: () => void) {
     setTshirtColor,
     setSelectedSize,
     setDesignImage,
+    setInitialCanvasImage,
     setIsLoading,
     fetchDesignData,
     handleDesignChange,

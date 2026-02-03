@@ -224,11 +224,16 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     setIsLoading(true);
 
     try {
-      const redirectTo = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI as string | undefined;
+      const isProd = process.env.NODE_ENV === 'production';
+      const redirectTo = isProd
+        ? process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI_PROD
+        : process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI_TEST;
+
       const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string | undefined;
-      console.log("OAuth redirect URI:", redirectTo);
+      console.log(`Environment: ${process.env.NODE_ENV}, OAuth redirect URI:`, redirectTo);
+
       if (!redirectTo) {
-        console.warn("NEXT_PUBLIC_GOOGLE_REDIRECT_URI is not set. Supabase will use the default site URL.");
+        console.warn("Google redirect URI is not set for this environment. Supabase will use the default site URL.");
       }
 
       const { data, error } = await supabase.auth.signInWithOAuth({

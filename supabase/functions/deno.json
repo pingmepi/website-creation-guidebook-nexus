@@ -1,30 +1,41 @@
 {
   "compilerOptions": {
     "allowJs": true,
-    "lib": ["deno.ns", "deno.unstable", "dom"],
+    "lib": [
+      "deno.ns",
+      "deno.unstable",
+      "dom"
+    ],
     "strict": false,
     "checkJs": false,
     "noImplicitAny": false,
     "allowImportingTsExtensions": true
   },
-  "importMap": {
-    "imports": {
-      "@supabase/supabase-js": "npm:@supabase/supabase-js@2",
-      "openai": "npm:openai@4.29.1"
-    }
+  "imports": {
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2",
+    "openai": "npm:openai@4.29.1"
   },
   "lint": {
     "files": {
-      "include": ["**/*.ts"]
+      "include": [
+        "**/*.ts"
+      ]
     },
     "rules": {
-      "tags": ["recommended"],
-      "exclude": ["no-explicit-any", "no-unused-vars"]
+      "tags": [
+        "recommended"
+      ],
+      "exclude": [
+        "no-explicit-any",
+        "no-unused-vars"
+      ]
     }
   },
   "fmt": {
     "files": {
-      "include": ["**/*.ts"]
+      "include": [
+        "**/*.ts"
+      ]
     },
     "options": {
       "useTabs": false,

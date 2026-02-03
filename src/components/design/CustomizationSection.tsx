@@ -17,6 +17,7 @@ interface CustomizationSectionProps {
   answers: Answer[];
   tshirtColor: string;
   designImage?: string;
+  initialCanvasImage?: string; // Used for the canvas background (external/initial images only)
   isSaving: boolean;
   isGenerating?: boolean;
   tshirtColors: Record<string, string>;
@@ -33,6 +34,7 @@ const CustomizationSection = ({
   answers,
   tshirtColor,
   designImage,
+  initialCanvasImage,
   isSaving,
   isGenerating,
   tshirtColors,
@@ -69,7 +71,6 @@ const CustomizationSection = ({
 
   // Handle design changes from canvas and sync with preview
   const handleCanvasDesignChange = (designDataUrl: string) => {
-    console.log("🎨 Design change from canvas:", designDataUrl.slice(0, 50) + "...");
     onDesignChange(designDataUrl);
   };
 
@@ -95,7 +96,7 @@ const CustomizationSection = ({
             <div className="bg-white rounded-lg p-4 shadow-sm">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-medium text-lg">Design Tools</h3>
-                
+
                 {/* T-shirt Color and Size Selection */}
                 <div className="flex items-center gap-4">
                   <div className="flex items-center">
@@ -114,8 +115,8 @@ const CustomizationSection = ({
                         {tshirtColorOptions.map(option => (
                           <SelectItem key={option.name} value={option.value}>
                             <div className="flex items-center">
-                              <div 
-                                className="w-4 h-4 rounded-full mr-2 border border-gray-300" 
+                              <div
+                                className="w-4 h-4 rounded-full mr-2 border border-gray-300"
                                 style={{ backgroundColor: option.value }}
                               />
                               {option.name}
@@ -150,28 +151,28 @@ const CustomizationSection = ({
                   </div>
                 </div>
               </div>
-              
+
               {/* Design Canvas Tools with Error Boundary */}
               <div className="mb-4">
                 <CanvasErrorBoundary>
-                  <ModernCanvasManager 
-                    tshirtColor={tshirtColor} 
+                  <ModernCanvasManager
+                    tshirtColor={tshirtColor}
                     onDesignChange={handleCanvasDesignChange}
-                    initialImage={designImage}
+                    initialImage={initialCanvasImage}
                   />
                 </CanvasErrorBoundary>
               </div>
             </div>
           </div>
-          
+
           {/* Design Preview - Right Side */}
           <div className="w-full lg:w-1/2">
             <div className="bg-white rounded-lg p-4 shadow-sm h-full">
               <h3 className="font-medium text-lg mb-4">T-Shirt Preview</h3>
               <div className="relative flex items-center justify-center">
                 <ErrorBoundary context="TshirtPreview">
-                  <TshirtDesignPreview 
-                    color={tshirtColor} 
+                  <TshirtDesignPreview
+                    color={tshirtColor}
                     designImage={designImage}
                   />
                 </ErrorBoundary>
@@ -184,10 +185,10 @@ const CustomizationSection = ({
                   </div>
                 )}
               </div>
-              
+
               {/* Action Buttons - Below Preview */}
               <div className="mt-6 space-y-3">
-                <Button 
+                <Button
                   onClick={onSaveDesign}
                   disabled={isSaving || !designImage || isGenerating}
                   className="w-full flex items-center justify-center gap-2"
@@ -206,7 +207,7 @@ const CustomizationSection = ({
                   )}
                 </Button>
 
-                <AddToCartButton 
+                <AddToCartButton
                   designImage={designImage}
                   tshirtColor={tshirtColor}
                   selectedSize={selectedSize}
@@ -215,7 +216,7 @@ const CustomizationSection = ({
                   onSaveDesign={onSaveDesign}
                 />
 
-                <PlaceOrderButton 
+                <PlaceOrderButton
                   designImage={designImage}
                   tshirtColor={tshirtColor}
                   selectedSize={selectedSize}
@@ -227,7 +228,7 @@ const CustomizationSection = ({
             </div>
           </div>
         </div>
-        
+
         {/* Design Preferences - Below Main Content */}
         <div className="bg-white rounded-lg p-4 shadow-sm">
           <h3 className="font-medium text-lg mb-4">Design Preferences</h3>

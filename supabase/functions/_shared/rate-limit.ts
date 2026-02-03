@@ -33,12 +33,15 @@ export function isRateLimited(req: Request, opts: RateLimitOptions): { limited: 
   return { limited: true, retryAfter };
 }
 
+import { corsHeaders } from './error-utils.ts';
+
 export function rateLimitResponse(retryAfter?: number): Response {
   return new Response(
     JSON.stringify({ error: 'Too Many Requests', retryAfter }),
     {
       status: 429,
       headers: {
+        ...corsHeaders,
         'Content-Type': 'application/json',
         'Retry-After': String(retryAfter ?? 60),
         'Cache-Control': 'no-store',

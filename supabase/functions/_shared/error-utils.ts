@@ -188,9 +188,9 @@ export function createSuccessResponse(data: unknown, statusCode: number = 200): 
 }
 
 export function createOptionsResponse(): Response {
-  return new Response(null, {
+  return new Response('ok', {
     headers: corsHeaders,
-    status: 204
+    status: 200
   });
 }
 
