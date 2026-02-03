@@ -53,6 +53,16 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				// Vibrant Atelier Hybrid Palette
+				atelier: {
+					bg: '#FAFAF9',           // Warm Alabaster
+					text: '#18181B',         // Jet Black
+				},
+				vibrant: {
+					orange: '#FF4500',       // International Orange
+					green: '#CBFF00',        // Acid Green
+					DEFAULT: '#FF4500',
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -63,6 +73,15 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				}
+			},
+			boxShadow: {
+				'hard': '4px 4px 0px 0px #000000',
+				'hard-sm': '2px 2px 0px 0px #000000',
+				'hard-lg': '8px 8px 0px 0px #000000',
+			},
+			fontFamily: {
+				sans: ['var(--font-sans)', 'Inter', 'sans-serif'],
+				display: ['var(--font-display)', 'Syne', 'sans-serif'], // Fallback to Syne if Clash isn't available
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
