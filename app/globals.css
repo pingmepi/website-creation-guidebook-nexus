@@ -4,8 +4,8 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 0 0% 98%; /* Warm Alabaster equivalent in HSL approx */
+    --foreground: 240 5.3% 10%; /* Jet Black equivalent */
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;

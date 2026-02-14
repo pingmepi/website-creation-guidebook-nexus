@@ -65,11 +65,11 @@ export const CartSidebar = () => {
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="relative" data-testid="cart-sidebar-trigger">
-          <ShoppingCart className="h-4 w-4" />
+        <Button variant="ghost" size="icon" className="relative" data-testid="cart-sidebar-trigger">
+          <ShoppingCart className="h-5 w-5" />
           {cartCount > 0 && (
             <span
-              className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+              className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
               data-testid="cart-count"
             >
               {cartCount}

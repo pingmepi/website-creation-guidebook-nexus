@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { Inter, Syne } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const syne = Syne({ subsets: ["latin"], variable: "--font-display", weight: ["400", "500", "600", "700", "800"] });
 
 export const metadata: Metadata = {
     title: "Merekapade - AI-Powered Custom T-Shirt Design",
@@ -21,7 +25,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body suppressHydrationWarning>
+            <body suppressHydrationWarning className={`${inter.variable} ${syne.variable} font-sans bg-atelier-bg text-atelier-text antialiased`}>
                 <Providers>
                     <div className="min-h-screen flex flex-col">
                         <Header />

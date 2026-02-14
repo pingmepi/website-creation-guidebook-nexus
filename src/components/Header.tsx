@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { User, ShoppingCart } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { useCart } from "@/contexts/CartContext";
-import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { CartSidebar } from "./cart/CartSidebar";
 import LoginDialog from "./auth/LoginDialog";
 import { useState } from "react";
@@ -44,21 +43,7 @@ const Header = () => {
         </nav>
 
         <div className="flex items-center space-x-4">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
-                <ShoppingCart className="h-5 w-5" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
-              </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <CartSidebar />
-            </SheetContent>
-          </Sheet>
+          <CartSidebar />
 
           {isAuthenticated ? (
             <DropdownMenu>
