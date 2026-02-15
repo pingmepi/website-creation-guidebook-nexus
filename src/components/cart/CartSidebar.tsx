@@ -10,6 +10,7 @@ import { ShoppingCart, Plus, Minus, Trash, X } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
+import { FEATURE_FLAGS } from "@/lib/featureFlags";
 
 export const CartSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -62,6 +63,10 @@ export const CartSidebar = () => {
     await removeFromCart(itemId);
   };
 
+  if (!FEATURE_FLAGS.enablePaymentFlows) {
+    return null;
+  }
+
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
@@ -102,7 +107,6 @@ export const CartSidebar = () => {
                   {cartItems.map((item) => (
                     <div key={item.id} className="flex gap-4">
                       <div className="h-20 w-20 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={item.product?.image}
                           alt={item.product?.name}
@@ -148,7 +152,6 @@ export const CartSidebar = () => {
                   {customDesigns.map((design) => (
                     <div key={design.id} className="flex gap-4">
                       <div className="h-20 w-20 bg-gray-50 rounded-md overflow-hidden flex-shrink-0 border p-1">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={design.design_image}
                           alt={design.design_name}

@@ -12,6 +12,7 @@ import { CanvasErrorBoundary } from "@/components/error/CanvasErrorBoundary";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import AddToCartButton from "./AddToCartButton";
 import PlaceOrderButton from "./PlaceOrderButton";
+import { FEATURE_FLAGS } from "@/lib/featureFlags";
 
 interface CustomizationSectionProps {
   answers: Answer[];
@@ -207,14 +208,16 @@ const CustomizationSection = ({
                   )}
                 </Button>
 
-                <AddToCartButton
-                  designImage={designImage}
-                  tshirtColor={tshirtColor}
-                  selectedSize={selectedSize}
-                  designName={designName}
-                  answers={answers}
-                  onSaveDesign={onSaveDesign}
-                />
+                {FEATURE_FLAGS.enablePaymentFlows ? (
+                  <AddToCartButton
+                    designImage={designImage}
+                    tshirtColor={tshirtColor}
+                    selectedSize={selectedSize}
+                    designName={designName}
+                    answers={answers}
+                    onSaveDesign={onSaveDesign}
+                  />
+                ) : null}
 
                 <PlaceOrderButton
                   designImage={designImage}

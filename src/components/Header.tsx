@@ -9,6 +9,7 @@ import { useCart } from "@/contexts/CartContext";
 import { CartSidebar } from "./cart/CartSidebar";
 import LoginDialog from "./auth/LoginDialog";
 import { useState } from "react";
+import { FEATURE_FLAGS } from "@/lib/featureFlags";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,14 +44,13 @@ const Header = () => {
         </nav>
 
         <div className="flex items-center space-x-4">
-          <CartSidebar />
+          {FEATURE_FLAGS.enablePaymentFlows ? <CartSidebar /> : null}
 
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
                   {user?.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={user.avatar_url}
                       alt={user.name || "User"}
