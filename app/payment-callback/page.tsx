@@ -9,7 +9,7 @@ function PaymentCallbackContent() {
     const router = useRouter();
 
     useEffect(() => {
-        // Extract parameters from PhonePe callback
+        // Extract parameters from payment callback
         const transactionId = searchParams.get('transactionId');
         const providerReferenceId = searchParams.get('providerReferenceId');
         const orderId = searchParams.get('orderId');

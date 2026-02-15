@@ -4,13 +4,13 @@ project_id = "fgptneltbhgasesniqyx"
 [functions.generate-ai-design]
 verify_jwt = true
 
-[functions.initiate-phonepe-payment]
+[functions.initiate-razorpay-payment]
 verify_jwt = true
 
-[functions.verify-phonepe-payment]
+[functions.verify-razorpay-payment]
 verify_jwt = true
 
-[functions.webhook-phonepe-payment]
+[functions.webhook-razorpay-payment]
 verify_jwt = false
 
 [api]
@@ -36,5 +36,4 @@ site_url = "http://localhost:3000"
 
 [analytics]
 enabled = false
-
 

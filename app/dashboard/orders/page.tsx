@@ -10,12 +10,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+    ORDER_STATUS_BADGE_CLASS,
+    ORDER_STATUS_LABELS,
+    normalizeOrderStatus,
+    type OrderStatus,
+} from "@/lib/orderStatus";
 
 interface Order {
     id: string;
     order_number: string;
     total_amount: number;
-    status: string;
+    status: OrderStatus | string;
     created_at: string;
     shipping_address: Record<string, unknown>;
     order_items?: OrderItem[];
@@ -69,24 +75,19 @@ export default function OrderHistory() {
     }, [user]);
 
     const getStatusClass = (status: string) => {
-        switch (status) {
-            case 'pending':
-                return 'bg-yellow-100 text-yellow-800';
-            case 'processing':
-                return 'bg-blue-100 text-blue-800';
-            case 'shipped':
-                return 'bg-purple-100 text-purple-800';
-            case 'delivered':
-                return 'bg-green-100 text-green-800';
-            case 'cancelled':
-                return 'bg-red-100 text-red-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
+        const normalized = normalizeOrderStatus(status);
+        if (normalized === "unknown") {
+            return "bg-gray-100 text-gray-800";
         }
+        return ORDER_STATUS_BADGE_CLASS[normalized];
     };
 
     const getStatusText = (status: string) => {
-        return status.charAt(0).toUpperCase() + status.slice(1);
+        const normalized = normalizeOrderStatus(status);
+        if (normalized === "unknown") {
+            return status.charAt(0).toUpperCase() + status.slice(1);
+        }
+        return ORDER_STATUS_LABELS[normalized];
     };
 
     if (isLoading) {

@@ -56,7 +56,7 @@ enum ErrorType {
 - Better fallback mechanisms
 - Consistent logging and error responses
 
-### 2. `initiate-phonepe-payment/index.ts`
+### 2. `initiate-razorpay-payment/index.ts`
 
 **Before**: 228 lines with duplicate retry logic
 **After**: 229 lines with shared utilities
@@ -68,7 +68,7 @@ enum ErrorType {
 - Improved authentication handling
 - Consistent logging
 
-### 3. `verify-phonepe-payment/index.ts`
+### 3. `verify-razorpay-payment/index.ts`
 
 **Before**: 202 lines with custom retry logic
 **After**: 198 lines with shared utilities
@@ -79,7 +79,7 @@ enum ErrorType {
 - Improved database error handling
 - Consistent response formatting
 
-### 4. `webhook-phonepe-payment/index.ts`
+### 4. `webhook-razorpay-payment/index.ts`
 
 **Before**: 134 lines with basic error handling
 **After**: 167 lines with comprehensive error handling
