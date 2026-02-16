@@ -1,10 +1,23 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ShoppingCart } from "lucide-react";
 import { ReactNode, useState } from "react";
 import { useProductVariants } from "@/hooks/useProductVariants";
 import { toast } from "@/hooks/use-toast";
+import { FEATURE_FLAGS } from "@/lib/featureFlags";
 
 interface ProductQuickViewProps {
   children: ReactNode;
@@ -15,17 +28,21 @@ interface ProductQuickViewProps {
     image: string;
     colorOptions?: string[];
   };
-  onAddToCart: (variantId: string, quantity?: number) => void;
+  onAddToCart?: (variantId: string, quantity?: number) => void;
+  enableCartActions?: boolean;
 }
 
-export const ProductQuickView = ({ children, product, onAddToCart }: ProductQuickViewProps) => {
+export const ProductQuickView = ({
+  children,
+  product,
+  onAddToCart,
+  enableCartActions = FEATURE_FLAGS.enablePaymentFlows,
+}: ProductQuickViewProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{product.name}</DialogTitle>
@@ -34,9 +51,11 @@ export const ProductQuickView = ({ children, product, onAddToCart }: ProductQuic
           <ProductQuickViewContent
             product={product}
             onAddToCart={(variantId, quantity) => {
+              if (!enableCartActions || !onAddToCart) return;
               onAddToCart(variantId, quantity);
               setIsOpen(false);
             }}
+            enableCartActions={enableCartActions}
           />
         )}
       </DialogContent>
@@ -44,29 +63,34 @@ export const ProductQuickView = ({ children, product, onAddToCart }: ProductQuic
   );
 };
 
-const ProductQuickViewContent = ({ product, onAddToCart }: Omit<ProductQuickViewProps, "children">) => {
+const ProductQuickViewContent = ({
+  product,
+  onAddToCart,
+  enableCartActions = FEATURE_FLAGS.enablePaymentFlows,
+}: Omit<ProductQuickViewProps, "children">) => {
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
-  const { sizes, colors, loading, selectedSize, setSelectedSize, checkStock } = useProductVariants(product.id);
+  const { sizes, colors, loading, selectedSize, setSelectedSize, checkStock } =
+    useProductVariants(product.id);
 
   const handleAddToCart = async () => {
     if (!selectedSize) {
       toast({
         title: "Please select a size",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
-    const selectedVariant = colors.find(color =>
-      selectedColor ? color.color_hex === selectedColor : color.variant_id
+    const selectedVariant = colors.find((color) =>
+      selectedColor ? color.color_hex === selectedColor : color.variant_id,
     );
 
     if (!selectedVariant) {
       toast({
         title: "Product not available",
         description: "Selected size/color combination is not available",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -77,10 +101,12 @@ const ProductQuickViewContent = ({ product, onAddToCart }: Omit<ProductQuickView
       toast({
         title: "Out of stock",
         description: "This item is currently out of stock",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
+
+    if (!enableCartActions || !onAddToCart) return;
 
     onAddToCart(selectedVariant.variant_id, quantity);
   };
@@ -97,21 +123,30 @@ const ProductQuickViewContent = ({ product, onAddToCart }: Omit<ProductQuickView
       <div className="space-y-4">
         <div>
           <h3 className="text-xl font-semibold">{product.name}</h3>
-          <p className="text-2xl font-bold text-primary mt-2">{product.price}</p>
+          <p className="text-2xl font-bold text-primary mt-2">
+            {product.price}
+          </p>
         </div>
 
         <div>
           <h4 className="font-medium mb-2">Description</h4>
           <p className="text-muted-foreground text-sm">
-            Premium quality t-shirt made from 100% cotton. Comfortable fit with excellent durability and softness.
+            Premium quality t-shirt made from 100% cotton. Comfortable fit with
+            excellent durability and softness.
           </p>
         </div>
 
         <div>
           <h4 className="font-medium mb-2">Size</h4>
-          <Select value={selectedSize} onValueChange={setSelectedSize} disabled={loading}>
+          <Select
+            value={selectedSize}
+            onValueChange={setSelectedSize}
+            disabled={loading}
+          >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder={loading ? "Loading sizes..." : "Select size"} />
+              <SelectValue
+                placeholder={loading ? "Loading sizes..." : "Select size"}
+              />
             </SelectTrigger>
             <SelectContent>
               {sizes.map((size) => (
@@ -120,7 +155,10 @@ const ProductQuickViewContent = ({ product, onAddToCart }: Omit<ProductQuickView
                   value={size.size}
                   disabled={size.available_stock === 0}
                 >
-                  {size.size} {size.available_stock === 0 ? "(Out of Stock)" : `(${size.available_stock} available)`}
+                  {size.size}{" "}
+                  {size.available_stock === 0
+                    ? "(Out of Stock)"
+                    : `(${size.available_stock} available)`}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -157,7 +195,10 @@ const ProductQuickViewContent = ({ product, onAddToCart }: Omit<ProductQuickView
 
         <div>
           <h4 className="font-medium mb-2">Quantity</h4>
-          <Select value={quantity.toString()} onValueChange={(value) => setQuantity(parseInt(value))}>
+          <Select
+            value={quantity.toString()}
+            onValueChange={(value) => setQuantity(parseInt(value))}
+          >
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
@@ -171,14 +212,16 @@ const ProductQuickViewContent = ({ product, onAddToCart }: Omit<ProductQuickView
           </Select>
         </div>
 
-        <Button
-          onClick={handleAddToCart}
-          className="w-full flex items-center gap-2"
-          disabled={!selectedSize || loading}
-        >
-          <ShoppingCart size={20} />
-          Add to Cart
-        </Button>
+        {enableCartActions && (
+          <Button
+            onClick={handleAddToCart}
+            className="w-full flex items-center gap-2"
+            disabled={!selectedSize || loading}
+          >
+            <ShoppingCart size={20} />
+            Add to Cart
+          </Button>
+        )}
       </div>
     </div>
   );
