@@ -4,20 +4,16 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 // Using Vite's environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'placeholder-anon-key';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables');
-  console.error('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl);
-  console.error('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Present' : 'Missing');
-} else {
-  console.log('✅ Supabase environment variables loaded successfully');
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  console.warn('Missing Supabase environment variables; using placeholder values for build-time rendering.');
 }
 
 export const supabase = createClient<Database>(
-  supabaseUrl as string,
-  supabaseAnonKey as string,
+  supabaseUrl,
+  supabaseAnonKey,
   {
     auth: {
       persistSession: true,

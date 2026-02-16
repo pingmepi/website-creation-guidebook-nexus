@@ -40,6 +40,7 @@ The project uses environment variables for configuration. To set up your local e
 - `VITE_AUTH_COOKIE_DOMAIN`: Your domain name
 - `VITE_ENABLE_RATE_LIMITING`: Set to "true" for production
 - `VITE_CORS_ALLOWED_ORIGINS`: Comma-separated list of allowed origins
+- `NEXT_PUBLIC_ENABLE_PAYMENT_FLOWS`: Set to `false` to hide cart/checkout UI entry points while payment integration is disabled
 
 ## Key Documentation Files
 
@@ -61,6 +62,11 @@ The project uses environment variables for configuration. To set up your local e
 
 For a full index of documentation, see [docs/README.md](./docs/README.md).
 
+## Agent Workflow Docs
+
+- `docs/project-tracker.md`: compact current status and next tasks
+- `docs/agent-handoff.md`: append-only phase handoff log
+
 ## Project Overview
 
 The Custom T-Shirt Hub is a web application that allows users to design custom t-shirts through a guided, theme-based design flow. Users can select themes, answer questions to customize their design, and use a visual editor to make final adjustments before ordering.
@@ -77,7 +83,7 @@ All four critical security items are now addressed in branch `pathc/security-upd
 1. Scoped Supabase selects to explicit columns (removed `select *` / unscoped `.select()`)
 2. Input sanitization utilities and integration in critical flows (design payloads/saves, profile, addresses, checkout)
 3. Production security headers (CSP, HSTS, X-Frame-Options, Referrer-Policy) via `vercel.json`, with environment-aware CSP in code
-4. Rate limiting on sensitive Supabase Edge Functions (PhonePe initiate/verify, AI generation)
+4. Rate limiting on sensitive Supabase Edge Functions (Razorpay initiate/verify, AI generation)
 
 **ℹ️ Notes:**
 - Dev remains permissive for local development (CSP is tightened automatically in production)

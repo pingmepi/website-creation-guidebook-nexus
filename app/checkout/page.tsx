@@ -16,6 +16,7 @@ import { toast } from "@/components/ui/toast";
 import { tshirtImages } from "@/assets";
 import PaymentGateway from "@/components/payment/PaymentGateway";
 import { sanitizeAddress } from "@/utils/sanitize";
+import { ORDER_STATUS } from "@/lib/orderStatus";
 
 
 interface CartItem {
@@ -222,7 +223,7 @@ export default function Checkout() {
                     total_amount: totalAmount,
                     shipping_address: sanitizedShipping,
                     shipping_address_id: savedAddressId,
-                    status: 'pending',
+                    status: ORDER_STATUS.PENDING,
                     order_number: ''
                 } as any)
                 .select('id')
@@ -411,7 +412,7 @@ export default function Checkout() {
                             <CardContent>
                                 <div className="text-sm text-gray-600">
                                     UPI, Cards, Net Banking, and Wallet payments available.
-                                    Payment will be processed securely through PhonePe.
+                                    Payment will be processed securely through our payment partner.
                                 </div>
                             </CardContent>
                         </Card>
@@ -428,7 +429,6 @@ export default function Checkout() {
                                     {itemsWithProducts.map((item) => (
                                         <div key={item.id} className="flex items-center space-x-3">
                                             <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
-                                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                                 <img
                                                     src={typeof item.product?.image === 'string' ? item.product.image : (item.product?.image as any)?.src}
                                                     alt={item.product?.name || 'Product'}
@@ -448,7 +448,6 @@ export default function Checkout() {
                                     {(customDesigns || []).map((design) => (
                                         <div key={design.id} className="flex items-center space-x-3">
                                             <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
-                                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                                 <img
                                                     src={design.design_image}
                                                     alt={design.design_name}

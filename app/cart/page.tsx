@@ -110,7 +110,6 @@ export default function Cart() {
                                             <div key={item.id}>
                                                 <div className="flex items-start py-2">
                                                     <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
-                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
                                                         <img
                                                             src={item.product?.image}
                                                             alt={item.product?.name || 'Product'}
@@ -165,7 +164,6 @@ export default function Cart() {
                                                 <div className="flex items-start py-2">
                                                     <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 bg-gray-50">
                                                         {design.design_image ? (
-                                                            // eslint-disable-next-line @next/next/no-img-element
                                                             <img
                                                                 src={design.design_image}
                                                                 alt={design.design_name}

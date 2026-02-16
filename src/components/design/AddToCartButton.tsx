@@ -5,6 +5,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/components/ui/toast";
 import { Answer } from "./QuestionFlow";
+import { FEATURE_FLAGS } from "@/lib/featureFlags";
 
 interface AddToCartButtonProps {
   designImage?: string;
@@ -28,6 +29,11 @@ const AddToCartButton = ({
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleAddToCart = async () => {
+    if (!FEATURE_FLAGS.enablePaymentFlows) {
+      toast.info("Cart is currently unavailable.");
+      return;
+    }
+
     if (!designImage) {
       toast.error("Please create a design first");
       return;

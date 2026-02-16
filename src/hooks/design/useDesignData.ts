@@ -68,7 +68,7 @@ export function useDesignData(setDesignStage: () => void) {
         if (designData.theme_id) {
           try {
             // Convert theme_id to proper UUID format if it's a number
-            let themeId = designData.theme_id;
+            const themeId = designData.theme_id;
 
             // If theme_id is a number, we need to look it up differently
             if (typeof themeId === 'number') {

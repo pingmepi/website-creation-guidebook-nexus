@@ -3,12 +3,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Smartphone, AlertCircle, RefreshCw } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { paymentProvider } from "@/lib/payments";
 import { toast } from "@/components/ui/toast";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 import PaymentTimer from "./PaymentTimer";
 import { usePaymentRetry } from "@/hooks/usePaymentRetry";
-import { getErrorMessage, isRetryableError } from "@/utils/phonePeErrorCodes";
+import { getErrorMessage, isRetryableError } from "@/utils/paymentErrorCodes";
 
 interface PaymentGatewayProps {
   orderId: string;
@@ -33,7 +33,7 @@ const PaymentGateway = ({
     retryDelay: 2000
   });
 
-  const handlePhonePePayment = async () => {
+  const handlePayment = async () => {
     setIsProcessing(true);
     setLastError(null);
     reset();
@@ -41,21 +41,17 @@ const PaymentGateway = ({
     try {
       await executeWithRetry(
         async () => {
-          const { data, error } = await supabase.functions.invoke('initiate-phonepe-payment', {
-            body: {
-              orderId,
-              amount: Math.round(amount * 100), // Convert to paise
-              currency: 'INR',
-              paymentMethod: selectedPaymentMethod,
-              redirectUrl: `${window.location.origin}/payment-success`,
-              callbackUrl: `${window.location.origin}/payment-callback`
-            }
+          const data = await paymentProvider.createIntent({
+            orderId,
+            amount: Math.round(amount * 100), // Convert to paise
+            currency: "INR",
+            paymentMethod: selectedPaymentMethod,
+            redirectUrl: `${window.location.origin}/payment-success`,
+            callbackUrl: `${window.location.origin}/payment-callback`,
           });
 
-          if (error) throw error;
-
-          if (data?.paymentUrl) {
-            // Redirect to PhonePe payment page
+          if (data.paymentUrl) {
+            // Redirect to payment page.
             window.location.href = data.paymentUrl;
           } else {
             throw new Error("Failed to get payment URL");
@@ -69,7 +65,7 @@ const PaymentGateway = ({
       );
 
     } catch (error) {
-      console.error("PhonePe payment error:", error);
+      console.error("Payment error:", error);
 
       const errorCode = (error as Error & { details?: { code?: string } })?.details?.code || "UNKNOWN_ERROR";
       const userFriendlyMessage = getErrorMessage(errorCode);
@@ -90,7 +86,7 @@ const PaymentGateway = ({
   const handleRetry = () => {
     setPaymentTimeout(false);
     setLastError(null);
-    handlePhonePePayment();
+    handlePayment();
   };
 
   return (
@@ -100,7 +96,7 @@ const PaymentGateway = ({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Smartphone className="h-5 w-5" />
-              PhonePe Payment
+              Secure Payment
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -155,7 +151,7 @@ const PaymentGateway = ({
                 <span className="text-sm font-medium text-blue-800">Secure Payment</span>
               </div>
               <p className="text-sm text-blue-700">
-                You will be redirected to PhonePe to complete your payment securely.
+                You will be redirected to our payment partner to complete your payment securely.
                 Supports UPI, Cards, Net Banking & Wallets.
               </p>
             </div>
@@ -178,11 +174,11 @@ const PaymentGateway = ({
                 </Button>
               ) : (
                 <Button 
-                  onClick={handlePhonePePayment}
+                  onClick={handlePayment}
                   disabled={isProcessing || isRetrying}
                   className="w-full bg-purple-600 hover:bg-purple-700"
                 >
-                  {isProcessing || isRetrying ? "Redirecting to PhonePe..." : `Pay ₹${amount.toFixed(2)} with PhonePe`}
+                  {isProcessing || isRetrying ? "Redirecting to payment..." : `Pay ₹${amount.toFixed(2)}`}
                 </Button>
               )}
               

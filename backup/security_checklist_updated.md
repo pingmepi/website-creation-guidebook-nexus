@@ -63,7 +63,7 @@
 
 ## 🌐 **8. Browser-Side Protections**
 - ✅ **Implemented:** Production security headers configured via vercel.json (CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy) and environment-aware CSP in src/lib/security.ts. Dev remains permissive for Vite.
-- ✅ **Implemented:** Rate limiting added to sensitive Supabase Edge Functions (PhonePe initiate/verify, AI generation).
+- ✅ **Implemented:** Rate limiting added to sensitive Supabase Edge Functions (Razorpay initiate/verify, AI generation).
 - ✅ **Implemented:** CORS policies aligned to https://merekapade.com in production; localhost in dev.
 
 ---

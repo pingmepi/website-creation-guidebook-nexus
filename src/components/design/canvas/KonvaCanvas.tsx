@@ -270,7 +270,7 @@ export const KonvaCanvas = forwardRef<KonvaCanvasHandle, KonvaCanvasProps>(({
         const point = stage?.getPointerPosition();
         if (!point) return;
 
-        let lastLine = lines[lines.length - 1];
+        const lastLine = lines[lines.length - 1];
         // Add point
         lastLine.attrs.points = lastLine.attrs.points.concat([point.x, point.y]);
 

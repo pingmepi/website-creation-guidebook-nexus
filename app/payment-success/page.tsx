@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Loader2, XCircle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { paymentProvider } from "@/lib/payments";
 import { toast } from "@/components/ui/toast";
 import { usePaymentRetry } from "@/hooks/usePaymentRetry";
-import { getErrorMessage } from "@/utils/phonePeErrorCodes";
+import { getErrorMessage } from "@/utils/paymentErrorCodes";
 
 interface OrderDetails {
     id: string;
@@ -20,7 +21,6 @@ interface OrderDetails {
     order_number: string;
     shipping_address?: Record<string, unknown>;
     payment_method?: string;
-    payment_status?: string;
 }
 
 function PaymentSuccessContent() {
@@ -45,11 +45,9 @@ function PaymentSuccessContent() {
             setErrorMessage("");
 
             await executeWithRetry(async () => {
-                const { data, error } = await supabase.functions.invoke('verify-phonepe-payment', {
-                    body: { transactionId }
+                const data = await paymentProvider.verify({
+                    transactionId: transactionId as string
                 });
-
-                if (error) throw error;
 
                 if (data.success) {
                     setPaymentStatus('success');
@@ -59,7 +57,7 @@ function PaymentSuccessContent() {
                     if (orderId) {
                         const { data: order, error: orderError } = await supabase
                             .from('orders')
-                            .select('id, user_id, total_amount, status, created_at, updated_at, order_number, shipping_address, payment_method, payment_status')
+                            .select('id, user_id, total_amount, status, created_at, updated_at, order_number, shipping_address, payment_method')
                             .eq('id', orderId as any)
                             .single();
 
