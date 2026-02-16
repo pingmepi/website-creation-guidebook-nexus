@@ -78,7 +78,14 @@ const safeSerializeError = (error: unknown): string => {
   return "unknown_error";
 };
 
-const parseError = (error: unknown) => {
+type ParsedError = {
+  message: string;
+  details?: string;
+  code?: string;
+  raw: string;
+};
+
+const parseError = (error: unknown): ParsedError => {
   if (error instanceof Error) {
     return {
       message: error.message || "unknown_error",
