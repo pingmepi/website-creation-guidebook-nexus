@@ -53,6 +53,13 @@ type ErrorLike = {
   error?: unknown;
 };
 
+type ParsedError = {
+  message: string;
+  details?: string;
+  code?: string;
+  raw: string;
+};
+
 const safeSerializeError = (error: unknown): string => {
   if (typeof error === "string") return error;
 
@@ -76,13 +83,6 @@ const safeSerializeError = (error: unknown): string => {
   }
 
   return "unknown_error";
-};
-
-type ParsedError = {
-  message: string;
-  details?: string;
-  code?: string;
-  raw: string;
 };
 
 const parseError = (error: unknown): ParsedError => {

@@ -1,6 +1,8 @@
 
 import { cartTestScenarios } from "./cartTestScenarios";
 import { checkoutTestScenarios } from "./checkoutTestScenarios";
+import { paymentFlowRouteTests } from "./paymentFlowRouteTests";
+import { paymentProviderContractTests } from "./paymentProviderContractTests";
 import { testScenarios } from "./testScenarios";
 
 // Integration tests that run all test scenarios
@@ -21,6 +23,14 @@ export const integrationTests = {
       {
         name: "Checkout Functionality",
         runner: checkoutTestScenarios.runAllCheckoutTests
+      },
+      {
+        name: "Payment Flow Route Guards",
+        runner: paymentFlowRouteTests.runAllPaymentFlowRouteTests
+      },
+      {
+        name: "Payment Provider Contract",
+        runner: paymentProviderContractTests.runAllPaymentProviderContractTests
       }
     ];
 
