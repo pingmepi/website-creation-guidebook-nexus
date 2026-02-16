@@ -1,5 +1,4 @@
-'use client';
-
+"use client";
 
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +10,7 @@ import { useCart } from "@/contexts/CartContext";
 import { ImagePopup } from "@/components/ui/image-popup";
 import { ProductQuickView } from "@/components/ui/product-quick-view";
 import { supabase } from "@/integrations/supabase/client";
+import { FEATURE_FLAGS } from "@/lib/featureFlags";
 
 interface TshirtCardProps {
   id: string;
@@ -20,7 +20,13 @@ interface TshirtCardProps {
   colorOptions?: string[];
 }
 
-const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#000000", "#DC2626"] }: TshirtCardProps) => {
+const TshirtCard = ({
+  id,
+  name,
+  price,
+  image,
+  colorOptions = ["#FFFFFF", "#000000", "#DC2626"],
+}: TshirtCardProps) => {
   const [selectedColor, setSelectedColor] = useState(colorOptions[0]);
   const [isAdding, setIsAdding] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
@@ -39,15 +45,15 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
 
       // Find the corresponding variant for the selected color and default size (M)
       const { data: variant, error } = await supabase
-        .from('product_variants')
-        .select('id')
-        .eq('product_id', id)
-        .eq('color_hex', selectedColor as any)
-        .eq('size', 'M' as any)
+        .from("product_variants")
+        .select("id")
+        .eq("product_id", id)
+        .eq("color_hex", selectedColor as any)
+        .eq("size", "M" as any)
         .single();
 
       if (error || !variant) {
-        throw new Error('Product variant not found');
+        throw new Error("Product variant not found");
       }
 
       await addToCart((variant as any).id);
@@ -70,6 +76,7 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
   };
 
   const buttonContent = getButtonContent();
+  const showCartActions = FEATURE_FLAGS.enablePaymentFlows;
 
   // Color name mapping for better UX
   const getColorName = (color: string) => {
@@ -78,13 +85,16 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
       "#000000": "Black",
       "#DC2626": "Red",
       "#0000FF": "Blue",
-      "#8A898C": "Grey"
+      "#8A898C": "Grey",
     };
     return colorNames[color] || "Color";
   };
 
   return (
-    <Card className="overflow-hidden group bg-white" data-testid={`tshirt-card-${id}`}>
+    <Card
+      className="overflow-hidden group bg-white"
+      data-testid={`tshirt-card-${id}`}
+    >
       <div className="relative pb-[125%] overflow-hidden">
         <ImagePopup image={image} alt={name}>
           <img
@@ -97,32 +107,47 @@ const TshirtCard = ({ id, name, price, image, colorOptions = ["#FFFFFF", "#00000
         <div className="absolute bottom-0 left-0 right-0 p-4 flex gap-2 justify-center">
           <ProductQuickView
             product={{ id, name, price, image, colorOptions }}
-            onAddToCart={(variantId: string, quantity?: number) => handleAddToCart()}
+            onAddToCart={(variantId: string, quantity?: number) =>
+              handleAddToCart()
+            }
+            enableCartActions={showCartActions}
           >
-            <Button variant="secondary" size="sm" className="opacity-90 flex items-center gap-1">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="opacity-90 flex items-center gap-1"
+            >
               <Eye size={16} />
               <span>Quick view</span>
             </Button>
           </ProductQuickView>
-          <Button
-            size="sm"
-            className={`opacity-90 flex items-center gap-1 transition-colors ${justAdded ? 'bg-green-600 hover:bg-green-700' : ''
+          {showCartActions && (
+            <Button
+              size="sm"
+              className={`opacity-90 flex items-center gap-1 transition-colors ${
+                justAdded ? "bg-green-600 hover:bg-green-700" : ""
               }`}
-            onClick={handleAddToCart}
-            disabled={isAdding || !isAuthenticated}
-            data-testid="add-to-cart-button"
-          >
-            <buttonContent.icon size={16} />
-            <span>{buttonContent.text}</span>
-          </Button>
+              onClick={handleAddToCart}
+              disabled={isAdding || !isAuthenticated}
+              data-testid="add-to-cart-button"
+            >
+              <buttonContent.icon size={16} />
+              <span>{buttonContent.text}</span>
+            </Button>
+          )}
         </div>
       </div>
       <CardContent className="pt-4">
         <ProductQuickView
           product={{ id, name, price, image, colorOptions }}
-          onAddToCart={(variantId: string, quantity?: number) => handleAddToCart()}
+          onAddToCart={(variantId: string, quantity?: number) =>
+            handleAddToCart()
+          }
+          enableCartActions={showCartActions}
         >
-          <h3 className="font-medium hover:text-blue-600 transition-colors cursor-pointer">{name}</h3>
+          <h3 className="font-medium hover:text-blue-600 transition-colors cursor-pointer">
+            {name}
+          </h3>
         </ProductQuickView>
         <p className="text-lg font-medium mt-1">{price}</p>
       </CardContent>
