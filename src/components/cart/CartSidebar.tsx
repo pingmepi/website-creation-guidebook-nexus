@@ -102,7 +102,6 @@ export const CartSidebar = () => {
                   {cartItems.map((item) => (
                     <div key={item.id} className="flex gap-4">
                       <div className="h-20 w-20 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={item.product?.image}
                           alt={item.product?.name}
@@ -148,7 +147,6 @@ export const CartSidebar = () => {
                   {customDesigns.map((design) => (
                     <div key={design.id} className="flex gap-4">
                       <div className="h-20 w-20 bg-gray-50 rounded-md overflow-hidden flex-shrink-0 border p-1">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={design.design_image}
                           alt={design.design_name}

@@ -50,7 +50,6 @@ const Header = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
                   {user?.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={user.avatar_url}
                       alt={user.name || "User"}

@@ -6,7 +6,7 @@ export function sanitizeText(input: unknown): string {
   if (typeof input !== 'string') return '';
   const withoutTags = input.replace(/<[^>]*>/g, '');
   // Allow basic punctuation, letters, numbers and spaces; collapse whitespace
-  const basic = withoutTags.replace(/[^A-Za-z0-9 .,!?;:'"()\-_/@#&%+\[\]]+/g, ' ');
+  const basic = withoutTags.replace(/[^A-Za-z0-9 .,!?;:'"()_/@#&%+-]+/g, ' ');
   return basic.trim().replace(/\s{2,}/g, ' ');
 }
 
@@ -59,4 +59,3 @@ export function safeStringify(obj: unknown): string {
     return '{}';
   }
 }
-
