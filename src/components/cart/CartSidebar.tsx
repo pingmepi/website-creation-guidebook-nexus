@@ -10,6 +10,7 @@ import { ShoppingCart, Plus, Minus, Trash, X } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
+import { FEATURE_FLAGS } from "@/lib/featureFlags";
 
 export const CartSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -61,6 +62,10 @@ export const CartSidebar = () => {
     console.log("🗑️ Removing cart item:", itemId);
     await removeFromCart(itemId);
   };
+
+  if (!FEATURE_FLAGS.enablePaymentFlows) {
+    return null;
+  }
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>

@@ -17,29 +17,29 @@ The project uses environment variables for configuration. To set up your local e
 
 2. Edit the `.env` file and fill in the actual values for your environment:
    ```
-   VITE_SUPABASE_URL=your_actual_supabase_url
-   VITE_SUPABASE_ANON_KEY=your_actual_anon_key
+   NEXT_PUBLIC_SUPABASE_URL=your_actual_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_actual_anon_key
    # ... other variables
    ```
 
-3. The environment variables are loaded by Vite and made available to the client-side code through `import.meta.env.VITE_*`.
+3. The environment variables are loaded by Next.js and made available to client-side code through `process.env.NEXT_PUBLIC_*`.
 
-4. Only variables prefixed with `VITE_` will be exposed to your client-side code.
+4. Only variables prefixed with `NEXT_PUBLIC_` will be exposed to your client-side code.
 
 ### Required Environment Variables
 
-- `VITE_SUPABASE_URL`: Your Supabase project URL
-- `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key (public)
+- `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anonymous key (public)
 
 ### Optional Environment Variables
 
-- `VITE_USE_MOCK_IMAGE`: Set to "true" to use mock images instead of generating real ones
-- `VITE_API_WEBHOOK_URL`: URL for the image generation webhook
-- `VITE_AUTH_COOKIE_SECURE`: Set to "true" for production
-- `VITE_AUTH_COOKIE_SAME_SITE`: Set to "lax" or "strict"
-- `VITE_AUTH_COOKIE_DOMAIN`: Your domain name
-- `VITE_ENABLE_RATE_LIMITING`: Set to "true" for production
-- `VITE_CORS_ALLOWED_ORIGINS`: Comma-separated list of allowed origins
+- `NEXT_PUBLIC_USE_MOCK_IMAGE`: Set to "true" to use mock images instead of generating real ones
+- `NEXT_PUBLIC_API_WEBHOOK_URL`: URL for the image generation webhook
+- `NEXT_PUBLIC_AUTH_COOKIE_SECURE`: Set to "true" for production
+- `NEXT_PUBLIC_AUTH_COOKIE_SAME_SITE`: Set to "lax" or "strict"
+- `NEXT_PUBLIC_AUTH_COOKIE_DOMAIN`: Your domain name
+- `NEXT_PUBLIC_ENABLE_RATE_LIMITING`: Set to "true" for production
+- `NEXT_PUBLIC_CORS_ALLOWED_ORIGINS`: Comma-separated list of allowed origins
 - `NEXT_PUBLIC_ENABLE_PAYMENT_FLOWS`: Set to `false` to hide cart/checkout UI entry points while payment integration is disabled
 
 ## Key Documentation Files

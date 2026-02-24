@@ -5,15 +5,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  {
-    ignores: [
-      "dist",
-      ".next",
-      "node_modules",
-      "backup",
-      "local-backup",
-    ],
-  },
+  { ignores: [".next/**", "dist/**", "node_modules/**"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -33,7 +25,7 @@ export default tseslint.config(
       ],
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": "off",
-      "prefer-const": "off",
+      "@typescript-eslint/no-explicit-any": "off",
     },
   }
 );

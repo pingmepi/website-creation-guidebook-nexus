@@ -15,7 +15,7 @@ const PaymentMethodSelector = ({ selectedMethod, onMethodChange }: PaymentMethod
     {
       id: "UPI",
       name: "UPI",
-      description: "Pay using UPI apps like GPay, PhonePe, Paytm",
+      description: "Pay using UPI apps like GPay, Paytm, or other UPI apps",
       icon: <Smartphone className="h-5 w-5" />
     },
     {
