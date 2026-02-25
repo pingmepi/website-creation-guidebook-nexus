@@ -9,6 +9,7 @@ import PaymentMethodSelector from "./PaymentMethodSelector";
 import PaymentTimer from "./PaymentTimer";
 import { usePaymentRetry } from "@/hooks/usePaymentRetry";
 import { getErrorMessage, isRetryableError } from "@/utils/paymentErrorCodes";
+import { trackEvent } from "@/lib/trackEvent";
 
 interface PaymentGatewayProps {
   orderId: string;
@@ -27,7 +28,7 @@ const PaymentGateway = ({
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("UPI");
   const [paymentTimeout, setPaymentTimeout] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
-  
+
   const { executeWithRetry, isRetrying, canRetry, reset } = usePaymentRetry({
     maxRetries: 3,
     retryDelay: 2000
@@ -37,7 +38,8 @@ const PaymentGateway = ({
     setIsProcessing(true);
     setLastError(null);
     reset();
-    
+    trackEvent("payment_initiated", { order_id: orderId, amount, payment_method: selectedPaymentMethod });
+
     try {
       await executeWithRetry(
         async () => {
@@ -69,10 +71,11 @@ const PaymentGateway = ({
 
       const errorCode = (error as Error & { details?: { code?: string } })?.details?.code || "UNKNOWN_ERROR";
       const userFriendlyMessage = getErrorMessage(errorCode);
-      
+
       setLastError(userFriendlyMessage);
+      trackEvent("payment_failed", { order_id: orderId, error_code: errorCode, is_retryable: isRetryableError(errorCode) });
       toast.error(userFriendlyMessage);
-      
+
       setIsProcessing(false);
     }
   };
@@ -80,12 +83,14 @@ const PaymentGateway = ({
   const handlePaymentTimeout = () => {
     setPaymentTimeout(true);
     setIsProcessing(false);
+    trackEvent("payment_timeout", { order_id: orderId });
     toast.error("Payment session expired. Please try again.");
   };
 
   const handleRetry = () => {
     setPaymentTimeout(false);
     setLastError(null);
+    trackEvent("payment_retried", { order_id: orderId });
     handlePayment();
   };
 
@@ -104,9 +109,9 @@ const PaymentGateway = ({
               <p className="text-sm text-gray-600">Order ID: {orderId}</p>
               <p className="text-2xl font-bold">₹{amount.toFixed(2)}</p>
             </div>
-            
+
             {!isProcessing && !paymentTimeout && (
-              <PaymentTimer 
+              <PaymentTimer
                 duration={300} // 5 minutes
                 onTimeout={handlePaymentTimeout}
               />
@@ -158,7 +163,7 @@ const PaymentGateway = ({
 
             <div className="space-y-2 mt-4">
               {paymentTimeout || lastError ? (
-                <Button 
+                <Button
                   onClick={handleRetry}
                   disabled={isProcessing || isRetrying}
                   className="w-full bg-purple-600 hover:bg-purple-700"
@@ -173,7 +178,7 @@ const PaymentGateway = ({
                   )}
                 </Button>
               ) : (
-                <Button 
+                <Button
                   onClick={handlePayment}
                   disabled={isProcessing || isRetrying}
                   className="w-full bg-purple-600 hover:bg-purple-700"
@@ -181,8 +186,8 @@ const PaymentGateway = ({
                   {isProcessing || isRetrying ? "Redirecting to payment..." : `Pay ₹${amount.toFixed(2)}`}
                 </Button>
               )}
-              
-              <Button 
+
+              <Button
                 onClick={onCancel}
                 variant="outline"
                 className="w-full"

@@ -1,3 +1,7 @@
+/**
+ * @deprecated – All consumers have been migrated to `src/lib/trackEvent.ts`.
+ * This file is kept temporarily for reference. Remove after confirming no runtime usages.
+ */
 export type FunnelEventName =
   | "design_place_order_cta_clicked"
   | "design_place_order_modal_opened"

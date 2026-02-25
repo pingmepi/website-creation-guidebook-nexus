@@ -16,6 +16,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "@/components/ui/toast";
 import { Eye, EyeOff, Chrome } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
+import { trackEvent } from "@/lib/trackEvent";
 
 type AuthMode = "login" | "signup";
 
@@ -35,10 +36,20 @@ const LoginDialog = ({ open, onClose, onSuccess }: LoginDialogProps) => {
   const [mode, setMode] = useState<AuthMode>("login");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasTrackedOpen, setHasTrackedOpen] = useState(false);
 
   const { login, signup, loginWithGoogle } = useUser();
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>();
+
+  // Track modal open once per render-cycle
+  if (open && !hasTrackedOpen) {
+    trackEvent("login_modal_opened", { trigger_source: "dialog" });
+    setHasTrackedOpen(true);
+  }
+  if (!open && hasTrackedOpen) {
+    setHasTrackedOpen(false);
+  }
 
   const toggleMode = () => {
     console.log("Mode toggled from", mode, "to", mode === "login" ? "signup" : "login");
@@ -51,23 +62,29 @@ const LoginDialog = ({ open, onClose, onSuccess }: LoginDialogProps) => {
     console.log("Current mode:", mode);
     setIsLoading(true);
 
+    const eventPrefix = mode === "login" ? "login" : "signup";
+    trackEvent(`${eventPrefix}_attempted`, { method: "email" });
+
     try {
       if (mode === "login") {
         console.log("Attempting login with:", data.email);
         await login(data.email, data.password);
         console.log("Login successful");
+        trackEvent("login_success", { method: "email" });
         toast.success("Logged in successfully");
         onSuccess();
       } else {
         console.log("Attempting signup with:", data.email, "and name:", data.name);
         await signup(data.email, data.password, data.name);
         console.log("Signup successful");
+        trackEvent("signup_success", { method: "email" });
         toast.success("Account created successfully");
         setMode("login");
       }
     } catch (error: unknown) {
       console.error("Authentication error:", error);
       const errorMessage = error instanceof Error ? error.message : "Authentication failed";
+      trackEvent(`${eventPrefix}_failed`, { method: "email", error_message: errorMessage });
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -96,10 +113,13 @@ const LoginDialog = ({ open, onClose, onSuccess }: LoginDialogProps) => {
             disabled={isLoading}
             onClick={async () => {
               setIsLoading(true);
+              trackEvent("login_attempted", { method: "google" });
               try {
                 await loginWithGoogle();
+                trackEvent("login_success", { method: "google" });
               } catch (err) {
                 const errorMessage = err instanceof Error ? err.message : "Google login failed";
+                trackEvent("login_failed", { method: "google", error_message: errorMessage });
                 toast.error(errorMessage);
               } finally {
                 setIsLoading(false);

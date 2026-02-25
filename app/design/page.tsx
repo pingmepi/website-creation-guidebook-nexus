@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import DesignStepper from "@/components/design/DesignStepper";
 import ConfirmationDialog from "@/components/design/ConfirmationDialog";
 import LoginDialog from "@/components/auth/LoginDialog";
@@ -10,6 +10,7 @@ import PreferencesSection from "@/components/design/PreferencesSection";
 import CustomizationSection from "@/components/design/CustomizationSection";
 import { DesignErrorBoundary } from "@/components/error/DesignErrorBoundary";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
+import { trackEvent } from "@/lib/trackEvent";
 
 function DesignContent() {
     const {
@@ -40,6 +41,10 @@ function DesignContent() {
         handleDesignChange,
         handleSaveDesign
     } = useDesignState();
+
+    useEffect(() => {
+        trackEvent("design_started");
+    }, []);
 
     return (
         <DesignErrorBoundary>

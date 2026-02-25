@@ -11,6 +11,7 @@ import { ImagePopup } from "@/components/ui/image-popup";
 import { ProductQuickView } from "@/components/ui/product-quick-view";
 import { supabase } from "@/integrations/supabase/client";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
+import { trackEvent } from "@/lib/trackEvent";
 
 interface TshirtCardProps {
   id: string;
@@ -116,6 +117,7 @@ const TshirtCard = ({
               variant="secondary"
               size="sm"
               className="opacity-90 flex items-center gap-1"
+              onClick={() => trackEvent("view_item", { item_id: id, item_name: name, item_price: price })}
             >
               <Eye size={16} />
               <span>Quick view</span>
@@ -124,9 +126,8 @@ const TshirtCard = ({
           {showCartActions && (
             <Button
               size="sm"
-              className={`opacity-90 flex items-center gap-1 transition-colors ${
-                justAdded ? "bg-green-600 hover:bg-green-700" : ""
-              }`}
+              className={`opacity-90 flex items-center gap-1 transition-colors ${justAdded ? "bg-green-600 hover:bg-green-700" : ""
+                }`}
               onClick={handleAddToCart}
               disabled={isAdding || !isAuthenticated}
               data-testid="add-to-cart-button"

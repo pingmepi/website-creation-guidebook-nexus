@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
+import { trackEvent } from "@/lib/trackEvent";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +20,7 @@ const LogoutButton = () => {
   const handleLogout = async () => {
     try {
       await logout();
+      trackEvent("logout");
     } catch (error) {
       console.error("Logout failed:", error);
     }

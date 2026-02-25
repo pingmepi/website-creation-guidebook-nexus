@@ -1,7 +1,9 @@
 import TshirtCard from "@/components/TshirtCard";
 import { tshirtImages } from "@/assets";
+import { trackEvent } from "@/lib/trackEvent";
 
 export default function Shop() {
+    trackEvent("view_item_list", { item_count: 9 });
     const tshirtProducts = [
         { id: "bbf231f6-4f6b-487e-bcc0-5db8d91fc10c", name: "Classic White Tee", price: "₹2,070", image: tshirtImages.mockup1 },
         { id: "2a026f73-1c40-4f34-8cab-6f1281fafcab", name: "Urban Black Design", price: "₹2,490", image: tshirtImages.mockup2 },

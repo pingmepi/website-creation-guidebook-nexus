@@ -17,6 +17,7 @@ import { tshirtImages } from "@/assets";
 import PaymentGateway from "@/components/payment/PaymentGateway";
 import { sanitizeAddress } from "@/utils/sanitize";
 import { ORDER_STATUS } from "@/lib/orderStatus";
+import { trackEvent } from "@/lib/trackEvent";
 
 
 interface CartItem {
@@ -91,6 +92,12 @@ export default function Checkout() {
         }
 
         fetchSavedAddresses();
+
+        const itemCount = cartItems.length + (customDesigns?.length || 0);
+        trackEvent("begin_checkout", {
+            item_count: itemCount,
+            cart_value: 0, // will be calculated after render
+        });
     }, [isAuthenticated, cartItems.length, customDesigns?.length, customDesigns, router]);
 
     const fetchSavedAddresses = useCallback(async () => {
@@ -134,6 +141,7 @@ export default function Checkout() {
     const handleAddressChange = (addressId: string) => {
         setSelectedAddressId(addressId);
         setUseNewAddress(false);
+        trackEvent("add_shipping_info", { is_new_address: false });
     };
 
     const handleUseNewAddress = () => {
@@ -263,6 +271,7 @@ export default function Checkout() {
 
             setOrderId(newOrderId);
             setShowPayment(true);
+            trackEvent("add_payment_info", { payment_method: "online" });
 
         } catch (error) {
             console.error("Error placing order:", error);

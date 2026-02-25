@@ -13,6 +13,7 @@ import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import AddToCartButton from "./AddToCartButton";
 import PlaceOrderButton from "./PlaceOrderButton";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
+import { trackEvent } from "@/lib/trackEvent";
 
 interface CustomizationSectionProps {
   answers: Answer[];
@@ -106,7 +107,10 @@ const CustomizationSection = ({
                     </label>
                     <Select
                       value={tshirtColor}
-                      onValueChange={onColorChange}
+                      onValueChange={(value) => {
+                        onColorChange(value);
+                        trackEvent("design_customized", { change_type: "color", value });
+                      }}
                       disabled={isGenerating}
                     >
                       <SelectTrigger className="bg-white w-36">
@@ -135,7 +139,10 @@ const CustomizationSection = ({
                     </label>
                     <Select
                       value={selectedSize}
-                      onValueChange={onSizeChange}
+                      onValueChange={(value) => {
+                        if (onSizeChange) onSizeChange(value);
+                        trackEvent("design_customized", { change_type: "size", value });
+                      }}
                       disabled={isGenerating}
                     >
                       <SelectTrigger className="bg-white w-24">
@@ -190,7 +197,10 @@ const CustomizationSection = ({
               {/* Action Buttons - Below Preview */}
               <div className="mt-6 space-y-3">
                 <Button
-                  onClick={onSaveDesign}
+                  onClick={() => {
+                    onSaveDesign();
+                    trackEvent("design_saved", { design_name: designName, tshirt_color: tshirtColor, size: selectedSize });
+                  }}
                   disabled={isSaving || !designImage || isGenerating}
                   className="w-full flex items-center justify-center gap-2"
                   variant="outline"

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
+import { trackEvent } from "@/lib/trackEvent";
 
 // Define theme categories and themes
 const categories = ["All", "Artistic", "Minimal", "Nature", "Abstract", "Typography", "Lifestyle", "Style"];
@@ -53,11 +54,14 @@ const ThemeSelector = ({ onThemeSelect }: ThemeSelectorProps) => {
     : themes.filter(theme => theme.category.includes(selectedCategory));
 
   const toggleThemeSelection = (themeId: number) => {
+    const theme = themes.find(t => t.id === themeId);
     if (selectedThemes.includes(themeId)) {
       setSelectedThemes(selectedThemes.filter(id => id !== themeId));
+      trackEvent("theme_deselected", { theme_id: themeId, theme_name: theme?.name });
     } else {
       if (selectedThemes.length < 3) {
         setSelectedThemes([...selectedThemes, themeId]);
+        trackEvent("theme_selected", { theme_id: themeId, theme_name: theme?.name });
       }
     }
   };
@@ -86,7 +90,10 @@ const ThemeSelector = ({ onThemeSelect }: ThemeSelectorProps) => {
               key={category}
               variant="outline"
               pressed={selectedCategory === category}
-              onPressedChange={() => setSelectedCategory(category)}
+              onPressedChange={() => {
+                setSelectedCategory(category);
+                trackEvent("theme_category_filtered", { category });
+              }}
               className={`rounded-full px-4 py-2 text-sm ${selectedCategory === category
                 ? 'bg-blue-50 text-blue-800 border-blue-200'
                 : 'bg-gray-50 text-gray-700'
@@ -127,7 +134,11 @@ const ThemeSelector = ({ onThemeSelect }: ThemeSelectorProps) => {
         <Button
           onClick={() => {
             const selected = themes.find(t => t.id === selectedThemes[0]);
-            if (selected) onThemeSelect(selected);
+            if (selected) {
+              const selectedNames = selectedThemes.map(id => themes.find(t => t.id === id)?.name).filter(Boolean);
+              trackEvent("theme_step_completed", { theme_count: selectedThemes.length, theme_names: selectedNames.join(", ") });
+              onThemeSelect(selected);
+            }
           }}
           disabled={selectedThemes.length === 0}
           className="px-6"

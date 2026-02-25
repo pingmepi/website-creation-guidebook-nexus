@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Theme } from "@/hooks/design/types";
 import { supabase } from "@/integrations/supabase/client";
+import { trackEvent } from "@/lib/trackEvent";
 
 export interface Answer {
   question: string;
@@ -134,32 +135,40 @@ const QuestionFlow = ({ selectedTheme, onComplete, onBack }: QuestionFlowProps) 
 
   const handleNext = () => {
     if (!currentAnswer.trim()) {
-      // Don't proceed if answer is empty
       return;
     }
 
     saveAnswer();
 
+    trackEvent("question_answered", {
+      question_index: currentQuestionIndex,
+      question_type: questions[currentQuestionIndex]?.type,
+      total_questions: questions.length,
+    });
+
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
-      // Fixed: This was causing the bug - now we save the current answer and include all answers in the onComplete callback
       const updatedAnswers = [...answers];
-      const currentQuestion = questions[currentQuestionIndex];
-      const existingIndex = answers.findIndex(a => a.question === currentQuestion.question);
+      const currentQ = questions[currentQuestionIndex];
+      const existingIndex = answers.findIndex(a => a.question === currentQ.question);
 
       if (existingIndex >= 0) {
         updatedAnswers[existingIndex] = {
-          question: currentQuestion.question,
-          answer: currentAnswer
+          question: currentQ.question,
+          answer: currentAnswer,
         };
       } else {
         updatedAnswers.push({
-          question: currentQuestion.question,
-          answer: currentAnswer
+          question: currentQ.question,
+          answer: currentAnswer,
         });
       }
 
+      trackEvent("questions_completed", {
+        answer_count: updatedAnswers.length,
+        theme_name: selectedTheme.name,
+      });
       console.log("All questions answered:", updatedAnswers);
       onComplete(updatedAnswers);
     }
@@ -171,6 +180,7 @@ const QuestionFlow = ({ selectedTheme, onComplete, onBack }: QuestionFlowProps) 
     }
 
     if (currentQuestionIndex > 0) {
+      trackEvent("question_skipped", { question_index: currentQuestionIndex });
       setCurrentQuestionIndex(prev => prev - 1);
     } else {
       onBack();

@@ -18,7 +18,7 @@ import { toast } from "@/components/ui/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Answer } from "./QuestionFlow";
 import { sanitizeAddress, sanitizeText } from "@/utils/sanitize";
-import { emitFunnelEvent } from "@/lib/funnelEvents";
+import { trackEvent } from "@/lib/trackEvent";
 import { ORDER_STATUS } from "@/lib/orderStatus";
 
 interface PlaceOrderButtonProps {
@@ -164,13 +164,13 @@ const PlaceOrderButton = ({
     () =>
       Boolean(
         designImage &&
-          form.name.trim() &&
-          form.email.trim() &&
-          form.phone.trim() &&
-          form.streetAddress.trim() &&
-          form.city.trim() &&
-          form.state.trim() &&
-          form.postalCode.trim(),
+        form.name.trim() &&
+        form.email.trim() &&
+        form.phone.trim() &&
+        form.streetAddress.trim() &&
+        form.city.trim() &&
+        form.state.trim() &&
+        form.postalCode.trim(),
       ),
     [designImage, form],
   );
@@ -191,9 +191,11 @@ const PlaceOrderButton = ({
   };
 
   const openModal = () => {
-    emitFunnelEvent("design_place_order_cta_clicked", {
-      hasDesignImage: Boolean(designImage),
-      isAuthenticated,
+    trackEvent("place_order_cta_clicked", {
+      design_name: designName,
+      size: selectedSize,
+      color: tshirtColor,
+      has_design_image: Boolean(designImage),
     });
 
     if (!designImage) {
@@ -212,28 +214,25 @@ const PlaceOrderButton = ({
       email: prev.email || user.email || "",
     }));
     setIsModalOpen(true);
-    emitFunnelEvent("design_place_order_modal_opened", {
-      hasPrefillEmail: Boolean(user.email),
-    });
+    trackEvent("order_modal_opened");
   };
 
   const handleSubmitManualOrder = async () => {
-    emitFunnelEvent("design_place_order_modal_submitted", {
-      hasDesignImage: Boolean(designImage),
-      hasNotes: Boolean(form.notes.trim()),
+    trackEvent("order_submitted", {
+      has_notes: Boolean(form.notes.trim()),
     });
 
     const validationError = validateForm();
     if (validationError) {
-      emitFunnelEvent("design_place_order_validation_failed", {
-        reason: validationError,
+      trackEvent("order_form_validation_failed", {
+        field: validationError,
       });
       toast.error(validationError);
       return;
     }
 
     if (!user?.id || !designImage) {
-      emitFunnelEvent("design_place_order_failed", { reason: "missing_user_or_design" });
+      trackEvent("order_failed", { error_message: "missing_user_or_design" });
       toast.error("Unable to place order. Please try again.");
       return;
     }
@@ -326,9 +325,9 @@ const PlaceOrderButton = ({
         throw itemError;
       }
 
-      emitFunnelEvent("design_place_order_created", {
-        orderId: (order as any).id,
-        hasNotes: Boolean(safeNotes),
+      trackEvent("order_created", {
+        order_id: (order as any).id,
+        price_inr: DEFAULT_PRICE_INR,
       });
 
       toast.success("Order request submitted. We'll contact you by email for payment.");
@@ -336,8 +335,8 @@ const PlaceOrderButton = ({
       router.push("/dashboard/orders");
     } catch (error) {
       const parsedError = parseError(error);
-      emitFunnelEvent("design_place_order_failed", {
-        reason: parsedError.message,
+      trackEvent("order_failed", {
+        error_message: parsedError.message,
         code: parsedError.code || undefined,
       });
       console.error(
@@ -367,8 +366,8 @@ const PlaceOrderButton = ({
         open={isModalOpen}
         onOpenChange={(open) => {
           if (!open) {
-            emitFunnelEvent("design_place_order_modal_closed", {
-              duringProcessing: isProcessing,
+            trackEvent("order_modal_closed", {
+              had_input: canSubmit,
             });
           }
           setIsModalOpen(open);

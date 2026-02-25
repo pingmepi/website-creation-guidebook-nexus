@@ -11,6 +11,7 @@ import { useCart } from "@/contexts/CartContext";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
+import { trackEvent } from "@/lib/trackEvent";
 
 export const CartSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -56,11 +57,13 @@ export const CartSidebar = () => {
   const handleRemoveCustomDesign = async (designId: string) => {
     console.log("🗑️ Removing custom design:", designId);
     await removeCustomDesign(designId);
+    trackEvent("remove_from_cart", { item_name: "custom_design", item_id: designId });
   };
 
   const handleRemoveItem = async (itemId: string) => {
     console.log("🗑️ Removing cart item:", itemId);
     await removeFromCart(itemId);
+    trackEvent("remove_from_cart", { item_id: itemId });
   };
 
   if (!FEATURE_FLAGS.enablePaymentFlows) {
@@ -68,7 +71,12 @@ export const CartSidebar = () => {
   }
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+    <Sheet open={isOpen} onOpenChange={(open) => {
+      setIsOpen(open);
+      if (open) {
+        trackEvent("cart_viewed", { item_count: cartCount, cart_value: calculateSubtotal() });
+      }
+    }}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="relative" data-testid="cart-sidebar-trigger">
           <ShoppingCart className="h-5 w-5" />

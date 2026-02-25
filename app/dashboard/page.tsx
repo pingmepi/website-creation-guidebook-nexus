@@ -7,6 +7,7 @@ import { Layers, ShoppingBag, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { supabase } from "@/integrations/supabase/client";
+import { trackEvent } from "@/lib/trackEvent";
 
 export default function Dashboard() {
     const { user } = useUser();
@@ -55,6 +56,13 @@ export default function Dashboard() {
             fetchOrderCount();
         }
     }, [user]);
+
+    // Track dashboard view when counts are loaded
+    useEffect(() => {
+        if (user && (designCount > 0 || orderCount > 0)) {
+            trackEvent("dashboard_viewed", { design_count: designCount, order_count: orderCount });
+        }
+    }, [user, designCount, orderCount]);
 
     return (
         <div className="space-y-6">

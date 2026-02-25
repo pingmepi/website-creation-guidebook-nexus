@@ -6,6 +6,7 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/components/ui/toast";
 import { Answer } from "./QuestionFlow";
 import { FEATURE_FLAGS } from "@/lib/featureFlags";
+import { trackEvent } from "@/lib/trackEvent";
 
 interface AddToCartButtonProps {
   designImage?: string;
@@ -65,7 +66,13 @@ const AddToCartButton = ({
       };
 
       await addCustomDesignToCart(customDesign);
-      
+
+      trackEvent("add_to_cart", {
+        item_name: designName || "Custom Design",
+        item_price: 2499,
+        item_color: tshirtColor,
+        item_size: selectedSize,
+      });
       toast.success("Design added to cart!");
 
     } catch (error) {
@@ -77,7 +84,7 @@ const AddToCartButton = ({
   };
 
   return (
-    <Button 
+    <Button
       onClick={handleAddToCart}
       disabled={isProcessing || !designImage}
       className="w-full flex items-center justify-center gap-2"
